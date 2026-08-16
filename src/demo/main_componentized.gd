@@ -48,7 +48,7 @@ func _create_piece_from_state(id: String, state: Dictionary, cell: Vector2i) -> 
 
 func _hand_world_position(holder: String, piece_id: String) -> Vector3:
 	var slot := _hand_slot_index(holder, piece_id)
-	var area: BgoPlayerArea = $Player2Area if holder == "player_2" else $Player1Area
+	var area := ($Player2Area if holder == "player_2" else $Player1Area) as BgoPlayerArea
 	if area != null:
 		return area.hand_slot_world(slot)
 	return super._hand_world_position(holder, piece_id)
@@ -81,9 +81,9 @@ func _apply_landscape_player_layout() -> void:
 		return
 
 	# Rebuild the panel as two vertical columns: hand/object strip + action rail.
-	var hand_title: Control = old_column.get_child(0) if old_column.get_child_count() > 0 else null
-	var hand_scroll: Control = old_column.get_child(1) if old_column.get_child_count() > 1 else null
-	var old_bar: Control = _pickup_button.get_parent() if _pickup_button != null else null
+	var hand_title = old_column.get_child(0) if old_column.get_child_count() > 0 else null
+	var hand_scroll = old_column.get_child(1) if old_column.get_child_count() > 1 else null
+	var old_bar = _pickup_button.get_parent() if _pickup_button != null else null
 
 	if hand_title != null:
 		old_column.remove_child(hand_title)
