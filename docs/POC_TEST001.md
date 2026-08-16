@@ -1,111 +1,134 @@
-# BGO PoC 01 — TEST001
+# BGO — TEST001 component-driven vertical slice
 
-This proof of concept validates one shared Firebase-backed board viewed by two roles from the same Godot Web build.
+TEST001 now validates a shared Firebase-backed board whose static setup comes from `games/test001/game.jsonh` and whose runtime state lives in Firebase RTDB.
+
+## Game definition
+
+The game file references reusable component IDs rather than redefining component behavior:
+
+- `bgo.board.checkered`
+- `bgo.piece.basic_cylinder`
+- `bgo.player_area.basic`
+- `bgo.slot.basic`
+
+The loader validates the definition before using it. An invalid definition is ignored and reported instead of crashing the runtime. The current file uses strict JSON syntax, which is also valid JSONH; when JsonhGd is present at `res://addons/JsonhGd/JsonhGd.gd`, human-friendly JSONH syntax can be used as well.
 
 ## Roles
 
 ### Display
 
-Open:
-
 `?role=display&game=TEST001`
 
-The display cannot manipulate pieces. It renders Firebase state and automatically focuses the camera toward pieces whose state changes.
+The display cannot manipulate pieces. It renders synchronized state and follows activity.
 
-### Player
-
-Open:
+### Player 1
 
 `?role=player&game=TEST001&player=player_1`
 
-Controls:
+### Player 2
 
-- drag: orbit camera around the table
-- tap owned piece while in `PICK UP`: select it
-- press `PLACE`
-- tap a board cell: place selected piece there
+`?role=player&game=TEST001&player=player_2`
 
-The move is written to Firebase RTDB and an immutable-style event entry is pushed to `/games/TEST001/events`.
+Each player has an independent camera and controls only objects they own or currently hold. Neutral public objects have an empty `owner_id` and can be claimed while unheld.
 
-## Firebase paths used
+## Location model
+
+Logical destinations are no longer arbitrary world coordinates.
 
 ```text
-/games/TEST001
-  /metadata
-  /pieces
-    /player_1_piece
-    /player_2_stack
-  /events
+slot         board/grid placement such as board:3:2
+player_area  public/semi-public objects associated with a player
+hand         true private/semi-private hand state (cards later)
 ```
 
-Example piece:
+Every checkered-board cell exposes a logical slot id in the form `board:x:y`. `bgo.slot.basic` is available for future markets, resource banks, discard areas, etc.
+
+`PlayerArea` and `Hand` are intentionally different concepts. Generic PICK UP of the current cylinder piece sends it to `player_area`, not to `hand`.
+
+## Current setup
+
+The game definition declares:
+
+- an 8 × 6 checkered board;
+- Player 1 and Player 2 colors;
+- one Player 1 cylinder token;
+- one Player 2 stack;
+- one neutral ivory stack.
+
+If TEST001 already exists in Firebase, missing objects from the definition are added without resetting existing piece positions.
+
+## Player controls
+
+- drag: orbit camera;
+- PICK UP + tap an allowed object: move it to the player's area;
+- tap an object in the player's area to make it active;
+- PLACE + tap a valid board cell: move the active object to that board slot;
+- FULL SCREEN: request browser fullscreen and landscape orientation.
+
+The right-side mobile panel now separates `PLAYER AREA` from `HAND`. The hand remains empty until a hand-capable component such as cards is introduced.
+
+## Firebase state
+
+Example:
 
 ```json
 {
+  "component_id": "bgo.piece.basic_cylinder",
+  "object_config": { "color_source": "player" },
   "owner_id": "player_1",
-  "holder_id": "player_1",
+  "holder_id": "",
   "quantity": 1,
   "cell": { "x": 1, "y": 2 },
+  "location": { "type": "slot", "slot_id": "board:1:2" },
   "revision": 1
 }
 ```
 
-## First run behavior
+When held in the public player area:
 
-If `/games/TEST001` does not exist, the first connected client seeds the demo session automatically.
+```json
+{
+  "owner_id": "",
+  "holder_id": "player_1",
+  "location": { "type": "player_area", "player_id": "player_1" }
+}
+```
 
-## Export
+This demonstrates the difference between permanent ownership and current possession.
 
-Use the committed `Web` export preset. Output is configured as:
+## Export/deploy
+
+Export Web to:
 
 `build/web/index.html`
 
-From Godot Editor: Project → Export → Web → Export Project.
-
-Or from a Godot executable with export templates installed:
+For the temporary Firebase Test Mode prototype, deploy Hosting only:
 
 ```bash
-godot --headless --export-release Web build/web/index.html
-```
-
-## Firebase deployment
-
-For this prototype the Realtime Database is currently using Firebase console Test Mode. Do **not** deploy the repository's production-oriented database rules yet.
-
-Deploy only Hosting:
-
-```bash
-firebase login
-firebase use board-game-online-68c3f
 firebase deploy --only hosting
 ```
 
-Then test two URLs based on the Hosting URL shown by Firebase:
+Do not deploy the repository database rules yet.
 
-```text
-https://<hosting-domain>/?role=display&game=TEST001
-https://<hosting-domain>/?role=player&game=TEST001&player=player_1
-```
+## Test checklist
 
-Open the first on the PC/TV and the second on the phone.
+1. Run locally first and confirm there are no GDScript parse errors.
+2. Display, Player 1 and Player 2 all render the same board state.
+3. A neutral ivory stack appears after Firebase synchronizes the definition.
+4. Player 1 cannot pick up Player 2's owned stack.
+5. Either player can pick up the neutral stack while it is unheld.
+6. PICK UP animates the object to that player's public area.
+7. The mobile panel lists it under PLAYER AREA, while HAND remains separate.
+8. PLACE only resolves to a board slot and synchronizes/animates on every client.
+9. Firebase events/logging record the interaction.
 
-## Expected result
+## Still staged
 
-1. Both clients show the same 3D table.
-2. The phone can orbit its own camera.
-3. The display remains non-interactive.
-4. The phone selects the yellow `player_1` piece in PICK UP mode.
-5. Switch to PLACE and tap another board cell.
-6. The move appears on the display after the next Firebase poll (normally under one second).
-7. The display camera shifts focus toward the changed piece.
-8. Firebase contains the new piece position and a `PIECE_MOVED` event.
-
-## Deliberate prototype limitations
-
-- RTDB polling is used instead of the future realtime Web adapter.
-- Authentication is not enabled yet; this depends on temporary Firebase Test Mode.
-- Only player 1 manipulation is intended for the first phone test.
-- Hand/private-object visibility is not part of PoC 01 yet.
-- MCP is intentionally not deployed yet.
-
-These are staged limitations, not intended production architecture.
+- transfer/give UI between players;
+- runtime slot-capacity/occupancy authority;
+- true private card-hand renderer/security;
+- anonymous authentication and production RTDB rules;
+- realtime Firebase/WebSocket adapter instead of polling;
+- presence avatars/pointers;
+- MCP tools over the logical game model;
+- snapshots/rewind UI.
