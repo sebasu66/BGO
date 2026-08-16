@@ -8,7 +8,9 @@ const ROLE_DISPLAY := "display"
 const ROLE_PLAYER := "player"
 const MODE_PICK_UP := "pick_up"
 const MODE_PLACE := "place"
-const MOVE_DURATION := 1.1
+const MOVE_DURATION := 1.25
+const PLAYER_AREA_X := 6.15
+const PLAYER_AREA_DEPTH := 7.2
 
 @onready var camera: Camera3D = $Camera3D
 @onready var title_label: Label = $UI/Title
@@ -25,14 +27,13 @@ var client_id := ""
 var selected_piece: Node3D
 var pieces: Dictionary = {}
 var _session_seed_requested := false
-
 var _pointer_down := false
 var _pointer_dragged := false
 var _pointer_start := Vector2.ZERO
 
 var _camera_yaw := 0.0
 var _camera_pitch := deg_to_rad(52.0)
-var _camera_distance := 10.8
+var _camera_distance := 12.8
 var _camera_focus := Vector3.ZERO
 var _desired_focus := Vector3.ZERO
 var _focus_release_at := 0.0
@@ -127,10 +128,7 @@ func _pick_at(screen_position: Vector2) -> void:
 	var collider: Node = null
 	if not hit.is_empty():
 		collider = hit.get("collider") as Node
-		logger.info("RAYCAST_HIT", {
-			"collider": collider.name if collider != null else "null",
-			"position": _vec3_payload(hit.get("position", Vector3.ZERO))
-		})
+		logger.info("RAYCAST_HIT", {"collider": collider.name if collider != null else "null", "position": _vec3_payload(hit.get("position", Vector3.ZERO))})
 		if collider != null and collider.has_meta("bgo_piece"):
 			_set_debug("ray hit piece: %s" % collider.name)
 			_on_piece_tapped(collider)
@@ -151,7 +149,6 @@ func _pick_at(screen_position: Vector2) -> void:
 			destination = collider.get_meta("board_cell")
 		else:
 			destination = _screen_to_board_cell(origin, direction)
-
 		if destination.x >= 0:
 			_place_selected_piece(destination)
 			return
@@ -213,15 +210,18 @@ func _on_piece_tapped(piece: Node3D) -> void:
 
 func _pick_up_piece(piece: Node3D) -> void:
 	var piece_id := str(piece.get_meta("entity_id"))
-	# Network state first, local optimistic animation immediately after.
+	var target := _hand_world_position(player_id, piece_id)
+
+	# Publish the destination first; animate locally immediately after.
 	repository.pickup_piece(piece_id, player_id)
-	logger.info("PICKUP_REQUESTED", {"piece_id": piece_id, "duration": MOVE_DURATION})
+	logger.info("PICKUP_REQUESTED", {"piece_id": piece_id, "duration": MOVE_DURATION, "target": _vec3_payload(target)})
+
 	piece.set_meta("holder_id", player_id)
 	piece.set_meta("location_type", "hand")
 	_select_piece(piece)
-	_animate_piece(piece, _hand_world_position(player_id, piece_id))
+	_animate_piece(piece, target, "pickup")
 	_refresh_hand_strip()
-	_set_status("Picked up %s · now in your hand" % piece.name)
+	_set_status("Picked up %s · moving to PLAYER 1 area" % piece.name)
 	_set_debug("pickup → hand: %s" % piece.name)
 
 func _place_selected_piece(destination: Vector2i) -> void:
@@ -229,13 +229,15 @@ func _place_selected_piece(destination: Vector2i) -> void:
 		return
 	var piece := selected_piece
 	var piece_id := str(piece.get_meta("entity_id"))
-	# Commit destination before starting the local tween so every client can begin ASAP.
+	var target := _cell_world(destination) + Vector3(0, 0.35, 0)
+
 	repository.place_piece(piece_id, player_id, destination)
-	logger.info("PLACE_REQUESTED", {"piece_id": piece_id, "cell": _cell_payload(destination), "duration": MOVE_DURATION})
+	logger.info("PLACE_REQUESTED", {"piece_id": piece_id, "cell": _cell_payload(destination), "duration": MOVE_DURATION, "target": _vec3_payload(target)})
+
 	piece.set_meta("holder_id", "")
 	piece.set_meta("location_type", "board")
 	piece.set_meta("cell", destination)
-	_animate_piece(piece, _cell_world(destination) + Vector3(0, 0.35, 0))
+	_animate_piece(piece, target, "place")
 	selected_piece = null
 	_refresh_hand_strip()
 	_set_status("Placed %s at %s" % [piece.name, destination])
@@ -266,8 +268,8 @@ func _create_board() -> void:
 			$Board.add_child(cell)
 
 func _create_player_areas() -> void:
-	_create_player_area("player_1", Vector3(-5.25, 0.02, 0), Vector3(1.35, 0.06, 6.8), Color(0.45, 0.31, 0.06), "PLAYER 1")
-	_create_player_area("player_2", Vector3(5.25, 0.02, 0), Vector3(1.35, 0.06, 6.8), Color(0.07, 0.27, 0.43), "PLAYER 2")
+	_create_player_area("player_1", Vector3(-PLAYER_AREA_X, 0.02, 0), Vector3(1.55, 0.06, PLAYER_AREA_DEPTH), Color(0.45, 0.31, 0.06), "PLAYER 1")
+	_create_player_area("player_2", Vector3(PLAYER_AREA_X, 0.02, 0), Vector3(1.55, 0.06, PLAYER_AREA_DEPTH), Color(0.07, 0.27, 0.43), "PLAYER 2")
 
 func _create_player_area(id: String, position: Vector3, size: Vector3, color: Color, label_text: String) -> void:
 	var root := Node3D.new()
@@ -288,7 +290,7 @@ func _create_player_area(id: String, position: Vector3, size: Vector3, color: Co
 	var label := Label3D.new()
 	label.text = label_text
 	label.font_size = 42
-	label.position = Vector3(0, 0.12, -2.6)
+	label.position = Vector3(0, 0.12, -2.85)
 	label.rotation_degrees = Vector3(-90, 0, 0)
 	root.add_child(label)
 
@@ -327,9 +329,8 @@ func _on_piece_changed(piece_id: String, piece_data: Dictionary) -> void:
 		_update_piece_from_state(pieces[piece_id], piece_data, cell)
 
 	if client_role == ROLE_DISPLAY:
-		var piece: Node3D = pieces[piece_id]
-		_desired_focus = piece.position
-		_focus_release_at = Time.get_ticks_msec() / 1000.0 + 2.2
+		_desired_focus = _target_world_position(piece_id, piece_data, cell)
+		_focus_release_at = Time.get_ticks_msec() / 1000.0 + 2.4
 	if client_role == ROLE_PLAYER:
 		_refresh_hand_strip()
 
@@ -403,7 +404,7 @@ func _update_piece_from_state(piece: Node3D, state: Dictionary, cell: Vector2i) 
 
 	var target := _target_world_position(str(piece.get_meta("entity_id")), state, cell)
 	logger.info("PIECE_ANIMATION_RECEIVED", {"piece_id": piece.name, "from": _vec3_payload(piece.position), "to": _vec3_payload(target), "duration": MOVE_DURATION, "location_type": location_type})
-	_animate_piece(piece, target)
+	_animate_piece(piece, target, "sync")
 
 func _target_world_position(piece_id: String, state: Dictionary, cell: Vector2i) -> Vector3:
 	var location: Dictionary = state.get("location", {})
@@ -414,9 +415,10 @@ func _target_world_position(piece_id: String, state: Dictionary, cell: Vector2i)
 
 func _hand_world_position(holder: String, piece_id: String) -> Vector3:
 	var slot := _hand_slot_index(holder, piece_id)
+	var z := -2.35 + float(slot) * 0.9
 	if holder == "player_2":
-		return Vector3(5.25, 0.38, -2.0 + float(slot) * 0.85)
-	return Vector3(-5.25, 0.38, -2.0 + float(slot) * 0.85)
+		return Vector3(PLAYER_AREA_X, 0.40, z)
+	return Vector3(-PLAYER_AREA_X, 0.40, z)
 
 func _hand_slot_index(holder: String, piece_id: String) -> int:
 	var ids: Array[String] = []
@@ -429,9 +431,16 @@ func _hand_slot_index(holder: String, piece_id: String) -> int:
 	ids.sort()
 	return maxi(ids.find(piece_id), 0)
 
-func _animate_piece(piece: Node3D, target: Vector3) -> void:
-	var tween := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
-	tween.tween_property(piece, "position", target, MOVE_DURATION)
+func _animate_piece(piece: Node3D, target: Vector3, reason: String) -> void:
+	# A visible lift/travel/drop arc. Total duration is ~1.25 s.
+	var start := piece.position
+	var lift_start := start + Vector3(0, 0.75, 0)
+	var lift_target := target + Vector3(0, 0.75, 0)
+	logger.info("PIECE_ANIMATION_STARTED", {"piece_id": piece.name, "reason": reason, "from": _vec3_payload(start), "to": _vec3_payload(target)})
+	var tween := piece.create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(piece, "position", lift_start, 0.20)
+	tween.tween_property(piece, "position", lift_target, 0.80)
+	tween.tween_property(piece, "position", target, 0.25)
 
 func _select_piece(piece: Node3D) -> void:
 	selected_piece = piece
@@ -451,80 +460,77 @@ func _create_hud() -> void:
 	$UI.add_child(_status_label)
 
 	if client_role == ROLE_DISPLAY:
-		hint_label.text = "Shared display · Firebase TEST001 · player areas show held objects."
+		hint_label.text = "Shared display · Firebase TEST001 · player hand areas live outside the board."
 		return
 
-	hint_label.text = "Drag to orbit · PICK UP sends an object to your hand · PLACE sends the active hand object to the board."
+	hint_label.text = "Drag to orbit · PICK UP moves a piece into your hand · PLACE moves the active hand piece to the board."
 
+	# Explicit bottom HUD geometry: no scroll/container compression in mobile Web.
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	panel.offset_left = 16
-	panel.offset_right = -16
-	panel.offset_top = -154
-	panel.offset_bottom = -12
+	panel.offset_left = 12
+	panel.offset_right = -12
+	panel.offset_top = -142
+	panel.offset_bottom = -10
 	$UI.add_child(panel)
 	_player_controls = panel
 
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 6)
-	panel.add_child(column)
+	var content := Control.new()
+	content.custom_minimum_size = Vector2(0, 132)
+	panel.add_child(content)
 
 	var hand_title := Label.new()
-	hand_title.text = "YOUR HAND · tap an object to make it active"
-	hand_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	column.add_child(hand_title)
-
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(0, 52)
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	column.add_child(scroll)
+	hand_title.text = "YOUR HAND"
+	hand_title.position = Vector2(14, 8)
+	hand_title.size = Vector2(180, 24)
+	hand_title.add_theme_font_size_override("font_size", 16)
+	content.add_child(hand_title)
 
 	_hand_strip = HBoxContainer.new()
+	_hand_strip.position = Vector2(14, 34)
+	_hand_strip.size = Vector2(760, 46)
 	_hand_strip.add_theme_constant_override("separation", 8)
-	scroll.add_child(_hand_strip)
-
-	var bar := HBoxContainer.new()
-	bar.alignment = BoxContainer.ALIGNMENT_CENTER
-	bar.add_theme_constant_override("separation", 12)
-	column.add_child(bar)
+	content.add_child(_hand_strip)
 
 	_pickup_button = Button.new()
-	_pickup_button.text = "● PICK UP"
+	_pickup_button.text = "PICK UP"
 	_pickup_button.toggle_mode = true
-	_pickup_button.button_pressed = true
-	_pickup_button.custom_minimum_size = Vector2(140, 44)
+	_pickup_button.position = Vector2(14, 86)
+	_pickup_button.size = Vector2(150, 40)
 	_pickup_button.pressed.connect(func(): _set_mode(MODE_PICK_UP))
-	bar.add_child(_pickup_button)
+	content.add_child(_pickup_button)
 
 	_place_button = Button.new()
 	_place_button.text = "PLACE"
 	_place_button.toggle_mode = true
-	_place_button.custom_minimum_size = Vector2(140, 44)
+	_place_button.position = Vector2(174, 86)
+	_place_button.size = Vector2(150, 40)
 	_place_button.pressed.connect(func(): _set_mode(MODE_PLACE))
-	bar.add_child(_place_button)
+	content.add_child(_place_button)
 
 	_mode_label = Label.new()
 	_mode_label.text = "Mode: PICK UP"
-	_mode_label.position = Vector2(30, 126)
-	_mode_label.size = Vector2(300, 28)
+	_mode_label.position = Vector2(338, 94)
+	_mode_label.size = Vector2(240, 30)
 	_mode_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	$UI.add_child(_mode_label)
+	content.add_child(_mode_label)
 
 	_debug_label = Label.new()
 	_debug_label.text = "Input debug: waiting for tap"
 	_debug_label.position = Vector2(30, 154)
-	_debug_label.size = Vector2(700, 28)
+	_debug_label.size = Vector2(800, 28)
 	_debug_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_debug_label.add_theme_font_size_override("font_size", 13)
 	$UI.add_child(_debug_label)
+
+	_set_mode(MODE_PICK_UP)
 	_refresh_hand_strip()
 
 func _refresh_hand_strip() -> void:
 	if _hand_strip == null:
 		return
 	for child in _hand_strip.get_children():
-		child.free()
+		child.queue_free()
 
 	var hand_ids: Array[String] = []
 	for key in pieces.keys():
@@ -536,7 +542,7 @@ func _refresh_hand_strip() -> void:
 	if hand_ids.is_empty():
 		var empty := Label.new()
 		empty.text = "Hand is empty"
-		empty.custom_minimum_size = Vector2(180, 40)
+		empty.custom_minimum_size = Vector2(180, 42)
 		empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		_hand_strip.add_child(empty)
 		return
@@ -546,10 +552,11 @@ func _refresh_hand_strip() -> void:
 		var button := Button.new()
 		var quantity := int(piece.get_meta("quantity", 1))
 		button.text = "%s%s" % [piece_id, " ×%d" % quantity if quantity > 1 else ""]
-		button.custom_minimum_size = Vector2(135, 42)
+		button.custom_minimum_size = Vector2(150, 42)
 		button.toggle_mode = true
 		button.button_pressed = piece == selected_piece
 		button.pressed.connect(_on_hand_item_pressed.bind(piece_id))
+		_apply_hand_button_style(button, piece == selected_piece)
 		_hand_strip.add_child(button)
 
 func _on_hand_item_pressed(piece_id: String) -> void:
@@ -564,12 +571,47 @@ func _set_mode(mode: String) -> void:
 		_mode_label.text = "Mode: %s" % mode.replace("_", " ").to_upper()
 	if _pickup_button != null:
 		_pickup_button.button_pressed = mode == MODE_PICK_UP
-		_pickup_button.text = "● PICK UP" if mode == MODE_PICK_UP else "PICK UP"
+		_apply_mode_button_style(_pickup_button, mode == MODE_PICK_UP, Color(0.90, 0.58, 0.10))
 	if _place_button != null:
 		_place_button.button_pressed = mode == MODE_PLACE
-		_place_button.text = "● PLACE" if mode == MODE_PLACE else "PLACE"
-	logger.info("INTERACTION_MODE_CHANGED", {"mode": mode})
+		_apply_mode_button_style(_place_button, mode == MODE_PLACE, Color(0.18, 0.68, 0.94))
+	if logger != null:
+		logger.info("INTERACTION_MODE_CHANGED", {"mode": mode})
 	_set_debug("mode: %s" % mode)
+
+func _apply_mode_button_style(button: Button, active: bool, accent: Color) -> void:
+	var style := StyleBoxFlat.new()
+	style.bg_color = accent if active else Color(0.10, 0.11, 0.14, 0.96)
+	style.border_width_left = 3 if active else 1
+	style.border_width_top = 3 if active else 1
+	style.border_width_right = 3 if active else 1
+	style.border_width_bottom = 3 if active else 1
+	style.border_color = accent.lightened(0.22) if active else Color(0.28, 0.30, 0.34)
+	style.corner_radius_top_left = 6
+	style.corner_radius_top_right = 6
+	style.corner_radius_bottom_left = 6
+	style.corner_radius_bottom_right = 6
+	button.add_theme_stylebox_override("normal", style)
+	button.add_theme_stylebox_override("pressed", style)
+	button.add_theme_stylebox_override("hover", style)
+	button.add_theme_color_override("font_color", Color.WHITE)
+	button.text = ("● " if active else "") + ("PICK UP" if button == _pickup_button else "PLACE")
+
+func _apply_hand_button_style(button: Button, active: bool) -> void:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.28, 0.42, 0.62, 1.0) if active else Color(0.12, 0.13, 0.16, 0.98)
+	style.border_width_left = 3 if active else 1
+	style.border_width_top = 3 if active else 1
+	style.border_width_right = 3 if active else 1
+	style.border_width_bottom = 3 if active else 1
+	style.border_color = Color(0.62, 0.82, 1.0) if active else Color(0.30, 0.32, 0.36)
+	style.corner_radius_top_left = 5
+	style.corner_radius_top_right = 5
+	style.corner_radius_bottom_left = 5
+	style.corner_radius_bottom_right = 5
+	button.add_theme_stylebox_override("normal", style)
+	button.add_theme_stylebox_override("pressed", style)
+	button.add_theme_stylebox_override("hover", style)
 
 func _set_status(text: String) -> void:
 	if _status_label != null:
@@ -582,7 +624,7 @@ func _set_debug(text: String) -> void:
 func _configure_camera() -> void:
 	_camera_yaw = 0.0
 	_camera_pitch = deg_to_rad(52.0 if client_role == ROLE_DISPLAY else 45.0)
-	_camera_distance = 10.8 if client_role == ROLE_DISPLAY else 8.6
+	_camera_distance = 12.8 if client_role == ROLE_DISPLAY else 10.2
 	_update_camera_transform()
 
 func _update_camera_transform() -> void:
@@ -616,7 +658,6 @@ func _read_launch_options() -> void:
 				game_id = arg.trim_prefix("--game=")
 			elif arg.begins_with("--player="):
 				player_id = arg.trim_prefix("--player=")
-
 	if client_role != ROLE_PLAYER:
 		client_role = ROLE_DISPLAY
 
