@@ -4,6 +4,9 @@ const BASIC_CYLINDER_SCENE := preload("res://src/components/pieces/basic_cylinde
 
 func _ready() -> void:
 	_request_landscape_orientation()
+	var preview := get_node_or_null("EditorPreview")
+	if preview != null:
+		preview.queue_free()
 	super._ready()
 
 func _create_board() -> void:
