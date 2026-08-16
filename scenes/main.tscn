@@ -1,9 +1,10 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene format=3 uid="uid://cv02cvbpac4ct"]
 
-[ext_resource path="res://src/demo/main_componentized.gd" type="Script" id="1_main"]
-[ext_resource path="res://src/components/boards/checkered_board/checkered_board.tscn" type="PackedScene" id="2_board"]
-[ext_resource path="res://src/components/player_area/player_area.tscn" type="PackedScene" id="3_area"]
-[ext_resource path="res://src/components/pieces/basic_cylinder/basic_cylinder_piece.tscn" type="PackedScene" id="4_piece"]
+[ext_resource type="Script" uid="uid://rnmfxfe7t21c" path="res://src/demo/main_componentized.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://src/components/boards/checkered_board/checkered_board.tscn" id="2_board"]
+[ext_resource type="PackedScene" path="res://src/components/player_area/player_area.tscn" id="3_area"]
+[ext_resource type="PackedScene" path="res://src/components/pieces/basic_cylinder/basic_cylinder_piece.tscn" id="4_piece"]
+[ext_resource type="Script" uid="uid://brice8nmh2v7y" path="res://addons/lente/runtime/lente_photo_mode.gd" id="5_tbgi4"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -12,78 +13,69 @@ ambient_light_source = 3
 ambient_light_color = Color(0.42, 0.47, 0.58, 1)
 ambient_light_energy = 0.55
 
-[sub_resource type="BoxMesh" id="TableMesh"]
-size = Vector3(15.5, 0.35, 9.8)
-
 [sub_resource type="StandardMaterial3D" id="TableMaterial"]
 albedo_color = Color(0.16, 0.075, 0.035, 1)
 roughness = 0.72
 
-[node name="Main" type="Node3D"]
+[sub_resource type="BoxMesh" id="TableMesh"]
+size = Vector3(15.5, 0.35, 9.8)
+
+[node name="Main" type="Node3D" unique_id=1900994057]
 script = ExtResource("1_main")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=369637670]
 environment = SubResource("Environment_main")
 
-[node name="KeyLight" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-52, -28, 0)
+[node name="KeyLight" type="DirectionalLight3D" parent="." unique_id=1139649120]
+transform = Transform3D(0.88294756, 0.36994863, -0.2890356, 0, 0.6156615, 0.7880107, 0.46947157, -0.6957722, 0.5435968, 0, 0, 0)
 light_color = Color(1, 0.91, 0.78, 1)
 light_energy = 1.25
 shadow_enabled = true
 
-[node name="FillLight" type="OmniLight3D" parent="."]
-position = Vector3(-3.5, 4.5, 2.5)
-omni_range = 15.0
+[node name="FillLight" type="OmniLight3D" parent="." unique_id=924605994]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 4.5, 2.5)
 light_color = Color(0.52, 0.67, 1, 1)
 light_energy = 2.2
-shadow_enabled = false
+omni_range = 15.0
 
-[node name="Table" type="MeshInstance3D" parent="."]
-position = Vector3(0, -0.27, 0)
-mesh = SubResource("TableMesh")
+[node name="Table" type="MeshInstance3D" parent="." unique_id=1440442709]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.27, 0)
 material_override = SubResource("TableMaterial")
+mesh = SubResource("TableMesh")
 
-[node name="Board" parent="." instance=ExtResource("2_board")]
-columns = 8
-rows = 6
-cell_size = 1.2
+[node name="Board" parent="." unique_id=1309770363 instance=ExtResource("2_board")]
 
-[node name="Player1Area" parent="." instance=ExtResource("3_area")]
-position = Vector3(-6.15, 0.02, 0)
-player_id = "player_1"
-label_text = "PLAYER 1"
-area_color = Color(0.45, 0.31, 0.06, 1)
+[node name="Player1Area" parent="." unique_id=70614072 instance=ExtResource("3_area")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.15, 0.02, 0)
 
-[node name="Player2Area" parent="." instance=ExtResource("3_area")]
-position = Vector3(6.15, 0.02, 0)
+[node name="Player2Area" parent="." unique_id=1709813326 instance=ExtResource("3_area")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.15, 0.02, 0)
 player_id = "player_2"
 label_text = "PLAYER 2"
 area_color = Color(0.07, 0.27, 0.43, 1)
 
-[node name="EditorPreview" type="Node3D" parent="."]
+[node name="EditorPreview" type="Node3D" parent="." unique_id=1086920998]
 
-[node name="Player1Piece" parent="EditorPreview" instance=ExtResource("4_piece")]
-position = Vector3(-3.0, 0.35, -0.6)
-piece_color = Color(0.95, 0.72, 0.22, 1)
+[node name="Player1Piece" parent="EditorPreview" unique_id=1192341311 instance=ExtResource("4_piece")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.35, -0.6)
 metadata/editor_preview = true
 
-[node name="Player2Piece" parent="EditorPreview" instance=ExtResource("4_piece")]
-position = Vector3(3.0, 0.35, 0.6)
-piece_color = Color(0.30, 0.72, 0.95, 1)
+[node name="Player2Piece" parent="EditorPreview" unique_id=428775779 instance=ExtResource("4_piece")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.35, 0.6)
+piece_color = Color(0.3, 0.72, 0.95, 1)
 quantity = 3
 metadata/editor_preview = true
 
-[node name="Pieces" type="Node3D" parent="."]
+[node name="Pieces" type="Node3D" parent="." unique_id=1611822845]
 
-[node name="Camera3D" type="Camera3D" parent="."]
-position = Vector3(0, 10.5, 10.4)
-rotation_degrees = Vector3(-47, 0, 0)
-fov = 48.0
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1027673321]
+transform = Transform3D(1, 0, 0, 0, 0.64278764, 0.76604444, 0, -0.76604444, 0.64278764, 0, 8.6, 8.2)
 current = true
+fov = 44.1
 
-[node name="UI" type="CanvasLayer" parent="."]
+[node name="UI" type="CanvasLayer" parent="." unique_id=584883415]
 
-[node name="Title" type="Label" parent="UI"]
+[node name="Title" type="Label" parent="UI" unique_id=277164301]
 offset_left = 28.0
 offset_top = 24.0
 offset_right = 520.0
@@ -91,7 +83,7 @@ offset_bottom = 60.0
 theme_override_font_sizes/font_size = 26
 text = "BGO · 3D Core Prototype"
 
-[node name="Hint" type="Label" parent="UI"]
+[node name="Hint" type="Label" parent="UI" unique_id=1268504950]
 offset_left = 30.0
 offset_top = 62.0
 offset_right = 900.0
@@ -99,3 +91,7 @@ offset_bottom = 92.0
 theme_override_colors/font_color = Color(0.72, 0.76, 0.84, 1)
 theme_override_font_sizes/font_size = 16
 text = "Select a piece, then click/tap a board cell."
+
+[node name="LentePhotoMode" type="Node3D" parent="." unique_id=368444116]
+script = ExtResource("5_tbgi4")
+continue_processing_groups = PackedStringArray("lente_unpaused")
