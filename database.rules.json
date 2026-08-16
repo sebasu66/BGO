@@ -1,0 +1,24 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "games": {
+      "$gameId": {
+        ".read": "auth != null && data.child('members').child(auth.uid).exists()",
+        "members": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid"
+          }
+        },
+        "state": {
+          ".write": "auth != null && root.child('games').child($gameId).child('members').child(auth.uid).exists()"
+        },
+        "commands": {
+          "$commandId": {
+            ".write": "auth != null && root.child('games').child($gameId).child('members').child(auth.uid).exists()"
+          }
+        }
+      }
+    }
+  }
+}
