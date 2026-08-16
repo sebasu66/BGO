@@ -1,0 +1,10 @@
+{
+  "id": "bgo.player_area.basic",
+  "kind": "player_area",
+  "scene": "res://src/components/player_area/player_area.tscn",
+  "config": {
+    "visible": { "type": "bool", "default": true },
+    "public_objects": { "type": "bool", "default": true }
+  },
+  "capabilities": ["player_zone", "public_storage"]
+}
