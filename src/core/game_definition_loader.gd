@@ -7,36 +7,37 @@ static func load_game(path: String) -> Dictionary:
 	var result := {
 		"ok": false,
 		"data": {},
-		"errors": [] as Array[String],
+		"errors": [],
 		"path": path,
 	}
 
 	if not FileAccess.file_exists(path):
-		result.errors.append("Game definition not found: %s" % path)
+		(result["errors"] as Array).append("Game definition not found: %s" % path)
 		return result
 
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
-		result.errors.append("Could not open game definition: %s" % path)
+		(result["errors"] as Array).append("Could not open game definition: %s" % path)
 		return result
 	var source := file.get_as_text()
 
 	var parsed := _parse_jsonh(source)
-	if not parsed.ok:
-		result.errors.append("JSONH parse error: %s" % parsed.error)
+	if not bool(parsed.get("ok", false)):
+		(result["errors"] as Array).append("JSONH parse error: %s" % str(parsed.get("error", "Unknown parse error")))
 		return result
-	if not parsed.value is Dictionary:
-		result.errors.append("The root of the game definition must be an object.")
+	var parsed_value: Variant = parsed.get("value")
+	if not parsed_value is Dictionary:
+		(result["errors"] as Array).append("The root of the game definition must be an object.")
 		return result
 
-	var data: Dictionary = parsed.value
+	var data: Dictionary = parsed_value
 	var validation_errors := validate_game(data)
 	if not validation_errors.is_empty():
-		result.errors = validation_errors
+		result["errors"] = validation_errors
 		return result
 
-	result.ok = true
-	result.data = data
+	result["ok"] = true
+	result["data"] = data
 	return result
 
 static func _parse_jsonh(source: String) -> Dictionary:
@@ -51,8 +52,9 @@ static func _parse_jsonh(source: String) -> Dictionary:
 						return {"ok": false, "value": null, "error": str(parse_result.call("error"))}
 					return {"ok": true, "value": parse_result.call("value"), "error": ""}
 
-	# JSON is a strict subset of JSONH. This fallback lets the runtime keep working
-	# with strict JSON definitions when the optional JsonhGd addon is not installed.
+	# JSON is a strict subset of JSONH. This fallback means a game still loads
+	# safely if the optional JsonhGd addon is absent, as long as the file uses
+	# strict JSON syntax.
 	var json := JSON.new()
 	var error := json.parse(source)
 	if error == OK:
@@ -81,17 +83,23 @@ static func validate_game(data: Dictionary) -> Array[String]:
 		if max_players < min_players:
 			errors.append("game.max_players must be >= game.min_players.")
 
+	var board_columns := 0
+	var board_rows := 0
 	var board: Variant = data.get("board")
 	if not board is Dictionary:
 		errors.append("Missing object 'board'.")
 	else:
 		_validate_component_reference(board, "board", errors)
+		var board_config: Variant = board.get("config", {})
+		if board_config is Dictionary:
+			board_columns = int(board_config.get("columns", 0))
+			board_rows = int(board_config.get("rows", 0))
 
+	var player_ids: Dictionary = {}
 	var players: Variant = data.get("players")
 	if not players is Array or players.is_empty():
 		errors.append("players must be a non-empty array.")
 	else:
-		var player_ids: Dictionary = {}
 		for index in players.size():
 			var player: Variant = players[index]
 			if not player is Dictionary:
@@ -104,7 +112,11 @@ static func validate_game(data: Dictionary) -> Array[String]:
 				errors.append("Duplicate player id '%s'." % player_id)
 			else:
 				player_ids[player_id] = true
+			var area: Variant = player.get("area", {})
+			if area is Dictionary and not area.is_empty():
+				_validate_component_reference(area, "players[%d].area" % index, errors)
 
+	var occupied_initial_slots: Dictionary = {}
 	var setup: Variant = data.get("setup", {})
 	if setup is Dictionary:
 		var objects: Variant = setup.get("objects", [])
@@ -126,8 +138,32 @@ static func validate_game(data: Dictionary) -> Array[String]:
 				var owner_id := str(object_def.get("owner_id", ""))
 				if not owner_id.is_empty() and not player_ids.has(owner_id):
 					errors.append("setup.objects[%d].owner_id references unknown player '%s'." % [index, owner_id])
+				_validate_initial_location(object_def, index, board_columns, board_rows, occupied_initial_slots, errors)
 
 	return errors
+
+static func _validate_initial_location(object_def: Dictionary, index: int, columns: int, rows: int, occupied: Dictionary, errors: Array[String]) -> void:
+	var location: Variant = object_def.get("initial_location", {})
+	if not location is Dictionary:
+		errors.append("setup.objects[%d].initial_location must be an object." % index)
+		return
+	if str(location.get("type", "")) != "slot":
+		errors.append("setup.objects[%d].initial_location.type must currently be 'slot'." % index)
+		return
+	var slot_id := str(location.get("slot_id", ""))
+	var parts := slot_id.split(":")
+	if parts.size() != 3 or parts[0] != "board":
+		errors.append("setup.objects[%d] has invalid board slot '%s'. Expected board:x:y." % [index, slot_id])
+		return
+	var x := int(parts[1])
+	var y := int(parts[2])
+	if x < 0 or y < 0 or x >= columns or y >= rows:
+		errors.append("setup.objects[%d] slot '%s' is outside the configured board." % [index, slot_id])
+		return
+	if occupied.has(slot_id):
+		errors.append("Initial slot '%s' is already occupied by '%s'." % [slot_id, str(occupied[slot_id])])
+	else:
+		occupied[slot_id] = str(object_def.get("id", "unnamed"))
 
 static func _validate_component_reference(definition: Dictionary, label: String, errors: Array[String]) -> void:
 	var component_id := str(definition.get("component", ""))
