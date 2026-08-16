@@ -16,6 +16,10 @@ func write(path: String, value: Variant) -> void:
 func patch(path: String, value: Dictionary) -> void:
 	_send(&"patch", path, HTTPClient.METHOD_PATCH, JSON.stringify(value))
 
+func push(path: String, value: Variant) -> void:
+	# Firebase RTDB POST creates a unique child key and returns {"name": "..."}.
+	_send(&"push", path, HTTPClient.METHOD_POST, JSON.stringify(value))
+
 func remove(path: String) -> void:
 	_send(&"remove", path, HTTPClient.METHOD_DELETE)
 
