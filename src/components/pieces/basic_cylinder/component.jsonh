@@ -1,0 +1,11 @@
+{
+  "id": "bgo.piece.basic_cylinder",
+  "kind": "piece",
+  "scene": "res://src/components/pieces/basic_cylinder/basic_cylinder_piece.tscn",
+  "config": {
+    "radius": { "type": "float", "min": 0.1, "max": 2.0, "default": 0.38 },
+    "height": { "type": "float", "min": 0.05, "max": 2.0, "default": 0.32 },
+    "color_source": { "type": "enum", "values": ["player", "fixed"], "default": "player" }
+  },
+  "capabilities": ["movable", "ownable", "holdable", "placeable"]
+}
