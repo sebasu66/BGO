@@ -1,0 +1,42 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource path="res://src/components/pieces/basic_cylinder/basic_cylinder_piece.gd" type="Script" id="1_piece"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_piece"]
+top_radius = 0.38
+bottom_radius = 0.38
+height = 0.32
+radial_segments = 32
+
+[sub_resource type="CylinderShape3D" id="CylinderShape_piece"]
+radius = 0.42
+height = 0.38
+
+[sub_resource type="StandardMaterial3D" id="PreviewMaterial"]
+albedo_color = Color(0.95, 0.72, 0.22, 1)
+roughness = 0.38
+metallic = 0.08
+
+[node name="BasicCylinderPiece" type="StaticBody3D"]
+script = ExtResource("1_piece")
+metadata/_edit_group_ = true
+metadata/bgo_piece = true
+metadata/entity_id = "preview_piece"
+metadata/owner_id = "player_1"
+metadata/holder_id = ""
+metadata/quantity = 1
+metadata/location_type = "board"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("CylinderMesh_piece")
+material_override = SubResource("PreviewMaterial")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CylinderShape_piece")
+
+[node name="QuantityLabel" type="Label3D" parent="."]
+visible = false
+position = Vector3(0, 0.28, 0)
+font_size = 72
+billboard = 1
+text = "1"
