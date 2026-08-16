@@ -43,8 +43,12 @@ func rebuild() -> void:
 		for x in columns:
 			var cell := StaticBody3D.new()
 			cell.name = "Cell_%d_%d" % [x, y]
-			cell.set_meta("board_cell", Vector2i(x, y))
-			cell.position = cell_world(Vector2i(x, y))
+			var cell_coord := Vector2i(x, y)
+			cell.set_meta("board_cell", cell_coord)
+			cell.set_meta("bgo_slot", true)
+			cell.set_meta("slot_id", slot_id(cell_coord))
+			cell.set_meta("capacity", 1)
+			cell.position = cell_world(cell_coord)
 
 			var mesh_instance := MeshInstance3D.new()
 			var mesh := BoxMesh.new()
@@ -62,6 +66,32 @@ func rebuild() -> void:
 			shape.shape = box
 			cell.add_child(shape)
 			add_child(cell)
+			if Engine.is_editor_hint():
+				cell.owner = get_tree().edited_scene_root
+				mesh_instance.owner = get_tree().edited_scene_root
+				shape.owner = get_tree().edited_scene_root
+
+func slot_id(cell: Vector2i) -> String:
+	return "board:%d:%d" % [cell.x, cell.y]
+
+func parse_slot_id(value: String) -> Vector2i:
+	var parts := value.split(":")
+	if parts.size() != 3 or parts[0] != "board":
+		return Vector2i(-1, -1)
+	var cell := Vector2i(int(parts[1]), int(parts[2]))
+	return cell if is_valid_cell(cell) else Vector2i(-1, -1)
+
+func is_valid_cell(cell: Vector2i) -> bool:
+	return cell.x >= 0 and cell.x < columns and cell.y >= 0 and cell.y < rows
+
+func is_valid_slot(value: String) -> bool:
+	return parse_slot_id(value).x >= 0
+
+func slot_world(value: String) -> Vector3:
+	var cell := parse_slot_id(value)
+	if cell.x < 0:
+		return Vector3.ZERO
+	return cell_world(cell)
 
 func cell_world(cell: Vector2i) -> Vector3:
 	var width := float(columns - 1) * cell_size
