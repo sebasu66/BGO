@@ -705,3 +705,358 @@ The first success criterion is simple:
 > A player opens BGO on a phone, joins a session displayed on another device, moves an owned piece, and every connected client immediately renders the resulting shared state.
 
 If this works while the domain model remains independent from Firebase and rendering, the foundation is correct.
+
+---
+
+## 21. Player interaction model
+
+The mobile device is not intended to behave as a miniature copy of the TV. It is the player's **private controller, camera and inventory surface**.
+
+The shared TV remains the primary communal presentation surface, especially for players in the same room.
+
+### Shared display camera
+
+The display camera should support multiple behaviors and allow cycling between them with a remote or simple controls.
+
+Initial camera modes:
+
+- **Overview:** shows the complete board/table and prioritizes readability.
+- **Focus / smart camera:** automatically frames the region where a relevant action is occurring.
+- **Optional manual/cinematic mode:** later allows direct control or predefined viewpoints.
+
+The smart camera should react to domain events such as piece movement, card placement, dice rolls, reveals and other significant actions rather than requiring the user to manually steer the TV camera.
+
+### Mobile camera
+
+The player's phone uses a constrained free camera above the table, conceptually similar to a helicopter/orbit camera.
+
+Primary gestures should control the camera, not immediately manipulate objects:
+
+- drag: pan/orbit the camera
+- pinch: zoom
+- optional rotate gesture: adjust viewing angle
+- camera movement is constrained so the player cannot accidentally leave the useful table area
+
+This avoids overloading drag gestures with both camera and object manipulation.
+
+### Tap and long-press interaction
+
+Game objects expose semantic actions through their components.
+
+A normal tap should invoke or expose the object's most common interaction.
+
+A long press should open an extended contextual menu for less frequent or administrative actions.
+
+Example for a deck:
+
+Normal actions may include:
+
+- draw one card
+- draw N cards
+- inspect top card when allowed
+
+Extended actions may include:
+
+- move deck
+- shuffle
+- split deck
+- give cards to player
+- delete/remove object when permissions allow
+
+The available actions are determined by the object's components and current permissions, not hardcoded globally into the UI.
+
+### Interaction modes: Pick Up and Place
+
+Direct drag-and-drop of arbitrary 3D objects is not the primary interaction model on mobile.
+
+Instead, the player can switch between explicit manipulation modes.
+
+#### Pick Up mode
+
+When Pick Up mode is active, tapping an eligible object transfers it into the player's hand/container.
+
+Typical flow:
+
+```text
+navigate camera to source area
+    ↓
+enable Pick Up mode
+    ↓
+tap one or more owned/available objects
+    ↓
+objects enter player's hand
+```
+
+This supports quickly collecting several miniatures, tokens or resources without requiring precise dragging.
+
+#### Place mode
+
+When Place mode is active, tapping a valid table location places the currently selected object from the player's hand.
+
+The hand preserves ordering, allowing repeated taps to place objects sequentially when useful.
+
+Typical flow:
+
+```text
+navigate camera to destination area
+    ↓
+enable Place mode
+    ↓
+select object or ordered group from hand
+    ↓
+tap destination(s)
+    ↓
+objects are placed sequentially
+```
+
+This is particularly useful for moving groups of miniatures, setup components or resource tokens.
+
+### The hand is a generic container
+
+A player's hand is **not limited to cards**.
+
+It is a private or semi-private container that can hold any portable game object:
+
+- cards
+- miniatures
+- resource tokens
+- coins
+- dice
+- markers
+- temporary game objects
+
+Objects in the hand move conceptually with the player/camera rather than remaining fixed to a table coordinate.
+
+The renderer may show hand objects in different ways depending on visibility rules:
+
+- fully visible to the owner
+- card-back / masked representation to other players
+- hidden completely from other players
+- visible only as an object count
+
+### Ownership vs possession
+
+Ownership and possession are distinct concepts.
+
+An object may be associated permanently with a player color/faction, or it may simply be in a player's current possession.
+
+Examples:
+
+- a red miniature may be permanently owned by the red player
+- a coin may have no permanent owner but may currently be possessed by player 2
+- a shared resource may move between players many times during a game
+
+The engine should therefore model at least:
+
+```text
+owner_id      // persistent game ownership, optional
+holder_id     // current possession/controller, optional
+```
+
+This distinction enables natural interactions such as giving another player money, cards or shared resources.
+
+### Player-to-player transfers
+
+Objects and resources in a player's hand may expose transfer actions such as:
+
+- give selected object to player
+- give N resource units to player
+- trade selected objects
+- return object to common supply
+
+These operations should be represented as commands and validated by game rules/permissions.
+
+---
+
+## 22. Player presence and shared-table feeling
+
+BGO should preserve the feeling that multiple people are physically present around the same table.
+
+A player camera is therefore not only a viewport; it can also represent the player's **presence** in the shared 3D space.
+
+Each connected player can publish lightweight presence state such as:
+
+```text
+player_id
+camera_transform
+pointer_transform
+selected_object_id
+interaction_state
+```
+
+Remote clients can render this as an avatar rig attached conceptually to the player's viewpoint:
+
+```text
+RemotePlayer
+ └── AvatarRig
+     ├── Head
+     ├── Pointer
+     ├── OptionalLeftHand
+     └── OptionalRightHand
+```
+
+This allows players to perceive that someone else is looking at, pointing toward or interacting with a particular region of the table.
+
+The system does not need to stream remote camera video. Only the lightweight transform and interaction state need synchronization.
+
+This model also creates a future-compatible path toward VR, where headset and controller transforms could replace approximate desktop/mobile presence transforms without changing the domain concept.
+
+### Visibility layers
+
+Godot render layers and camera culling masks can be used to control visual presentation.
+
+Conceptually:
+
+```text
+Layer 1 = public table
+Layer 2 = player 1 private visuals
+Layer 3 = player 2 private visuals
+Layer 4 = player 3 private visuals
+Layer 5 = player 4 private visuals
+Layer N = host/debug visuals
+```
+
+A player's camera sees the public layer plus its own permitted private layers.
+
+The shared TV normally sees only public layers.
+
+These layers are a **rendering mechanism**, not a security boundary. Secret information that a client is not authorized to know should not be transmitted to that client merely because its camera does not render it.
+
+---
+
+## 23. Commands, event log, checkpoints and restoration
+
+Every meaningful game action should be represented as a high-level command and recorded as a resulting event from the beginning of the project.
+
+Examples:
+
+```text
+DRAW_CARD
+MOVE_OBJECT
+PICK_UP_OBJECT
+PLACE_OBJECT
+TRANSFER_OBJECT
+SHUFFLE_DECK
+ROLL_DICE
+END_TURN
+CHANGE_COUNTER
+```
+
+The system should maintain both:
+
+1. **Current state** for efficient rendering and synchronization.
+2. **Append-only event history** for traceability and reconstruction.
+
+A simplified Firebase structure may resemble:
+
+```text
+/games/{game_id}/state
+/games/{game_id}/events/{event_id}
+/games/{game_id}/checkpoints/{checkpoint_id}
+```
+
+The event log provides several capabilities:
+
+- inspect what happened during a game
+- debug desynchronization or rule problems
+- replay a match
+- provide a readable history to players
+- let AI analyze previous actions
+- reconstruct state when useful
+- support controlled restoration
+
+### Checkpoints
+
+The engine should periodically or semantically create checkpoints, especially at useful boundaries such as:
+
+- game setup completed
+- beginning of turn
+- beginning of round
+- before a complex resolution
+- explicit host save point
+
+A checkpoint stores a complete serializable game state together with enough metadata to resume consistently.
+
+### Restoration / rewind
+
+Restoration should not behave as an unrestricted local undo button.
+
+It is a session-level administrative action that restores the complete logical state to a selected checkpoint or event boundary.
+
+A restoration must include all relevant state:
+
+- board objects and transforms
+- hands/containers
+- ownership and possession
+- counters/resources
+- deck order when deterministic restoration requires it
+- turn and phase state
+- permissions
+- current active player
+- random state/seed when applicable
+
+This ensures that rewinding to the beginning of a previous turn also restores who may interact and what each player possessed at that moment.
+
+Restoration permissions should normally belong to the host/referee role and may optionally require player consensus depending on the game/session settings.
+
+A restoration itself should also be recorded as an event rather than silently deleting history.
+
+Example:
+
+```json
+{
+  "type": "SESSION_RESTORED",
+  "actor_id": "host_1",
+  "checkpoint_id": "turn_08_start",
+  "previous_revision": 312,
+  "new_revision": 313
+}
+```
+
+The original event history remains available for audit/review even after the active state has been restored.
+
+---
+
+## 24. Updated vertical-slice target
+
+The first meaningful BGO prototype should demonstrate the interaction philosophy as well as synchronization.
+
+Target scenario:
+
+```text
+Shared TV
+  ├── 3D table
+  ├── overview camera
+  └── smart focus camera
+
+Player A phone
+  ├── constrained table camera
+  ├── private hand/container
+  ├── Pick Up mode
+  ├── Place mode
+  └── contextual actions
+
+Player B phone
+  └── equivalent independent player interface
+
+Firebase RTDB
+  ├── shared state
+  ├── presence
+  ├── event history
+  └── checkpoints
+```
+
+Minimum demonstration:
+
+1. Two players join one session.
+2. The TV renders the shared table.
+3. Each phone can navigate its own camera.
+4. Player A picks up an owned object into their hand.
+5. Player A moves the camera and places the object elsewhere.
+6. The TV smart camera notices and frames the relevant action.
+7. Player A transfers a neutral resource to Player B.
+8. All resulting commands/events are recorded.
+9. The host restores the session to the beginning-of-turn checkpoint.
+10. All clients return to the same restored state.
+
+If this works cleanly while the domain model remains independent from Firebase and rendering, BGO's foundational architecture is validated.
