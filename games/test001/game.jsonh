@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "game": {
+    "id": "test001",
+    "name": "BGO Component Test",
+    "min_players": 2,
+    "max_players": 2,
+    "turn_based": true
+  },
+  "table": {
+    "width": 15.5,
+    "depth": 9.8
+  },
+  "board": {
+    "component": "bgo.board.checkered",
+    "config": {
+      "columns": 8,
+      "rows": 6,
+      "cell_size": 1.2
+    }
+  },
+  "players": [
+    {
+      "id": "player_1",
+      "color": "#F2B837",
+      "area": {
+        "component": "bgo.player_area.basic",
+        "config": { "visible": true, "public_objects": true }
+      },
+      "hand": {
+        "visibility": "owner_face_others_hidden"
+      }
+    },
+    {
+      "id": "player_2",
+      "color": "#4DB7F2",
+      "area": {
+        "component": "bgo.player_area.basic",
+        "config": { "visible": true, "public_objects": true }
+      },
+      "hand": {
+        "visibility": "owner_face_others_hidden"
+      }
+    }
+  ],
+  "setup": {
+    "objects": [
+      {
+        "id": "player_1_piece",
+        "component": "bgo.piece.basic_cylinder",
+        "owner_id": "player_1",
+        "quantity": 1,
+        "config": { "color_source": "player" },
+        "initial_location": { "type": "slot", "slot_id": "board:1:2" }
+      },
+      {
+        "id": "player_2_stack",
+        "component": "bgo.piece.basic_cylinder",
+        "owner_id": "player_2",
+        "quantity": 3,
+        "config": { "color_source": "player" },
+        "initial_location": { "type": "slot", "slot_id": "board:6:3" }
+      },
+      {
+        "id": "neutral_stack",
+        "component": "bgo.piece.basic_cylinder",
+        "owner_id": "",
+        "quantity": 5,
+        "config": { "color_source": "fixed", "color": "#E7E0CF" },
+        "initial_location": { "type": "slot", "slot_id": "board:3:2" }
+      }
+    ]
+  }
+}
