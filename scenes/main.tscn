@@ -1,8 +1,9 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource path="res://src/demo/main_componentized.gd" type="Script" id="1_main"]
 [ext_resource path="res://src/components/boards/checkered_board/checkered_board.tscn" type="PackedScene" id="2_board"]
 [ext_resource path="res://src/components/player_area/player_area.tscn" type="PackedScene" id="3_area"]
+[ext_resource path="res://src/components/pieces/basic_cylinder/basic_cylinder_piece.tscn" type="PackedScene" id="4_piece"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -58,6 +59,19 @@ position = Vector3(6.15, 0.02, 0)
 player_id = "player_2"
 label_text = "PLAYER 2"
 area_color = Color(0.07, 0.27, 0.43, 1)
+
+[node name="EditorPreview" type="Node3D" parent="."]
+
+[node name="Player1Piece" parent="EditorPreview" instance=ExtResource("4_piece")]
+position = Vector3(-3.0, 0.35, -0.6)
+piece_color = Color(0.95, 0.72, 0.22, 1)
+metadata/editor_preview = true
+
+[node name="Player2Piece" parent="EditorPreview" instance=ExtResource("4_piece")]
+position = Vector3(3.0, 0.35, 0.6)
+piece_color = Color(0.30, 0.72, 0.95, 1)
+quantity = 3
+metadata/editor_preview = true
 
 [node name="Pieces" type="Node3D" parent="."]
 
