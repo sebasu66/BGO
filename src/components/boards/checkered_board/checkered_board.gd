@@ -62,10 +62,6 @@ func rebuild() -> void:
 			shape.shape = box
 			cell.add_child(shape)
 			add_child(cell)
-			if Engine.is_editor_hint():
-				cell.owner = get_tree().edited_scene_root
-				mesh_instance.owner = get_tree().edited_scene_root
-				shape.owner = get_tree().edited_scene_root
 
 func cell_world(cell: Vector2i) -> Vector3:
 	var width := float(columns - 1) * cell_size
