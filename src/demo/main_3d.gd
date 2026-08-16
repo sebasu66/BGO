@@ -37,6 +37,8 @@ var _focus_release_at := 0.0
 
 var _mode_label: Label
 var _status_label: Label
+var _debug_label: Label
+var _player_controls: Control
 
 func _ready() -> void:
 	_read_launch_options()
@@ -53,19 +55,27 @@ func _process(delta: float) -> void:
 		_camera_focus = _camera_focus.lerp(_desired_focus, minf(delta * 3.5, 1.0))
 		_update_camera_transform()
 
-func _unhandled_input(event: InputEvent) -> void:
+# Use _input instead of _unhandled_input so touch events still reach the 3D picker
+# when CanvasLayer controls are present in the Web export.
+func _input(event: InputEvent) -> void:
 	if client_role != ROLE_PLAYER:
 		return
 
 	if event is InputEventScreenTouch:
+		if _pointer_is_over_controls(event.position):
+			return
 		if event.pressed:
 			_begin_pointer(event.position)
 		else:
 			_end_pointer(event.position)
 	elif event is InputEventScreenDrag:
+		if _pointer_is_over_controls(event.position):
+			return
 		_pointer_dragged = true
 		_orbit_camera(event.relative)
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if _pointer_is_over_controls(event.position):
+			return
 		if event.pressed:
 			_begin_pointer(event.position)
 		else:
@@ -75,16 +85,22 @@ func _unhandled_input(event: InputEvent) -> void:
 			_pointer_dragged = true
 			_orbit_camera(event.relative)
 
+func _pointer_is_over_controls(position: Vector2) -> bool:
+	return _player_controls != null and _player_controls.get_global_rect().has_point(position)
+
 func _begin_pointer(position: Vector2) -> void:
 	_pointer_down = true
 	_pointer_dragged = false
 	_pointer_start = position
 	_last_pointer = position
+	_set_debug("pointer down %.0f,%.0f" % [position.x, position.y])
 
 func _end_pointer(position: Vector2) -> void:
 	_pointer_down = false
 	if not _pointer_dragged and position.distance_to(_pointer_start) <= 12.0:
 		_pick_at(position)
+	else:
+		_set_debug("drag end")
 
 func _orbit_camera(relative: Vector2) -> void:
 	_camera_yaw -= relative.x * 0.008
@@ -95,19 +111,70 @@ func _pick_at(screen_position: Vector2) -> void:
 	var origin := camera.project_ray_origin(screen_position)
 	var direction := camera.project_ray_normal(screen_position)
 	var query := PhysicsRayQueryParameters3D.create(origin, origin + direction * 100.0)
+	query.collide_with_bodies = true
+	query.collide_with_areas = true
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
-	if hit.is_empty():
+
+	var collider: Node = null
+	if not hit.is_empty():
+		collider = hit.get("collider") as Node
+		if collider != null and collider.has_meta("bgo_piece"):
+			_set_debug("ray hit piece: %s" % collider.name)
+			_on_piece_tapped(collider)
+			return
+
+	# Mobile/Web fallback: select the closest projected piece on screen. This makes
+	# picking tolerant of browser/canvas coordinate and physics timing differences.
+	var projected_piece := _projected_piece_at(screen_position)
+	if projected_piece != null:
+		_set_debug("screen hit piece: %s" % projected_piece.name)
+		_on_piece_tapped(projected_piece)
 		return
 
-	var collider := hit.get("collider") as Node
-	if collider != null and collider.has_meta("bgo_piece"):
-		_on_piece_tapped(collider)
-		return
+	if interaction_mode == MODE_PLACE and selected_piece != null:
+		var destination := Vector2i(-1, -1)
+		if collider != null and collider.has_meta("board_cell"):
+			destination = collider.get_meta("board_cell")
+		else:
+			destination = _screen_to_board_cell(origin, direction)
 
-	if collider != null and collider.has_meta("board_cell") and interaction_mode == MODE_PLACE and selected_piece != null:
-		var cell: Vector2i = collider.get_meta("board_cell")
-		repository.move_piece(str(selected_piece.get_meta("entity_id")), player_id, cell)
-		_set_status("Placed %s at %s" % [selected_piece.name, cell])
+		if destination.x >= 0:
+			repository.move_piece(str(selected_piece.get_meta("entity_id")), player_id, destination)
+			_set_status("Placed %s at %s" % [selected_piece.name, destination])
+			_set_debug("place cell: %s" % destination)
+			return
+
+	_set_debug("tap: no piece/cell hit")
+
+func _projected_piece_at(screen_position: Vector2) -> Node3D:
+	var closest: Node3D = null
+	var closest_distance := INF
+	var threshold := maxf(54.0, minf(get_viewport().get_visible_rect().size.x, get_viewport().get_visible_rect().size.y) * 0.055)
+	for value in pieces.values():
+		var piece := value as Node3D
+		if piece == null or camera.is_position_behind(piece.global_position):
+			continue
+		var projected := camera.unproject_position(piece.global_position)
+		var distance := projected.distance_to(screen_position)
+		if distance < threshold and distance < closest_distance:
+			closest = piece
+			closest_distance = distance
+	return closest
+
+func _screen_to_board_cell(origin: Vector3, direction: Vector3) -> Vector2i:
+	if absf(direction.y) < 0.0001:
+		return Vector2i(-1, -1)
+	var t := -origin.y / direction.y
+	if t <= 0.0:
+		return Vector2i(-1, -1)
+	var point := origin + direction * t
+	var width := float(GRID_COLUMNS - 1) * CELL_SIZE
+	var depth := float(GRID_ROWS - 1) * CELL_SIZE
+	var x := int(round((point.x + width * 0.5) / CELL_SIZE))
+	var y := int(round((point.z + depth * 0.5) / CELL_SIZE))
+	if x < 0 or x >= GRID_COLUMNS or y < 0 or y >= GRID_ROWS:
+		return Vector2i(-1, -1)
+	return Vector2i(x, y)
 
 func _on_piece_tapped(piece: Node3D) -> void:
 	var owner_id := str(piece.get_meta("owner_id", ""))
@@ -249,6 +316,7 @@ func _create_hud() -> void:
 	_status_label = Label.new()
 	_status_label.position = Vector2(30, 96)
 	_status_label.size = Vector2(900, 30)
+	_status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_status_label.add_theme_font_size_override("font_size", 14)
 	$UI.add_child(_status_label)
 
@@ -263,6 +331,7 @@ func _create_hud() -> void:
 	bar.size = Vector2(300, 52)
 	bar.add_theme_constant_override("separation", 12)
 	$UI.add_child(bar)
+	_player_controls = bar
 
 	var pickup := Button.new()
 	pickup.text = "PICK UP"
@@ -280,16 +349,30 @@ func _create_hud() -> void:
 	_mode_label.text = "Mode: PICK UP"
 	_mode_label.position = Vector2(30, 126)
 	_mode_label.size = Vector2(300, 28)
+	_mode_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	$UI.add_child(_mode_label)
+
+	_debug_label = Label.new()
+	_debug_label.text = "Input debug: waiting for tap"
+	_debug_label.position = Vector2(30, 154)
+	_debug_label.size = Vector2(700, 28)
+	_debug_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_debug_label.add_theme_font_size_override("font_size", 13)
+	$UI.add_child(_debug_label)
 
 func _set_mode(mode: String) -> void:
 	interaction_mode = mode
 	if _mode_label != null:
 		_mode_label.text = "Mode: %s" % mode.replace("_", " ").to_upper()
+	_set_debug("mode: %s" % mode)
 
 func _set_status(text: String) -> void:
 	if _status_label != null:
 		_status_label.text = text
+
+func _set_debug(text: String) -> void:
+	if _debug_label != null:
+		_debug_label.text = "Input debug: %s" % text
 
 func _configure_camera() -> void:
 	_camera_yaw = 0.0
