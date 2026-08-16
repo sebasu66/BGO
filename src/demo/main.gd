@@ -60,7 +60,9 @@ func _create_token(id: String, owner: String, count: int, cell: Vector2i, color:
 	add_child(token)
 
 	var movable := MovableComponent.new()
-	movable.snap_size = CELL_SIZE
+	# The board demo already resolves clicks to exact cell centers. Generic
+	# snapping remains available in the component for future board types.
+	movable.snap_size = Vector2.ZERO
 	token.add_component(&"movable", movable)
 	movable.move_requested.connect(_on_move_requested.bind(movable))
 
