@@ -1,0 +1,166 @@
+msgid ""
+msgstr ""
+"Language: es\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "LENTE_PHOTO_MODE"
+msgstr "MODO FOTO"
+
+msgid "LENTE_LENS_GRADE"
+msgstr "OBJETIVO Y COLOR"
+
+msgid "LENTE_CAPTURE"
+msgstr "Capturar"
+
+msgid "LENTE_FOCUS"
+msgstr "Enfocar"
+
+msgid "LENTE_CONTROLS"
+msgstr "Controles"
+
+msgid "LENTE_GALLERY"
+msgstr "Galería"
+
+msgid "LENTE_EXIT"
+msgstr "Salir"
+
+msgid "LENTE_RESET"
+msgstr "Restablecer objetivo"
+
+msgid "LENTE_DOF"
+msgstr "Profundidad de campo"
+
+msgid "LENTE_PRESET"
+msgstr "Preajuste"
+
+msgid "LENTE_SAVE"
+msgstr "Guardar"
+
+msgid "LENTE_LOAD"
+msgstr "Cargar"
+
+msgid "LENTE_CLOSE"
+msgstr "Cerrar"
+
+msgid "LENTE_EMPTY_GALLERY"
+msgstr "Tus fotografías aparecerán aquí."
+
+msgid "LENTE_PHOTO_SAVED"
+msgstr "Fotografía guardada"
+
+msgid "LENTE_FOCUS_LOCKED"
+msgstr "Enfoque bloqueado"
+
+msgid "LENTE_FOV"
+msgstr "Campo de visión"
+
+msgid "LENTE_FOCUS_DISTANCE"
+msgstr "Distancia de enfoque"
+
+msgid "LENTE_APERTURE"
+msgstr "Apertura"
+
+msgid "LENTE_EXPOSURE"
+msgstr "Exposición"
+
+msgid "LENTE_ROLL"
+msgstr "Inclinación"
+
+msgid "LENTE_VIGNETTE"
+msgstr "Viñeta"
+
+msgid "LENTE_FILTER"
+msgstr "Estilo de color"
+
+msgid "LENTE_FILTER_STRENGTH"
+msgstr "Intensidad del estilo"
+
+msgid "LENTE_SATURATION"
+msgstr "Saturación"
+
+msgid "LENTE_CONTRAST"
+msgstr "Contraste"
+
+msgid "LENTE_TEMPERATURE"
+msgstr "Temperatura"
+
+msgid "LENTE_KEEP_GAME_FILTER"
+msgstr "Mantener filtro del juego"
+
+msgid "LENTE_MOVE"
+msgstr "Mover"
+
+msgid "LENTE_MOUSE"
+msgstr "Ratón"
+
+msgid "LENTE_LOOK"
+msgstr "Mirar"
+
+msgid "LENTE_MY_LOOK"
+msgstr "Mi estilo"
+
+msgid "LENTE_PRESET_SAVED"
+msgstr "Preajuste guardado — %s"
+
+msgid "LENTE_FILTER_NEUTRAL"
+msgstr "Neutro"
+
+msgid "LENTE_FILTER_CINEMA"
+msgstr "Cine"
+
+msgid "LENTE_FILTER_NOIR"
+msgstr "Blanco y negro"
+
+msgid "LENTE_FILTER_WARM"
+msgstr "Cálido"
+
+msgid "LENTE_FILTER_COOL"
+msgstr "Frío"
+
+msgid "LENTE_FILTER_VINTAGE"
+msgstr "Vintage"
+
+msgid "LENTE_FILTER_VIVID"
+msgstr "Vívido"
+
+msgid "LENTE_FILTER_BLEACH_BYPASS"
+msgstr "Sin blanqueo"
+
+msgid "LENTE_FILTER_TEAL_ORANGE"
+msgstr "Turquesa y naranja"
+
+msgid "LENTE_FILTER_FADED_FILM"
+msgstr "Película desvaída"
+
+msgid "LENTE_FILTER_DREAM"
+msgstr "Ensueño"
+
+msgid "LENTE_FILTER_NIGHT"
+msgstr "Noche"
+
+msgid "LENTE_ERROR_ALREADY_ACTIVE"
+msgstr "Ya hay otro LentePhotoMode activo."
+
+msgid "LENTE_ERROR_NO_CAMERA"
+msgstr "Lente no pudo encontrar una Camera3D activa."
+
+msgid "LENTE_FINISHING_PHOTO"
+msgstr "Finalizando la fotografía…"
+
+msgid "LENTE_NO_FOCUS_SUBJECT"
+msgstr "No hay ningún sujeto para enfocar bajo la retícula."
+
+msgid "LENTE_CAPTURE_EMPTY"
+msgstr "La ventana de captura devolvió una imagen vacía."
+
+msgid "LENTE_GALLERY_CREATE_FAILED"
+msgstr "No se pudo crear la carpeta de la galería de Lente (error %d)."
+
+msgid "LENTE_PHOTO_SAVE_FAILED"
+msgstr "No se pudo guardar la fotografía (error %d)."
+
+msgid "LENTE_DEMO_TITLE"
+msgstr "UN MODO FOTO PARA GODOT"
+
+msgid "LENTE_DEMO_HINT"
+msgstr "Pulsa P o START para ponerte tras el objetivo"

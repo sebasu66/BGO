@@ -1,0 +1,166 @@
+msgid ""
+msgstr ""
+"Language: en\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "LENTE_PHOTO_MODE"
+msgstr "PHOTO MODE"
+
+msgid "LENTE_LENS_GRADE"
+msgstr "LENS & GRADE"
+
+msgid "LENTE_CAPTURE"
+msgstr "Capture"
+
+msgid "LENTE_FOCUS"
+msgstr "Focus"
+
+msgid "LENTE_CONTROLS"
+msgstr "Controls"
+
+msgid "LENTE_GALLERY"
+msgstr "Gallery"
+
+msgid "LENTE_EXIT"
+msgstr "Exit"
+
+msgid "LENTE_RESET"
+msgstr "Reset lens"
+
+msgid "LENTE_DOF"
+msgstr "Depth of field"
+
+msgid "LENTE_PRESET"
+msgstr "Preset"
+
+msgid "LENTE_SAVE"
+msgstr "Save"
+
+msgid "LENTE_LOAD"
+msgstr "Load"
+
+msgid "LENTE_CLOSE"
+msgstr "Close"
+
+msgid "LENTE_EMPTY_GALLERY"
+msgstr "Your photographs will appear here."
+
+msgid "LENTE_PHOTO_SAVED"
+msgstr "Photograph saved"
+
+msgid "LENTE_FOCUS_LOCKED"
+msgstr "Focus locked"
+
+msgid "LENTE_FOV"
+msgstr "Field of view"
+
+msgid "LENTE_FOCUS_DISTANCE"
+msgstr "Focus distance"
+
+msgid "LENTE_APERTURE"
+msgstr "Aperture"
+
+msgid "LENTE_EXPOSURE"
+msgstr "Exposure"
+
+msgid "LENTE_ROLL"
+msgstr "Roll"
+
+msgid "LENTE_VIGNETTE"
+msgstr "Vignette"
+
+msgid "LENTE_FILTER"
+msgstr "Color mood"
+
+msgid "LENTE_FILTER_STRENGTH"
+msgstr "Mood strength"
+
+msgid "LENTE_SATURATION"
+msgstr "Saturation"
+
+msgid "LENTE_CONTRAST"
+msgstr "Contrast"
+
+msgid "LENTE_TEMPERATURE"
+msgstr "Temperature"
+
+msgid "LENTE_KEEP_GAME_FILTER"
+msgstr "Keep game filter"
+
+msgid "LENTE_MOVE"
+msgstr "Move"
+
+msgid "LENTE_MOUSE"
+msgstr "Mouse"
+
+msgid "LENTE_LOOK"
+msgstr "Look"
+
+msgid "LENTE_MY_LOOK"
+msgstr "My look"
+
+msgid "LENTE_PRESET_SAVED"
+msgstr "Preset saved — %s"
+
+msgid "LENTE_FILTER_NEUTRAL"
+msgstr "Neutral"
+
+msgid "LENTE_FILTER_CINEMA"
+msgstr "Cinema"
+
+msgid "LENTE_FILTER_NOIR"
+msgstr "Noir"
+
+msgid "LENTE_FILTER_WARM"
+msgstr "Warm"
+
+msgid "LENTE_FILTER_COOL"
+msgstr "Cool"
+
+msgid "LENTE_FILTER_VINTAGE"
+msgstr "Vintage"
+
+msgid "LENTE_FILTER_VIVID"
+msgstr "Vivid"
+
+msgid "LENTE_FILTER_BLEACH_BYPASS"
+msgstr "Bleach Bypass"
+
+msgid "LENTE_FILTER_TEAL_ORANGE"
+msgstr "Teal & Orange"
+
+msgid "LENTE_FILTER_FADED_FILM"
+msgstr "Faded Film"
+
+msgid "LENTE_FILTER_DREAM"
+msgstr "Dream"
+
+msgid "LENTE_FILTER_NIGHT"
+msgstr "Night"
+
+msgid "LENTE_ERROR_ALREADY_ACTIVE"
+msgstr "Another LentePhotoMode is already active."
+
+msgid "LENTE_ERROR_NO_CAMERA"
+msgstr "Lente could not find an active Camera3D."
+
+msgid "LENTE_FINISHING_PHOTO"
+msgstr "Finishing the photograph…"
+
+msgid "LENTE_NO_FOCUS_SUBJECT"
+msgstr "No focus subject under the reticle."
+
+msgid "LENTE_CAPTURE_EMPTY"
+msgstr "The capture viewport returned an empty image."
+
+msgid "LENTE_GALLERY_CREATE_FAILED"
+msgstr "Could not create the Lente gallery directory (error %d)."
+
+msgid "LENTE_PHOTO_SAVE_FAILED"
+msgstr "Could not save the photograph (error %d)."
+
+msgid "LENTE_DEMO_TITLE"
+msgstr "A PHOTO MODE FOR GODOT"
+
+msgid "LENTE_DEMO_HINT"
+msgstr "Press P or START to step behind the lens"
