@@ -28,6 +28,7 @@ jobs:
         run: pip install "gdtoolkit==4.*"
 
       - name: Project structure and architecture
+        id: structure
         run: python scripts/check_structure.py
 
       - name: GDScript format
@@ -76,18 +77,17 @@ jobs:
         run: godot --version
 
       - name: Godot import and parse
+        id: import
         run: godot --headless --path . --import --quit
 
       - name: Headless core tests
+        id: tests
         run: godot --headless --path . --script res://tests/test_runner.gd
 
-      - name: Web export smoke test
-        run: |
-          mkdir -p build/web
-          godot --headless --path . --export-release Web build/web/index.html
-          node scripts/sync_project_status.mjs
-          test -f build/web/index.html
-          test -f build/web/project-status/index.html
+      - name: Validated Web export
+        id: web_export
+        shell: bash
+        run: bash scripts/export_web.sh
 
       - name: Write CI dashboard result
         if: always()
@@ -102,15 +102,19 @@ jobs:
             "branch": "${{ github.ref_name }}",
             "run": "${{ github.run_id }}",
             "format": "${{ steps.format.outcome }}",
-            "lint": "${{ steps.lint.outcome }}"
+            "lint": "${{ steps.lint.outcome }}",
+            "structure": "${{ steps.structure.outcome }}",
+            "godot_import": "${{ steps.import.outcome }}",
+            "core_tests": "${{ steps.tests.outcome }}",
+            "web_export": "${{ steps.web_export.outcome }}"
           }
           EOF
 
-      - name: Upload Web smoke-build artifact
+      - name: Upload validated Web build artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: bgo-web-smoke-${{ github.run_id }}
+          name: bgo-web-${{ github.run_id }}
           path: build/web
           if-no-files-found: warn
           retention-days: 7
