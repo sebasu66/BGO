@@ -2,16 +2,16 @@
 
 Read this file before modifying BGO. It is the short operational contract for AI coding agents and human contributors.
 
-For the staged implementation plan, read `docs/IMPLEMENTATION_ROADMAP.md`. For the public-facing web application, read `docs/WEB_PLATFORM.md`. For deeper product rationale, read `docs/PROJECT_VISION.md` only when the task requires it.
+For the staged implementation plan, read `docs/IMPLEMENTATION_ROADMAP.md`. For the public-facing web application, read `docs/WEB_PLATFORM.md`. For branch/deployment rules, read `docs/DEPLOYMENT_ENVIRONMENTS.md`. For deeper product rationale, read `docs/PROJECT_VISION.md` only when the task requires it.
 
 ## Project goal
 
-BGO is a Godot-based virtual tabletop runtime for turn-based board games, surrounded by a separate web product surface for accounts, onboarding, catalog, billing, session launch, and administration. One logical session can be viewed by Web, mobile, TV, desktop, and later MCP clients. Clients may render the same logical object differently.
+BGO is a Godot-based virtual tabletop runtime for turn-based board games, surrounded by a separate web product surface for onboarding, catalog, session launch, account management later, and administration later. One logical session can be viewed by Web, mobile, TV, desktop, and later MCP clients. Clients may render the same logical object differently.
 
 ## Non-negotiable architecture boundaries
 
 1. **BGO Core is not a game.** Real games are external declarative packages/mods.
-2. **The public web platform is not the game runtime.** Product/account/billing/catalog workflows belong in the web app; gameplay rendering and interaction belong in Godot clients.
+2. **The public web platform is not the game runtime.** Product/catalog/session workflows belong in the web app; gameplay rendering and interaction belong in Godot clients.
 3. **Game packages do not define component internals.** They reference stable component IDs and allowed configuration.
 4. **Do not reference internal `.gd` or `.tscn` paths from external game definitions.** Resolve implementations through the component registry.
 5. **Do not execute arbitrary remote GDScript from game packages.** External packages are untrusted/declarative content.
@@ -23,8 +23,10 @@ BGO is a Godot-based virtual tabletop runtime for turn-based board games, surrou
 11. **Owner, holder/controller, location, and visibility are separate concepts.** Neutral ownership must remain representable.
 12. **Secrets are not protected by render layers.** Private information eventually requires per-client state filtering.
 13. **MCP operates on logical concepts and validated commands, never raw Godot nodes.**
-14. **Billing and entitlement state must not be trusted from clients.** Provider secrets and authoritative subscription state belong server-side.
-15. **Web, Godot, and future native clients share contracts, not implementation details.** Do not invent incompatible session/package/identity schemas per client.
+14. **Do not prematurely introduce auth/billing complexity.** Authentication is a later web checkpoint; monetization comes only after the commercial model is explicitly selected.
+15. **Future billing/entitlement state must not be trusted from clients.** Provider secrets and authoritative commercial state belong server-side.
+16. **Web, Godot, and future native clients share contracts, not implementation details.** Do not invent incompatible session/package/identity schemas per client.
+17. **DEV and PROD are separate release channels.** `develop` may deploy DEV; only an explicit owner-approved promotion may advance the stable `main`/PROD build.
 
 ## Layering
 
@@ -42,7 +44,7 @@ Rendering consumes domain state.
 Neither networking nor rendering decides game legality.
 ```
 
-The public web platform consumes stable identity/session/package/entitlement contracts but must not duplicate gameplay-domain rules in frontend code.
+The public web platform consumes stable session/package contracts and later identity/entitlement contracts, but must not duplicate gameplay-domain rules in frontend code.
 
 A useful design target is:
 
@@ -110,17 +112,39 @@ Remote assets must eventually be validated and cached. A large or invalid model 
 
 The public-facing web application is developed as a parallel track. It may use conventional web tooling or AI-assisted builders, but it must preserve shared contracts.
 
-Web responsibilities include:
+Current early responsibilities include:
 
 - landing/product explanation
-- registration/login/account management
-- billing UI and plans
 - catalog/discovery
 - create/join/resume session UX
 - device-role selection and runtime launch
-- creator/admin surfaces later
 
-Keep secrets server-side. Do not put gameplay legality into the web frontend. Launch Godot using explicit session/package/user context rather than hidden coupling.
+Registration/login/account management is a later checkpoint. Billing/ads/paid plans are deferred until a commercialization model is selected.
+
+Keep secrets server-side. Do not put gameplay legality into the web frontend. Launch Godot using explicit session/package/context rather than hidden coupling.
+
+## DEV / PROD release policy
+
+Follow `docs/DEPLOYMENT_ENVIRONMENTS.md`.
+
+Intended steady state:
+
+```text
+feature/* -> develop -> [manual owner promotion] -> main
+```
+
+Rules:
+
+- DEV and PROD remain separately accessible.
+- `develop` is the integration source for DEV.
+- `main` is the stable source for PROD.
+- AI agents and CI must never autonomously promote DEV to PROD.
+- a normal `develop` push must not overwrite PROD.
+- both environments must identify the Git commit they run.
+- environment-specific Firebase/config values belong in explicit configuration, not domain logic.
+- Firebase recommends separate projects for true DEV/PROD backend isolation; multiple Hosting sites in one project do not isolate RTDB/Auth/Storage.
+
+During the prototype, `PROD` means the manually chosen stable/public build, not that all production security/commercial systems are complete.
 
 ## Testing and quality expectations
 
@@ -133,7 +157,7 @@ Before considering a change complete, preserve a clean quality gate:
 - unit/domain tests
 - relevant conformance fixture tests
 - Web export smoke test
-- web-platform tests for important auth/session/entitlement flows when that track is touched
+- web-platform tests for important session flows; auth tests once auth exists
 
 Objective violations may block CI. Heuristic smells may initially warn rather than fail.
 
@@ -172,6 +196,8 @@ For the existing prototype:
 
 Never replace this with a plain unrestricted `firebase deploy` unless the deployment policy is explicitly changed.
 
+When DEV/PROD targets are added, deployment commands/workflows must name their destination explicitly and make accidental PROD deployment difficult.
+
 ## Agent workflow
 
 For each task:
@@ -185,6 +211,7 @@ For each task:
 7. Do not silently introduce a second competing abstraction for an existing concept.
 8. Do not hide migration/schema errors; fail safely with precise messages.
 9. Do not destructively reset existing session state merely to accommodate a schema addition.
-10. Leave the repository in a state that can pass the relevant quality gate.
+10. Do not promote a DEV build to PROD unless the project owner explicitly requested that promotion.
+11. Leave the repository in a state that can pass the relevant quality gate.
 
 When uncertain, prefer a smaller reversible implementation that preserves the public contracts.
