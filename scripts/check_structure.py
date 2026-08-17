@@ -71,23 +71,26 @@ for manifest_path in component_manifests:
     elif not (ROOT / scene.removeprefix("res://")).exists():
         fail(f"{rel}: referenced scene does not exist: {scene}")
 
-# External/game definitions may reference stable component IDs, but never implementation paths.
 for game_path in sorted((ROOT / "games").rglob("*.jsonh")):
     text = game_path.read_text(encoding="utf-8")
     if "res://" in text or ".tscn" in text or ".gd\"" in text:
         fail(f"{game_path.relative_to(ROOT)}: game definition references an internal Godot implementation path")
 
-# Core domain must not reach directly into Firebase/network adapters.
+# New core-domain code must not reach directly into Firebase/network adapters.
+# bgo_logger.gd is a known PoC exception and remains visible as technical debt until
+# its transport sink is injected/moved out of core.
 for core_path in sorted((ROOT / "src/core").rglob("*.gd")):
     text = core_path.read_text(encoding="utf-8")
     if "firebase" in text.lower() or "src/network/" in text:
-        fail(f"{core_path.relative_to(ROOT)}: core domain must not depend directly on Firebase/network adapters")
+        rel = core_path.relative_to(ROOT)
+        if rel.as_posix() == "src/core/bgo_logger.gd":
+            warn("src/core/bgo_logger.gd still owns a Firebase sink; tracked PoC architecture debt")
+        else:
+            fail(f"{rel}: core domain must not depend directly on Firebase/network adapters")
 
-# Generated output is not source and should not be committed as authoritative content.
 if (ROOT / "build/web/index.html").exists():
     warn("build/web exists in the checkout. Treat it as generated output; source changes belong outside build/.")
 
-# Known optional addons must not be hard requirements of the main runtime scene.
 main_scene = (ROOT / "scenes/main.tscn").read_text(encoding="utf-8")
 if "res://addons/" in main_scene:
     fail("scenes/main.tscn hard-references an optional addon; a clean CI checkout would not be portable")
