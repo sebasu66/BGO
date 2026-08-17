@@ -1,10 +1,11 @@
 [gd_scene format=3 uid="uid://cv02cvbpac4ct"]
 
-[ext_resource type="Script" uid="uid://rnmfxfe7t21c" path="res://src/demo/main_componentized.gd" id="1_main"]
+[ext_resource type="Script" path="res://src/demo/main_filtered.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://src/components/boards/checkered_board/checkered_board.tscn" id="2_board"]
 [ext_resource type="PackedScene" path="res://src/components/player_area/player_area.tscn" id="3_area"]
 [ext_resource type="PackedScene" path="res://src/components/pieces/basic_cylinder/basic_cylinder_piece.tscn" id="4_piece"]
 [ext_resource type="Script" path="res://src/components/player_presence/player_presence_layer.gd" id="5_presence"]
+[ext_resource type="Script" path="res://src/ui/camera_filter_controller.gd" id="6_filter"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -56,6 +57,9 @@ area_color = Color(0.07, 0.27, 0.43, 1)
 
 [node name="PlayerPresence" type="Node3D" parent="."]
 script = ExtResource("5_presence")
+
+[node name="CameraFilters" type="Node" parent="."]
+script = ExtResource("6_filter")
 
 [node name="EditorPreview" type="Node3D" parent="." unique_id=1086920998]
 
