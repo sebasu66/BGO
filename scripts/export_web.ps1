@@ -16,16 +16,32 @@ $Godot = if ($env:GODOT_BIN) {
 
 Write-Host "Using Godot CLI: $Godot"
 
+function Invoke-Godot {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string[]] $Arguments,
+        [Parameter(Mandatory = $true)]
+        [string] $FailureMessage
+    )
+
+    # Godot's normal Windows executable is a GUI subsystem process. In an
+    # interactive PowerShell session, invoking it directly can return control
+    # before the export process has actually finished. Start-Process -Wait makes
+    # the build pipeline deterministic regardless of whether godot.exe or the
+    # console wrapper is used.
+    $process = Start-Process -FilePath $Godot -ArgumentList $Arguments -Wait -PassThru
+    if ($process.ExitCode -ne 0) {
+        throw "$FailureMessage with exit code $($process.ExitCode)"
+    }
+}
+
 if (Test-Path "build/web") {
     Remove-Item "build/web" -Recurse -Force
 }
 New-Item "build/web" -ItemType Directory -Force | Out-Null
 
-& $Godot --headless --path . --import --quit
-if ($LASTEXITCODE -ne 0) { throw "Godot import failed with exit code $LASTEXITCODE" }
-
-& $Godot --headless --path . --export-release Web build/web/index.html
-if ($LASTEXITCODE -ne 0) { throw "Godot Web export failed with exit code $LASTEXITCODE" }
+Invoke-Godot -Arguments @("--headless", "--path", ".", "--import", "--quit") -FailureMessage "Godot import failed"
+Invoke-Godot -Arguments @("--headless", "--path", ".", "--export-release", "Web", "build/web/index.html") -FailureMessage "Godot Web export failed"
 
 node scripts/sync_project_status.mjs
 if ($LASTEXITCODE -ne 0) { throw "Web auxiliary sync failed with exit code $LASTEXITCODE" }
