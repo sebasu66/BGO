@@ -1,0 +1,35 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/components/player_presence/basic_mask/player_presence_mask.gd" id="1_script"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_head"]
+radius = 0.38
+height = 0.72
+radial_segments = 8
+rings = 4
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_nose"]
+top_radius = 0.0
+bottom_radius = 0.11
+height = 0.28
+radial_segments = 4
+
+[node name="PlayerPresenceMask" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="Head" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_head")
+scale = Vector3(0.86, 1.0, 0.78)
+
+[node name="Nose" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.02, -0.42)
+rotation_degrees = Vector3(90, 0, 0)
+mesh = SubResource("CylinderMesh_nose")
+
+[node name="Name" type="Label3D" parent="."]
+position = Vector3(0, 0.67, 0)
+billboard = 1
+fixed_size = true
+font_size = 32
+outline_size = 8
+text = "PLAYER"
