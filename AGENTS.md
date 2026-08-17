@@ -2,26 +2,29 @@
 
 Read this file before modifying BGO. It is the short operational contract for AI coding agents and human contributors.
 
-For the staged implementation plan, read `docs/IMPLEMENTATION_ROADMAP.md`. For deeper product rationale, read `docs/PROJECT_VISION.md` only when the task requires it.
+For the staged implementation plan, read `docs/IMPLEMENTATION_ROADMAP.md`. For the public-facing web application, read `docs/WEB_PLATFORM.md`. For deeper product rationale, read `docs/PROJECT_VISION.md` only when the task requires it.
 
 ## Project goal
 
-BGO is a Godot-based virtual tabletop runtime for turn-based board games. One logical session can be viewed by Web, mobile, TV, desktop, and later MCP clients. Clients may render the same logical object differently.
+BGO is a Godot-based virtual tabletop runtime for turn-based board games, surrounded by a separate web product surface for accounts, onboarding, catalog, billing, session launch, and administration. One logical session can be viewed by Web, mobile, TV, desktop, and later MCP clients. Clients may render the same logical object differently.
 
 ## Non-negotiable architecture boundaries
 
 1. **BGO Core is not a game.** Real games are external declarative packages/mods.
-2. **Game packages do not define component internals.** They reference stable component IDs and allowed configuration.
-3. **Do not reference internal `.gd` or `.tscn` paths from external game definitions.** Resolve implementations through the component registry.
-4. **Do not execute arbitrary remote GDScript from game packages.** External packages are untrusted/declarative content.
-5. **Domain state must not depend on rendering.** Camera, meshes, UI, lighting, billboards, etc. are representations only.
-6. **Domain rules must not depend directly on Firebase.** Networking/persistence belongs behind adapters/repositories.
-7. **Synchronize logical game objects, not graphics.** Different clients may choose different representations.
-8. **Prefer logical slots/zones over arbitrary Vector3 positions.** Free-form positioning is an explicit future capability.
-9. **Hand and PlayerArea are distinct concepts.** Do not collapse them into a generic held collection.
-10. **Owner, holder/controller, location, and visibility are separate concepts.** Neutral ownership must remain representable.
-11. **Secrets are not protected by render layers.** Private information eventually requires per-client state filtering.
-12. **MCP operates on logical concepts and validated commands, never raw Godot nodes.**
+2. **The public web platform is not the game runtime.** Product/account/billing/catalog workflows belong in the web app; gameplay rendering and interaction belong in Godot clients.
+3. **Game packages do not define component internals.** They reference stable component IDs and allowed configuration.
+4. **Do not reference internal `.gd` or `.tscn` paths from external game definitions.** Resolve implementations through the component registry.
+5. **Do not execute arbitrary remote GDScript from game packages.** External packages are untrusted/declarative content.
+6. **Domain state must not depend on rendering.** Camera, meshes, UI, lighting, billboards, etc. are representations only.
+7. **Domain rules must not depend directly on Firebase.** Networking/persistence belongs behind adapters/repositories.
+8. **Synchronize logical game objects, not graphics.** Different clients may choose different representations.
+9. **Prefer logical slots/zones over arbitrary Vector3 positions.** Free-form positioning is an explicit future capability.
+10. **Hand and PlayerArea are distinct concepts.** Do not collapse them into a generic held collection.
+11. **Owner, holder/controller, location, and visibility are separate concepts.** Neutral ownership must remain representable.
+12. **Secrets are not protected by render layers.** Private information eventually requires per-client state filtering.
+13. **MCP operates on logical concepts and validated commands, never raw Godot nodes.**
+14. **Billing and entitlement state must not be trusted from clients.** Provider secrets and authoritative subscription state belong server-side.
+15. **Web, Godot, and future native clients share contracts, not implementation details.** Do not invent incompatible session/package/identity schemas per client.
 
 ## Layering
 
@@ -38,6 +41,8 @@ Networking adapters consume domain results.
 Rendering consumes domain state.
 Neither networking nor rendering decides game legality.
 ```
+
+The public web platform consumes stable identity/session/package/entitlement contracts but must not duplicate gameplay-domain rules in frontend code.
 
 A useful design target is:
 
@@ -101,6 +106,22 @@ Do not implement all representation modes prematurely. Follow the roadmap checkp
 
 Remote assets must eventually be validated and cached. A large or invalid model must not be allowed to destroy Web/mobile performance merely because a mod references it.
 
+## Web platform
+
+The public-facing web application is developed as a parallel track. It may use conventional web tooling or AI-assisted builders, but it must preserve shared contracts.
+
+Web responsibilities include:
+
+- landing/product explanation
+- registration/login/account management
+- billing UI and plans
+- catalog/discovery
+- create/join/resume session UX
+- device-role selection and runtime launch
+- creator/admin surfaces later
+
+Keep secrets server-side. Do not put gameplay legality into the web frontend. Launch Godot using explicit session/package/user context rather than hidden coupling.
+
 ## Testing and quality expectations
 
 Before considering a change complete, preserve a clean quality gate:
@@ -112,6 +133,7 @@ Before considering a change complete, preserve a clean quality gate:
 - unit/domain tests
 - relevant conformance fixture tests
 - Web export smoke test
+- web-platform tests for important auth/session/entitlement flows when that track is touched
 
 Objective violations may block CI. Heuristic smells may initially warn rather than fail.
 
@@ -119,7 +141,7 @@ Do not optimize for SOLID ceremony. Optimize for clear responsibilities, low cou
 
 ## Current implementation sequence
 
-Do not jump ahead without a reason. Current order is:
+Do not jump ahead without a reason. Core runtime order is:
 
 1. stabilize the current PoC
 2. CI/lint/tests/headless Web export
@@ -132,6 +154,8 @@ Do not jump ahead without a reason. Current order is:
 9. top-down renderer
 10. photobooth/authoring pipeline
 11. MCP logical control MVP
+
+In parallel, the Web Platform may progress through its own checkpoints documented in `docs/WEB_PLATFORM.md`, as long as it does not force premature changes to unstable core contracts.
 
 If a requested feature belongs to a later phase, document it rather than pulling all of its implementation forward.
 
@@ -153,7 +177,7 @@ Never replace this with a plain unrestricted `firebase deploy` unless the deploy
 For each task:
 
 1. Inspect the current branch/files before modifying them.
-2. Identify the active roadmap checkpoint.
+2. Identify the active roadmap checkpoint and product surface (core runtime vs web platform vs shared contract).
 3. Make the smallest coherent vertical change.
 4. Preserve architecture boundaries above.
 5. Add/update tests for new public behavior.
@@ -161,6 +185,6 @@ For each task:
 7. Do not silently introduce a second competing abstraction for an existing concept.
 8. Do not hide migration/schema errors; fail safely with precise messages.
 9. Do not destructively reset existing session state merely to accommodate a schema addition.
-10. Leave the repository in a state that can pass the quality gate.
+10. Leave the repository in a state that can pass the relevant quality gate.
 
 When uncertain, prefer a smaller reversible implementation that preserves the public contracts.
