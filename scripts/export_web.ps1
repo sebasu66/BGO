@@ -4,7 +4,17 @@ Set-StrictMode -Version Latest
 $Root = Split-Path -Parent $PSScriptRoot
 Set-Location $Root
 
-$Godot = if ($env:GODOT_BIN) { $env:GODOT_BIN } else { "godot" }
+$Godot = if ($env:GODOT_BIN) {
+    $env:GODOT_BIN
+} elseif (Test-Path "./godot") {
+    "./godot"
+} elseif (Test-Path "./godot.exe") {
+    "./godot.exe"
+} else {
+    "godot"
+}
+
+Write-Host "Using Godot CLI: $Godot"
 
 if (Test-Path "build/web") {
     Remove-Item "build/web" -Recurse -Force
