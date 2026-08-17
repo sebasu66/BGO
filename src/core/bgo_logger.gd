@@ -4,7 +4,7 @@ extends Node
 const LOG_ROOT := "debug"
 const PUBLIC_LOG_ROOT := "debug_public"
 const MAX_BUFFER_ENTRIES := 250
-const WEB_POLL_SECONDS := 1.0
+const WEB_POLL_SECONDS := 0.25
 
 var game_id := "TEST001"
 var client_id := "unknown"
@@ -18,6 +18,7 @@ var _run_id := ""
 var _buffer: Array[Dictionary] = []
 var _web_poll_timer: Timer
 var _last_uploaded_generation := 0
+var _recorder_missing_reported := false
 
 func configure(target_game_id: String, target_client_id: String) -> void:
 	game_id = target_game_id
@@ -65,7 +66,11 @@ func log_event(event_name: String, payload: Dictionary = {}, level: String = "in
 
 	if level == "error":
 		_mark_web_error("bgo_logger:%s" % event_name)
-		if not OS.has_feature("web"):
+		if OS.has_feature("web"):
+			# Do not wait for the periodic timer: a fatal browser/runtime error can
+			# navigate or terminate the page before the next tick.
+			_poll_web_flight_recorder.call_deferred()
+		else:
 			_flush_structured_error_run("bgo_logger")
 
 func debug(event_name: String, payload: Dictionary = {}) -> void:
@@ -87,6 +92,7 @@ func _start_web_flight_recorder_poll() -> void:
 	_web_poll_timer.autostart = true
 	add_child(_web_poll_timer)
 	_web_poll_timer.timeout.connect(_poll_web_flight_recorder)
+	_poll_web_flight_recorder.call_deferred()
 
 func _mark_web_error(reason: String) -> void:
 	if not OS.has_feature("web"):
@@ -99,15 +105,64 @@ func _poll_web_flight_recorder() -> void:
 		return
 	var snapshot_json: Variant = JavaScriptBridge.eval("window.__bgoFlightRecorder?JSON.stringify(window.__bgoFlightRecorder.snapshot()):'';", true)
 	if not snapshot_json is String or snapshot_json.is_empty():
+		_report_missing_web_recorder()
 		return
 	var snapshot: Variant = JSON.parse_string(snapshot_json)
 	if not snapshot is Dictionary:
+		_report_invalid_web_recorder_snapshot(str(snapshot_json))
 		return
 	var generation := int(snapshot.get("error_generation", 0))
 	if generation <= _last_uploaded_generation:
 		return
 	_last_uploaded_generation = generation
 	_upload_error_run(snapshot, "web_flight_recorder")
+
+func _report_missing_web_recorder() -> void:
+	if _recorder_missing_reported:
+		return
+	_recorder_missing_reported = true
+	var entry := {
+		"ts": Time.get_unix_time_from_system(),
+		"ticks_ms": Time.get_ticks_msec(),
+		"level": "error",
+		"event": "WEB_FLIGHT_RECORDER_MISSING",
+		"game_id": game_id,
+		"client_id": client_id,
+		"run_id": _run_id,
+		"payload": {"message": "window.__bgoFlightRecorder is missing from exported HTML"}
+	}
+	_buffer.append(entry)
+	_upload_error_run({
+		"error_generation": _last_uploaded_generation + 1,
+		"error_seen": true,
+		"entries": [],
+		"recorder_available": false,
+	}, "flight_recorder_missing")
+	_last_uploaded_generation += 1
+
+func _report_invalid_web_recorder_snapshot(raw_value: String) -> void:
+	if _recorder_missing_reported:
+		return
+	_recorder_missing_reported = true
+	var entry := {
+		"ts": Time.get_unix_time_from_system(),
+		"ticks_ms": Time.get_ticks_msec(),
+		"level": "error",
+		"event": "WEB_FLIGHT_RECORDER_INVALID",
+		"game_id": game_id,
+		"client_id": client_id,
+		"run_id": _run_id,
+		"payload": {"raw_snapshot": raw_value.left(512)}
+	}
+	_buffer.append(entry)
+	_upload_error_run({
+		"error_generation": _last_uploaded_generation + 1,
+		"error_seen": true,
+		"entries": [],
+		"recorder_available": true,
+		"snapshot_valid": false,
+	}, "flight_recorder_invalid")
+	_last_uploaded_generation += 1
 
 func _flush_structured_error_run(source: String) -> void:
 	if not firebase_enabled or _adapter == null:
@@ -122,6 +177,7 @@ func _flush_structured_error_run(source: String) -> void:
 
 func _upload_error_run(snapshot: Dictionary, source: String) -> void:
 	var payload := {
+		"schema_version": 1,
 		"run_id": _run_id,
 		"game_id": game_id,
 		"client_id": client_id,
