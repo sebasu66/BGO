@@ -92,7 +92,89 @@ body {
 		</style>
 		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
 <link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+<script>
+(() => {
+  if (window.__bgoFlightRecorder) return;
 
+  const max = 250;
+  const cut = 2000;
+  const entries = [];
+  let gen = 0;
+
+  const safe = (v) => {
+    try {
+      if (v instanceof Error)
+        return `${v.name}: ${v.message} ${v.stack || ""}`;
+      if (typeof v === "string")
+        return v;
+      return JSON.stringify(v);
+    } catch {
+      return String(v);
+    }
+  };
+
+  const add = (level, args) => {
+    const text = Array.from(args)
+      .map(safe)
+      .join(" ")
+      .slice(0, cut);
+
+    entries.push({
+      ts: Date.now(),
+      level,
+      text
+    });
+
+    if (entries.length > max)
+      entries.splice(0, entries.length - max);
+  };
+
+  const mark = (reason) => {
+    gen++;
+    add("error", [reason]);
+  };
+
+  ["debug", "log", "info", "warn", "error"].forEach((level) => {
+    const original = console[level].bind(console);
+
+    console[level] = (...args) => {
+      add(level, args);
+
+      if (level === "error")
+        gen++;
+
+      original(...args);
+    };
+  });
+
+  window.addEventListener("error", (e) => {
+    mark(
+      `window.onerror: ${e.message} @ ${e.filename}:${e.lineno}:${e.colno}`
+    );
+
+    if (e.error && e.error.stack)
+      add("error", [e.error.stack]);
+  });
+
+  window.addEventListener("unhandledrejection", (e) => {
+    mark(`unhandledrejection: ${safe(e.reason)}`);
+  });
+
+  window.__bgoFlightRecorder = {
+    markError: mark,
+
+    snapshot: () => ({
+      error_generation: gen,
+      error_seen: gen > 0,
+      url: location.href,
+      user_agent: navigator.userAgent,
+      entries: entries.slice()
+    })
+  };
+
+  add("debug", ["BGO flight recorder ready"]);
+})();
+</script>
 	</head>
 	<body>
 		<canvas id="canvas">
@@ -111,7 +193,7 @@ body {
 
 		<script src="index.js"></script>
 		<script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":11712556,"index.wasm":37900721},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":11729472,"index.wasm":37900721},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
