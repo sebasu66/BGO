@@ -22,13 +22,19 @@ web/project-status/
 
 It must not be authored directly inside `build/web`, because Godot Web export output is generated and may be replaced.
 
-Before deploying Hosting, copy the dashboard into the generated Web output with:
+Firebase Hosting has a `predeploy` hook that runs:
+
+```text
+node scripts/sync_project_status.mjs
+```
+
+This copies the dashboard into `build/web/project-status/` automatically immediately before Hosting is deployed. A PowerShell helper also exists for manual/local synchronization:
 
 ```powershell
 ./scripts/sync_project_status.ps1
 ```
 
-Then deploy Hosting only:
+Normal deployment remains:
 
 ```text
 firebase deploy --only hosting
