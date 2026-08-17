@@ -22,7 +22,12 @@
   "players": [
     {
       "id": "player_1",
+      "name": "Player 1",
       "color": "#F2B837",
+      "presence": {
+        "component": "bgo.player_presence.basic_mask",
+        "config": {}
+      },
       "area": {
         "component": "bgo.player_area.basic",
         "config": { "visible": true, "public_objects": true }
@@ -33,7 +38,12 @@
     },
     {
       "id": "player_2",
+      "name": "Player 2",
       "color": "#4DB7F2",
+      "presence": {
+        "component": "bgo.player_presence.basic_mask",
+        "config": {}
+      },
       "area": {
         "component": "bgo.player_area.basic",
         "config": { "visible": true, "public_objects": true }
