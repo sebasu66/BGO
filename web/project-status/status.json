@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-17T11:03:00-03:00",
+  "updated_at": "2026-08-17T15:06:00-03:00",
   "overall": {
     "status": "warning",
     "label": "EN DESARROLLO"
@@ -10,66 +10,78 @@
     "title": "Estabilizar el PoC componentizado",
     "status": "active",
     "status_label": "ACTIVO",
-    "progress_percent": 75,
-    "description": "La base funcional existe, pero la última refactorización de componentes, slots y definición TEST001 necesita una ejecución local limpia y un Web export confirmado antes de dar el baseline por cerrado.",
-    "next_action": "Ejecutar Godot localmente, corregir cualquier parse/runtime error y confirmar display + player_1 + player_2 antes de habilitar el quality gate automático."
+    "progress_percent": 88,
+    "description": "TEST001 ya exporta y corre en Web con Display, P1 y P2. El smoke multi-cliente reveló trabajo real de UX/dominio: PlayerArea vs Hand, cámaras por jugador, stacks, ocupación y filtros de cámara.",
+    "next_action": "Cerrar los hallazgos del smoke multi-cliente: split de stacks TAKE 1/ALL, ocupación lógica sin overlap, validar filtros de cámara y repetir Display + P1 + P2 con export validado."
   },
   "health_checks": [
     {
-      "name": "Godot local smoke test",
-      "status": "pending",
-      "label": "PENDIENTE",
-      "detail": "Pendiente de confirmar después de la última refactorización del PoC."
+      "name": "Godot multi-client smoke test",
+      "status": "warning",
+      "label": "EN PRUEBA",
+      "detail": "Display + P1 + P2 funcionan y sincronizan; el smoke encontró ajustes de interacción y layout todavía abiertos."
     },
     {
       "name": "Web export",
-      "status": "pending",
-      "label": "PENDIENTE",
-      "detail": "El flujo manual existe; falta validar el export actual y luego automatizarlo en CI."
+      "status": "success",
+      "label": "AUTOMATIZADO",
+      "detail": "scripts/export_web.ps1 y scripts/export_web.sh limpian, importan, exportan, sincronizan Web auxiliar y validan el artefacto."
+    },
+    {
+      "name": "Web package validation",
+      "status": "success",
+      "label": "ACTIVO",
+      "detail": "El validador comprueba flight recorder, TEST001 JSONH dentro del PCK, project-status y test-launcher antes de aceptar el build."
+    },
+    {
+      "name": "Browser error diagnostics",
+      "status": "success",
+      "label": "ACTIVO",
+      "detail": "Flight recorder + BgoLogger publican sólo corridas con error y detectan también si el recorder falta del HTML exportado."
     },
     {
       "name": "GDScript lint / format",
-      "status": "pending",
-      "label": "NO INSTALADO",
-      "detail": "Previsto para Phase 1 con gdlint/gdformat y reglas de Godot."
+      "status": "warning",
+      "label": "ADVISORY",
+      "detail": "gdformat/gdlint corren en CI; la deuda baseline sigue siendo advisory mientras se estabiliza C0."
     },
     {
       "name": "Unit / domain tests",
-      "status": "pending",
-      "label": "NO INSTALADO",
-      "detail": "Se implementará un runner headless y fixtures de dominio."
+      "status": "success",
+      "label": "ACTIVO",
+      "detail": "Runner headless disponible y ejecutado por GitHub Actions; ampliar cobertura a stacks, slots/ocupación y permisos."
     },
     {
       "name": "Architecture checks",
-      "status": "pending",
-      "label": "NO INSTALADO",
-      "detail": "Pendiente convertir reglas de AGENTS.md en validaciones ejecutables."
+      "status": "success",
+      "label": "ACTIVO",
+      "detail": "scripts/check_structure.py corre en cada quality gate."
     },
     {
       "name": "GitHub Actions CI",
-      "status": "pending",
-      "label": "NO CONECTADO",
-      "detail": "El dashboard está preparado para mostrar el resultado cuando exista el workflow."
+      "status": "success",
+      "label": "ACTIVO",
+      "detail": "Quality Gate ejecuta estructura, lint/format, Godot import, tests y el mismo export Web validado que se usa localmente."
     }
   ],
   "blockers": [
     {
-      "title": "Baseline actual todavía no verificado",
+      "title": "Stacks todavía no tienen split de cantidad",
+      "status": "warning",
+      "label": "C0",
+      "detail": "Tomar o soltar un stack debe ofrecer TAKE [1] [+] [ALL] y crear/mergear cantidades mediante estado sincronizado."
+    },
+    {
+      "title": "Ocupación física/lógica incompleta",
+      "status": "warning",
+      "label": "C0",
+      "detail": "El reflow evita overlap visual en colecciones, pero slots y PlayerArea necesitan restricciones lógicas de ocupación deterministas."
+    },
+    {
+      "title": "Smoke multi-cliente debe repetirse",
       "status": "warning",
       "label": "CHECKPOINT",
-      "detail": "No avanzar con grandes refactors hasta confirmar que TEST001 carga, sincroniza y exporta correctamente con los últimos cambios."
-    },
-    {
-      "title": "Addons locales no garantizados en un clone limpio",
-      "status": "warning",
-      "label": "RIESGO",
-      "detail": "Lente aparece habilitado/referenciado, pero anteriormente el árbol remoto no incluía addons/. Debe resolverse o hacerse opcional antes de confiar en CI desde checkout limpio."
-    },
-    {
-      "title": "CI todavía no produce datos automáticos",
-      "status": "pending",
-      "label": "PENDIENTE",
-      "detail": "La página muestra estado manual hasta que Phase 1 genere status/test results automáticamente."
+      "detail": "Los fixes de cámara, Hand/PlayerArea, presence y filtros deben pasar nuevamente Display + P1 + P2 antes de cerrar C0."
     }
   ],
   "core_roadmap": [
@@ -78,24 +90,24 @@
       "title": "Stabilize current PoC",
       "status": "active",
       "label": "ACTIVO",
-      "description": "Cerrar un baseline conocido: TEST001, roles display/P1/P2, slots, ownership, PlayerArea/Hand y Web export.",
-      "checkpoint": "Local run + Web export + sesión compartida verificados."
+      "description": "Cerrar TEST001 con roles Display/P1/P2, player identity/presence, slots, ownership, PlayerArea/Hand, stacks y Web export validado.",
+      "checkpoint": "Sesión compartida y export reproducible verificados sin regresiones."
     },
     {
       "id": "1",
       "title": "Quality gate + CI",
-      "status": "planned",
-      "label": "SIGUIENTE",
-      "description": "Lint, formatting, structure checks, architecture checks, tests, Godot headless y Web export en cada commit.",
-      "checkpoint": "Clean checkout verde y un fallo intencional vuelve CI rojo."
+      "status": "active",
+      "label": "EN USO",
+      "description": "Lint, formatting, structure, tests, Godot headless y Web export validado en cada commit.",
+      "checkpoint": "Clean checkout verde y errores de packaging detectados automáticamente."
     },
     {
       "id": "2",
       "title": "Logical model",
       "status": "planned",
-      "label": "PLAN",
-      "description": "Slots, zones, ownership, permissions, commands, transfer y operaciones de dominio desacopladas de render/Firebase.",
-      "checkpoint": "Tests de permisos, ocupación, Hand/PlayerArea y convergencia de clientes."
+      "label": "SIGUIENTE",
+      "description": "Session/Player/Turn/Phase/Tracks, slots, zones, ownership, permissions y comandos desacoplados de render/Firebase.",
+      "checkpoint": "Tests de turnos, tracks, permisos, ocupación, Hand/PlayerArea y convergencia."
     },
     {
       "id": "3",
@@ -166,15 +178,15 @@
     {
       "id": "W0",
       "title": "Product shell",
-      "status": "planned",
-      "label": "PARALELO",
-      "description": "Landing, navegación, diseño responsive y acceso de prueba sin imponer autenticación temprana."
+      "status": "active",
+      "label": "EN USO",
+      "description": "Dashboard de proyecto y test launcher ya viven como capa Web separada del runtime Godot."
     },
     {
       "id": "W1",
       "title": "Lobby / session UX",
       "status": "planned",
-      "label": "PLAN",
+      "label": "SIGUIENTE",
       "description": "Crear/unirse/reanudar partidas, elegir rol y lanzar Godot sin editar URLs."
     },
     {
@@ -189,21 +201,21 @@
       "title": "Authentication",
       "status": "planned",
       "label": "DIFERIDO",
-      "description": "Agregar cuentas solo cuando dejen de entorpecer el ciclo de validación y aporten valor real."
+      "description": "Agregar cuentas sólo cuando aporten valor real al producto."
     },
     {
       "id": "W4",
       "title": "Commercial model decision",
       "status": "planned",
       "label": "DIFERIDO",
-      "description": "Elegir monetización con datos reales antes de implementar billing, ads, Patreon o entitlements."
+      "description": "Elegir monetización con datos reales antes de implementar billing o entitlements."
     }
   ],
   "ci": {
-    "status": "unknown",
-    "label": "NO CONECTADO",
-    "commit": "—",
-    "run": "Pendiente de Phase 1",
-    "note": "Cuando exista GitHub Actions, el workflow podrá reemplazar estos campos y los health_checks con resultados reales antes de copiar el dashboard al build de Firebase Hosting."
+    "status": "active",
+    "label": "GITHUB ACTIONS",
+    "commit": "Ver ci.json",
+    "run": "Automático por push/PR",
+    "note": "El workflow genera ci.json dentro del artefacto Web y valida el mismo export reproducible disponible para desarrollo local."
   }
 }
