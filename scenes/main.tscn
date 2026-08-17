@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" path="res://src/components/boards/checkered_board/checkered_board.tscn" id="2_board"]
 [ext_resource type="PackedScene" path="res://src/components/player_area/player_area.tscn" id="3_area"]
 [ext_resource type="PackedScene" path="res://src/components/pieces/basic_cylinder/basic_cylinder_piece.tscn" id="4_piece"]
+[ext_resource type="Script" path="res://src/components/player_presence/player_presence_layer.gd" id="5_presence"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -52,6 +53,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.15, 0.02, 0)
 player_id = "player_2"
 label_text = "PLAYER 2"
 area_color = Color(0.07, 0.27, 0.43, 1)
+
+[node name="PlayerPresence" type="Node3D" parent="."]
+script = ExtResource("5_presence")
 
 [node name="EditorPreview" type="Node3D" parent="." unique_id=1086920998]
 
