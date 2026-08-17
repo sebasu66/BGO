@@ -15,6 +15,7 @@ Each checkpoint must preserve:
 - the existing shared-session PoC unless the checkpoint explicitly migrates it
 - clear separation between domain state, rendering, networking, and game/package data
 - compatibility with future external game packages and MCP control
+- an up-to-date agent development contract so multiple AI coding systems can contribute consistently
 
 ---
 
@@ -112,9 +113,9 @@ Before moving on:
 
 # Phase 1 — Quality gate and automated build safety
 
-**Purpose:** make every later refactor safer.
+**Purpose:** make every later refactor safer and make project knowledge portable across human and AI contributors.
 
-This phase should happen early because every later component and package feature benefits from automated regression checks.
+This phase should happen early because every later component and package feature benefits from automated regression checks and a shared implementation contract.
 
 ### Deliverables
 
@@ -126,6 +127,10 @@ This phase should happen early because every later component and package feature
 - Web export smoke test
 - project-structure checks
 - initial architectural dependency checks
+- repository-level `AGENTS.md` with non-negotiable architecture/deployment constraints
+- compact AI development skill/document that explains task routing, domain vocabulary, component/package rules, quality expectations, and the active roadmap sequence
+
+The agent contract is intentionally provider-neutral. ChatGPT/Codex, Gemini-based Firebase tooling, or other coding agents should all be able to consume the same repository-grounded instructions rather than depending on one model's conversational memory.
 
 Suggested pipeline:
 
@@ -175,6 +180,7 @@ The design target is not SOLID ceremony. The stronger rule is:
 - the same check command works locally
 - an intentional syntax/test failure makes CI fail
 - a valid Web export is produced headlessly
+- a fresh AI coding agent can read `AGENTS.md` + the AI skill and identify the current phase, forbidden shortcuts, required tests, and deploy constraints without relying on prior chat context
 
 ---
 
@@ -608,7 +614,7 @@ The near-term sequence is intentionally short:
 ```text
 0. Verify current componentized TEST001
         ↓
-1. CI + lint + test + headless Web export quality gate
+1. CI + lint + test + headless Web export + agent development contract
         ↓
 2. Finish logical slots/zones/ownership/transfer model
         ↓
