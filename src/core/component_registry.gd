@@ -14,6 +14,10 @@ const COMPONENTS := {
 		"kind": "player_area",
 		"scene": "res://src/components/player_area/player_area.tscn",
 	},
+	"bgo.player_presence.basic_mask": {
+		"kind": "player_presence",
+		"scene": "res://src/components/player_presence/basic_mask/player_presence_mask.tscn",
+	},
 	"bgo.slot.basic": {
 		"kind": "slot",
 		"scene": "res://src/components/slots/basic_slot/basic_slot.tscn",
@@ -50,7 +54,7 @@ static func validate_config(component_id: String, config: Dictionary) -> Array[S
 		"bgo.piece.basic_cylinder":
 			_validate_float_range(config, "radius", 0.1, 2.0, errors, true)
 			_validate_float_range(config, "height", 0.05, 2.0, errors, true)
-		"bgo.player_area.basic":
+		"bgo.player_area.basic", "bgo.player_presence.basic_mask":
 			pass
 		"bgo.slot.basic":
 			if config.has("capacity"):
