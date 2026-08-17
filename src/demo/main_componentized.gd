@@ -5,6 +5,8 @@ const GAME_DEFINITION_PATH := "res://games/test001/game.jsonh"
 var game_definition: Dictionary = {}
 var definition_errors: Array[String] = []
 var _private_hand_strip: HBoxContainer
+var _transfer_to_hand_button: Button
+var _transfer_to_area_button: Button
 
 func _ready() -> void:
 	_request_landscape_orientation()
@@ -91,6 +93,17 @@ func _color_from_definition(definition: Dictionary, fallback: Color) -> Color:
 		return fallback
 	return Color.from_string(value, fallback)
 
+func _configure_camera() -> void:
+	if client_role == ROLE_DISPLAY:
+		super._configure_camera()
+		return
+	_camera_focus = Vector3.ZERO
+	_desired_focus = Vector3.ZERO
+	_camera_pitch = deg_to_rad(42.0)
+	_camera_distance = 10.6
+	_camera_yaw = deg_to_rad(-90.0 if player_id == "player_1" else 90.0)
+	_update_camera_transform()
+
 func _create_piece_from_state(id: String, state: Dictionary, cell: Vector2i) -> void:
 	var component_id := str(state.get("component_id", "bgo.piece.basic_cylinder"))
 	var packed_scene := BgoComponentRegistry.load_scene(component_id)
@@ -139,8 +152,6 @@ func _on_piece_tapped(piece: Node3D) -> void:
 	var location_type := str(piece.get_meta("location_type", "slot"))
 	logger.info("PIECE_TAPPED", {"piece_id": piece.name, "owner_id": owner_id, "holder_id": holder_id, "location_type": location_type, "mode": interaction_mode})
 
-	# Neutral pieces (owner_id == "") may be claimed while public. A piece currently
-	# held by another player cannot be manipulated by this client.
 	if not holder_id.is_empty() and holder_id != player_id:
 		_set_status("That object is currently held by %s" % holder_id)
 		logger.warning("PIECE_CONTROL_DENIED", {"piece_id": piece.name, "holder_id": holder_id, "player_id": player_id})
@@ -169,6 +180,7 @@ func _pick_up_piece(piece: Node3D) -> void:
 	piece.set_meta("location_type", "player_area")
 	_select_piece(piece)
 	_animate_piece(piece, target, "pickup")
+	_reflow_collection(player_id, "player_area")
 	_refresh_hand_strip()
 	_set_status("Picked up %s · moving to your PLAYER AREA" % piece.name)
 	_set_debug("pickup → player area: %s" % piece.name)
@@ -191,6 +203,8 @@ func _place_selected_piece(destination: Vector2i) -> void:
 	piece.set_meta("cell", destination)
 	_animate_piece(piece, target, "place")
 	selected_piece = null
+	_reflow_collection(player_id, "player_area")
+	_reflow_collection(player_id, "hand")
 	_refresh_hand_strip()
 	_set_status("Placed %s" % piece.name)
 	_set_debug("place slot: %s" % destination)
@@ -203,8 +217,6 @@ func _target_world_position(piece_id: String, state: Dictionary, cell: Vector2i)
 			var area_player := str(location.get("player_id", state.get("holder_id", "player_1")))
 			return _player_area_world_position(area_player, piece_id)
 		"hand":
-			# A true Hand is private state. Until cards have a dedicated renderer, put
-			# its public proxy near the owner area rather than conflating it with Area.
 			var hand_player := str(location.get("player_id", state.get("holder_id", "player_1")))
 			return _private_hand_proxy_world_position(hand_player, piece_id)
 		"slot":
@@ -225,7 +237,8 @@ func _private_hand_proxy_world_position(holder: String, piece_id: String) -> Vec
 	var slot := _collection_slot_index(holder, piece_id, "hand")
 	var area := ($Player2Area if holder == "player_2" else $Player1Area) as BgoPlayerArea
 	if area != null:
-		return area.global_position + Vector3(0.0, 0.55, 1.4 + float(slot) * 0.45)
+		var side := -1.0 if holder == "player_1" else 1.0
+		return area.global_position + Vector3(side * 0.95, 0.55, -2.3 + float(slot) * 0.85)
 	return super._hand_world_position(holder, piece_id)
 
 func _collection_slot_index(holder: String, piece_id: String, location_type: String) -> int:
@@ -238,6 +251,21 @@ func _collection_slot_index(holder: String, piece_id: String, location_type: Str
 		ids.append(piece_id)
 	ids.sort()
 	return maxi(ids.find(piece_id), 0)
+
+func _reflow_collection(holder: String, location_type: String) -> void:
+	var ids: Array[String] = []
+	for key in pieces.keys():
+		var piece := pieces[key] as Node3D
+		if piece != null and str(piece.get_meta("location_type", "slot")) == location_type and str(piece.get_meta("holder_id", "")) == holder:
+			ids.append(str(key))
+	ids.sort()
+	for index in ids.size():
+		var piece := pieces[ids[index]] as Node3D
+		if piece == null:
+			continue
+		var target := _player_area_world_position(holder, ids[index]) if location_type == "player_area" else _private_hand_proxy_world_position(holder, ids[index])
+		if piece.position.distance_to(target) > 0.02:
+			_animate_piece(piece, target, "collection_reflow")
 
 func _cell_world(cell: Vector2i) -> Vector3:
 	var board := $Board as BgoCheckeredBoard
@@ -258,6 +286,13 @@ func _connect_session() -> void:
 	repository.start(game_id)
 	_set_status("Connecting to Firebase /games/%s …" % game_id)
 
+func _on_piece_changed(piece_id: String, piece_data: Dictionary) -> void:
+	super._on_piece_changed(piece_id, piece_data)
+	_reflow_collection("player_1", "player_area")
+	_reflow_collection("player_2", "player_area")
+	_reflow_collection("player_1", "hand")
+	_reflow_collection("player_2", "hand")
+
 func _create_hud() -> void:
 	super._create_hud()
 	if client_role != ROLE_PLAYER or _player_controls == null:
@@ -269,10 +304,11 @@ func _refresh_hand_strip() -> void:
 		_fill_collection_strip(_hand_strip, "player_area", "Area empty")
 	if _private_hand_strip != null:
 		_fill_collection_strip(_private_hand_strip, "hand", "Hand empty")
+	_update_transfer_buttons()
 
 func _fill_collection_strip(strip: HBoxContainer, location_type: String, empty_text: String) -> void:
 	for child in strip.get_children():
-		child.free()
+		child.queue_free()
 
 	var ids: Array[String] = []
 	for key in pieces.keys():
@@ -284,7 +320,7 @@ func _fill_collection_strip(strip: HBoxContainer, location_type: String, empty_t
 	if ids.is_empty():
 		var empty := Label.new()
 		empty.text = empty_text
-		empty.custom_minimum_size = Vector2(150, 36)
+		empty.custom_minimum_size = Vector2(160, 36)
 		empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		strip.add_child(empty)
 		return
@@ -294,91 +330,155 @@ func _fill_collection_strip(strip: HBoxContainer, location_type: String, empty_t
 		var button := Button.new()
 		var quantity := int(piece.get_meta("quantity", 1))
 		button.text = "%s%s" % [piece_id, " ×%d" % quantity if quantity > 1 else ""]
-		button.custom_minimum_size = Vector2(150, 40)
+		button.custom_minimum_size = Vector2(160, 40)
 		button.toggle_mode = true
 		button.button_pressed = piece == selected_piece
-		button.pressed.connect(_on_hand_item_pressed.bind(piece_id))
+		button.pressed.connect(_on_collection_item_pressed.bind(piece_id))
 		strip.add_child(button)
+
+func _on_collection_item_pressed(piece_id: String) -> void:
+	if not pieces.has(piece_id):
+		return
+	_select_piece(pieces[piece_id])
+	_update_transfer_buttons()
+
+func _move_selected_to_hand() -> void:
+	if selected_piece == null:
+		return
+	var holder := str(selected_piece.get_meta("holder_id", ""))
+	var location_type := str(selected_piece.get_meta("location_type", "slot"))
+	if holder != player_id or location_type != "player_area":
+		return
+	var piece_id := str(selected_piece.get_meta("entity_id"))
+	repository.move_to_hand(piece_id, player_id)
+	selected_piece.set_meta("location_type", "hand")
+	_animate_piece(selected_piece, _private_hand_proxy_world_position(player_id, piece_id), "to_hand")
+	_reflow_collection(player_id, "player_area")
+	_reflow_collection(player_id, "hand")
+	_refresh_hand_strip()
+	_set_status("Moved %s to HAND" % piece_id)
+
+func _move_selected_to_area() -> void:
+	if selected_piece == null:
+		return
+	var holder := str(selected_piece.get_meta("holder_id", ""))
+	var location_type := str(selected_piece.get_meta("location_type", "slot"))
+	if holder != player_id or location_type != "hand":
+		return
+	var piece_id := str(selected_piece.get_meta("entity_id"))
+	repository.move_to_player_area(piece_id, player_id)
+	selected_piece.set_meta("location_type", "player_area")
+	_animate_piece(selected_piece, _player_area_world_position(player_id, piece_id), "to_player_area")
+	_reflow_collection(player_id, "player_area")
+	_reflow_collection(player_id, "hand")
+	_refresh_hand_strip()
+	_set_status("Moved %s to PLAYER AREA" % piece_id)
+
+func _update_transfer_buttons() -> void:
+	var location_type := ""
+	var holder := ""
+	if selected_piece != null:
+		location_type = str(selected_piece.get_meta("location_type", ""))
+		holder = str(selected_piece.get_meta("holder_id", ""))
+	if _transfer_to_hand_button != null:
+		_transfer_to_hand_button.disabled = holder != player_id or location_type != "player_area"
+	if _transfer_to_area_button != null:
+		_transfer_to_area_button.disabled = holder != player_id or location_type != "hand"
 
 func _apply_landscape_player_layout() -> void:
 	if _player_controls == null:
 		return
-	_player_controls.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
-	_player_controls.offset_left = -340.0
-	_player_controls.offset_right = -12.0
-	_player_controls.offset_top = 14.0
-	_player_controls.offset_bottom = -14.0
+	_player_controls.visible = false
 
-	var old_column := _player_controls.get_child(0) as VBoxContainer
-	if old_column == null:
-		return
-	var area_title = old_column.get_child(0) if old_column.get_child_count() > 0 else null
-	var area_scroll = old_column.get_child(1) if old_column.get_child_count() > 1 else null
-	var old_bar = _pickup_button.get_parent() if _pickup_button != null else null
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
+	panel.offset_left = -410.0
+	panel.offset_right = -12.0
+	panel.offset_top = 14.0
+	panel.offset_bottom = -14.0
+	$UI.add_child(panel)
+	_player_controls = panel
 
-	if area_title != null:
-		old_column.remove_child(area_title)
-		area_title.text = "PLAYER AREA"
-	if area_scroll != null:
-		old_column.remove_child(area_scroll)
-	if _pickup_button != null and old_bar != null:
-		old_bar.remove_child(_pickup_button)
-	if _place_button != null and old_bar != null:
-		old_bar.remove_child(_place_button)
-	old_column.queue_free()
+	var root := VBoxContainer.new()
+	root.add_theme_constant_override("separation", 8)
+	panel.add_child(root)
 
-	var columns := HBoxContainer.new()
-	columns.add_theme_constant_override("separation", 10)
-	_player_controls.add_child(columns)
+	var player_title := Label.new()
+	var definition := _player_definition(player_id)
+	player_title.text = "%s · %s" % [str(definition.get("name", player_id.replace("_", " ").capitalize())), player_id.to_upper().replace("_", " ")]
+	player_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	player_title.add_theme_font_size_override("font_size", 18)
+	player_title.add_theme_color_override("font_color", _player_color(player_id))
+	root.add_child(player_title)
 
-	var collections := VBoxContainer.new()
-	collections.custom_minimum_size = Vector2(205, 0)
-	collections.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	collections.add_theme_constant_override("separation", 6)
-	columns.add_child(collections)
+	var area_title := Label.new()
+	area_title.text = "PLAYER AREA"
+	area_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	root.add_child(area_title)
+	var area_scroll := ScrollContainer.new()
+	area_scroll.custom_minimum_size = Vector2(370, 74)
+	area_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	area_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	root.add_child(area_scroll)
+	_hand_strip = HBoxContainer.new()
+	_hand_strip.add_theme_constant_override("separation", 6)
+	area_scroll.add_child(_hand_strip)
 
-	if area_title != null:
-		area_title.custom_minimum_size = Vector2(190, 28)
-		collections.add_child(area_title)
-	if area_scroll != null:
-		area_scroll.custom_minimum_size = Vector2(190, 105)
-		collections.add_child(area_scroll)
+	var transfer_row := HBoxContainer.new()
+	transfer_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	transfer_row.add_theme_constant_override("separation", 8)
+	root.add_child(transfer_row)
+	_transfer_to_hand_button = Button.new()
+	_transfer_to_hand_button.text = "TO HAND ↓"
+	_transfer_to_hand_button.custom_minimum_size = Vector2(150, 38)
+	_transfer_to_hand_button.pressed.connect(_move_selected_to_hand)
+	transfer_row.add_child(_transfer_to_hand_button)
+	_transfer_to_area_button = Button.new()
+	_transfer_to_area_button.text = "↑ TO AREA"
+	_transfer_to_area_button.custom_minimum_size = Vector2(150, 38)
+	_transfer_to_area_button.pressed.connect(_move_selected_to_area)
+	transfer_row.add_child(_transfer_to_area_button)
 
 	var hand_title := Label.new()
 	hand_title.text = "HAND"
 	hand_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	collections.add_child(hand_title)
+	root.add_child(hand_title)
 	var hand_scroll := ScrollContainer.new()
-	hand_scroll.custom_minimum_size = Vector2(190, 105)
+	hand_scroll.custom_minimum_size = Vector2(370, 74)
 	hand_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	hand_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	collections.add_child(hand_scroll)
+	root.add_child(hand_scroll)
 	_private_hand_strip = HBoxContainer.new()
 	_private_hand_strip.add_theme_constant_override("separation", 6)
 	hand_scroll.add_child(_private_hand_strip)
 
-	var action_column := VBoxContainer.new()
-	action_column.custom_minimum_size = Vector2(108, 0)
-	action_column.alignment = BoxContainer.ALIGNMENT_CENTER
-	action_column.add_theme_constant_override("separation", 10)
-	columns.add_child(action_column)
-	if _pickup_button != null:
-		_pickup_button.custom_minimum_size = Vector2(106, 64)
-		action_column.add_child(_pickup_button)
-	if _place_button != null:
-		_place_button.custom_minimum_size = Vector2(106, 64)
-		action_column.add_child(_place_button)
-
+	var action_row := HBoxContainer.new()
+	action_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	action_row.add_theme_constant_override("separation", 8)
+	root.add_child(action_row)
+	_pickup_button = Button.new()
+	_pickup_button.text = "PICK UP"
+	_pickup_button.toggle_mode = true
+	_pickup_button.custom_minimum_size = Vector2(110, 54)
+	_pickup_button.pressed.connect(func(): _set_mode(MODE_PICK_UP))
+	action_row.add_child(_pickup_button)
+	_place_button = Button.new()
+	_place_button.text = "PLACE"
+	_place_button.toggle_mode = true
+	_place_button.custom_minimum_size = Vector2(110, 54)
+	_place_button.pressed.connect(func(): _set_mode(MODE_PLACE))
+	action_row.add_child(_place_button)
 	var fullscreen_button := Button.new()
-	fullscreen_button.text = "FULL\nSCREEN"
-	fullscreen_button.custom_minimum_size = Vector2(106, 58)
+	fullscreen_button.text = "FULL SCREEN"
+	fullscreen_button.custom_minimum_size = Vector2(120, 54)
 	fullscreen_button.pressed.connect(_enter_web_fullscreen)
-	action_column.add_child(fullscreen_button)
+	action_row.add_child(fullscreen_button)
 
 	if _mode_label != null:
 		_mode_label.visible = false
 	if _debug_label != null:
 		_debug_label.visible = false
+	_set_mode(MODE_PICK_UP)
 	_refresh_hand_strip()
 
 func _request_landscape_orientation() -> void:
