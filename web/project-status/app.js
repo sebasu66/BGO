@@ -2,11 +2,14 @@ const $ = (id) => document.getElementById(id);
 
 const STATUS_CLASS = {
   pass: "good",
+  success: "good",
   done: "good",
   healthy: "good",
   warning: "warn",
   blocked: "bad",
   fail: "bad",
+  failure: "bad",
+  cancelled: "bad",
   pending: "neutral",
   planned: "neutral",
   unknown: "neutral",
@@ -114,11 +117,20 @@ function renderRoadmap(targetId, items) {
 
 function renderCi(data) {
   const ci = data.ci || {};
+  const checks = [
+    ["Format", ci.format],
+    ["Lint", ci.lint],
+    ["Structure", ci.structure],
+    ["Godot import", ci.godot_import],
+    ["Tests", ci.tests],
+    ["Web export", ci.web_export],
+  ].filter(([, value]) => value);
+
   $("ci-details").innerHTML = `
     <div class="ci-grid">
       <div class="ci-cell">
         <div class="label">Estado</div>
-        <div class="value">${badge(ci.label || "NO CONECTADO", ci.status || "unknown")}</div>
+        <div class="value">${badge((ci.label || "NO CONECTADO").toUpperCase(), ci.status || "unknown")}</div>
       </div>
       <div class="ci-cell">
         <div class="label">Commit</div>
@@ -129,6 +141,7 @@ function renderCi(data) {
         <div class="value">${ci.run || "Todavía no disponible"}</div>
       </div>
     </div>
+    ${checks.length ? `<div class="ci-grid">${checks.map(([name, value]) => `<div class="ci-cell"><div class="label">${name}</div><div class="value">${badge(String(value).toUpperCase(), value)}</div></div>`).join("")}</div>` : ""}
     ${ci.note ? `<p class="muted">${ci.note}</p>` : ""}`;
 }
 
@@ -155,11 +168,22 @@ function render(data) {
     : "Fecha de actualización no disponible";
 }
 
+async function fetchJson(path) {
+  const response = await fetch(`${path}?t=${Date.now()}`, { cache: "no-store" });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.json();
+}
+
 async function loadStatus() {
   try {
-    const response = await fetch(`./status.json?t=${Date.now()}`, { cache: "no-store" });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    render(await response.json());
+    const data = await fetchJson("./status.json");
+    try {
+      const ci = await fetchJson("./ci.json");
+      data.ci = { ...(data.ci || {}), ...ci };
+    } catch (_) {
+      // ci.json is optional until CI/deployment integration is active.
+    }
+    render(data);
   } catch (error) {
     $("overall-badge").className = "badge bad";
     $("overall-badge").textContent = "ERROR DE DATOS";
