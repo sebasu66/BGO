@@ -2,7 +2,7 @@
 
 Read this file before modifying BGO. It is the short operational contract for AI coding agents and human contributors.
 
-For the staged implementation plan, read `docs/IMPLEMENTATION_ROADMAP.md`. For the public-facing web application, read `docs/WEB_PLATFORM.md`. For branch/deployment rules, read `docs/DEPLOYMENT_ENVIRONMENTS.md`. For deeper product rationale, read `docs/PROJECT_VISION.md` only when the task requires it.
+For the staged implementation plan, read `docs/IMPLEMENTATION_ROADMAP.md`. For the public-facing web application, read `docs/WEB_PLATFORM.md`. For branch/deployment rules, read `docs/DEPLOYMENT_ENVIRONMENTS.md`. For the project health overview contract, read `docs/PROJECT_STATUS_DASHBOARD.md`. For deeper product rationale, read `docs/PROJECT_VISION.md` only when the task requires it.
 
 ## Project goal
 
@@ -27,6 +27,7 @@ BGO is a Godot-based virtual tabletop runtime for turn-based board games, surrou
 15. **Future billing/entitlement state must not be trusted from clients.** Provider secrets and authoritative commercial state belong server-side.
 16. **Web, Godot, and future native clients share contracts, not implementation details.** Do not invent incompatible session/package/identity schemas per client.
 17. **DEV and PROD are separate release channels.** `develop` may deploy DEV; only an explicit owner-approved promotion may advance the stable `main`/PROD build.
+18. **Project health must stay visible.** Material checkpoint changes, blockers, implementation-order changes, and quality risks must be reflected in the project status dashboard data/documentation.
 
 ## Layering
 
@@ -123,6 +124,19 @@ Registration/login/account management is a later checkpoint. Billing/ads/paid pl
 
 Keep secrets server-side. Do not put gameplay legality into the web frontend. Launch Godot using explicit session/package/context rather than hidden coupling.
 
+## Project status dashboard
+
+The development overview lives under `web/project-status/` and is documented in `docs/PROJECT_STATUS_DASHBOARD.md`.
+
+Rules:
+
+- `docs/IMPLEMENTATION_ROADMAP.md` remains the authoritative roadmap.
+- `web/project-status/status.json` is the operational projection shown by the dashboard.
+- do not mark a checkpoint complete merely because code exists; use its exit criteria.
+- update dashboard status when a checkpoint completes, a material blocker/risk is discovered or resolved, or implementation order changes.
+- Phase 1 CI should inject transient test/build results without requiring generated CI state to be committed back to Git.
+- DEV and PROD dashboards must identify their own commit/environment once separate deployments exist.
+
 ## DEV / PROD release policy
 
 Follow `docs/DEPLOYMENT_ENVIRONMENTS.md`.
@@ -191,6 +205,9 @@ For the existing prototype:
 
 - project ID: `board-game-online-68c3f`
 - Web build output: `build/web/index.html`
+- project status source: `web/project-status/`
+- project status Firebase path after sync/deploy: `/project-status/`
+- sync dashboard after Web export with `./scripts/sync_project_status.ps1`
 - deploy Hosting only with `firebase deploy --only hosting`
 - do NOT deploy production database rules while the prototype intentionally uses temporary Test Mode
 
@@ -208,10 +225,11 @@ For each task:
 4. Preserve architecture boundaries above.
 5. Add/update tests for new public behavior.
 6. Update docs when a contract or roadmap decision changes.
-7. Do not silently introduce a second competing abstraction for an existing concept.
-8. Do not hide migration/schema errors; fail safely with precise messages.
-9. Do not destructively reset existing session state merely to accommodate a schema addition.
-10. Do not promote a DEV build to PROD unless the project owner explicitly requested that promotion.
-11. Leave the repository in a state that can pass the relevant quality gate.
+7. Update project-status data/documentation when the task changes checkpoint status, blockers, implementation order, or material health risks.
+8. Do not silently introduce a second competing abstraction for an existing concept.
+9. Do not hide migration/schema errors; fail safely with precise messages.
+10. Do not destructively reset existing session state merely to accommodate a schema addition.
+11. Do not promote a DEV build to PROD unless the project owner explicitly requested that promotion.
+12. Leave the repository in a state that can pass the relevant quality gate.
 
 When uncertain, prefer a smaller reversible implementation that preserves the public contracts.
