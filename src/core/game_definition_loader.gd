@@ -4,30 +4,31 @@ extends RefCounted
 const JSONH_GD_PATH := "res://addons/JsonhGd/JsonhGd.gd"
 
 static func load_game(path: String) -> Dictionary:
+	var errors: Array[String] = []
 	var result := {
 		"ok": false,
 		"data": {},
-		"errors": [],
+		"errors": errors,
 		"path": path,
 	}
 
 	if not FileAccess.file_exists(path):
-		(result["errors"] as Array).append("Game definition not found: %s" % path)
+		errors.append("Game definition not found: %s" % path)
 		return result
 
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
-		(result["errors"] as Array).append("Could not open game definition: %s" % path)
+		errors.append("Could not open game definition: %s" % path)
 		return result
 	var source := file.get_as_text()
 
 	var parsed := _parse_jsonh(source)
 	if not bool(parsed.get("ok", false)):
-		(result["errors"] as Array).append("JSONH parse error: %s" % str(parsed.get("error", "Unknown parse error")))
+		errors.append("JSONH parse error: %s" % str(parsed.get("error", "Unknown parse error")))
 		return result
 	var parsed_value: Variant = parsed.get("value")
 	if not parsed_value is Dictionary:
-		(result["errors"] as Array).append("The root of the game definition must be an object.")
+		errors.append("The root of the game definition must be an object.")
 		return result
 
 	var data: Dictionary = parsed_value
