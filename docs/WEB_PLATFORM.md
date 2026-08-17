@@ -2,7 +2,7 @@
 
 This document defines the public-facing web application that surrounds the BGO game runtime.
 
-The web platform is a separate client/product surface from the Godot runtime. It may be implemented with conventional web technology and developed in parallel, including with AI-assisted tools such as Replit. It should share identity, session metadata, billing state, catalog data, and product configuration with the rest of BGO without forcing those concerns into Godot scenes.
+The web platform is a separate client/product surface from the Godot runtime. It may be implemented with conventional web technology and developed in parallel, including with AI-assisted tools such as Replit. It should share identity, session metadata, catalog data, and product configuration with the rest of BGO without forcing those concerns into Godot scenes.
 
 ## Responsibilities
 
@@ -11,10 +11,8 @@ The web platform owns product and account workflows that are better served by a 
 - landing / product explanation
 - registration, login, account recovery
 - profile and account settings
-- subscription / billing UI
-- plan and entitlement explanations
 - game catalog and discovery
-- owned/installed/favorite game packages
+- owned/installed/favorite game packages later if the product model requires them
 - create / join / resume session flows
 - invite links and room codes
 - device-role selection (player, display, spectator, host where allowed)
@@ -23,7 +21,36 @@ The web platform owns product and account workflows that are better served by a 
 - mod/package author and publishing workflows later
 - admin/support tooling later
 
-The Godot runtime owns gameplay rendering and interaction. It should not become the primary implementation for billing, account management, marketing pages, or other normal SaaS/web flows.
+The Godot runtime owns gameplay rendering and interaction. It should not become the primary implementation for account management, marketing pages, or other normal SaaS/web flows.
+
+## Current MVP access policy
+
+The initial product is intentionally **free while the platform is being validated**, but access requires an authenticated BGO account.
+
+For the MVP:
+
+- users must register/sign in
+- authenticated users may access the available BGO functionality
+- there is no checkout flow
+- there are no paid plans
+- there are no advertising requirements
+- there are no Patreon/supporter entitlements in the runtime
+- gameplay code must not contain assumptions about a future commercial model
+
+This is a temporary product policy, not a permanent commitment to one business model.
+
+The eventual commercialization model is deliberately deferred until the platform has enough real usage data to make a sensible decision. Candidate models may later include, separately or in combination:
+
+- free / donation-supported access
+- Patreon or supporter membership
+- freemium plans
+- paid subscriptions
+- paid creator/publishing features
+- advertising-supported free access
+- package/game purchases or marketplace fees
+- other models discovered during product validation
+
+Do not implement monetization infrastructure merely because one of these possibilities exists.
 
 ## Shared platform boundary
 
@@ -39,10 +66,10 @@ Conceptually:
           |                    |                    |
    Web Platform          Godot Web/TV         Native Godot PC
  accounts/catalog         gameplay client       gameplay client
- billing/lobby            display/player        richer graphics
+ lobby/launcher           display/player        richer graphics
 ```
 
-No web page should need to understand Godot scene nodes, and Godot should not need to understand billing-provider UI.
+No web page should need to understand Godot scene nodes, and Godot should not need to understand future commercial-provider UI.
 
 ## Authentication and identity
 
@@ -50,20 +77,25 @@ Use one user identity across the ecosystem. The web platform is expected to be t
 
 Do not couple the domain model directly to one authentication SDK. Firebase Auth is an initial provider, not the game-domain API.
 
-## Plans, billing, and entitlements
+For the current MVP, authentication itself is the access gate: an unauthenticated visitor may see public product/landing content, but entering the application/lobby and launching protected game sessions requires a valid user identity.
 
-Billing and entitlement checks must be represented as explicit backend/product capabilities, for example:
+## Future monetization and entitlements
+
+Monetization is intentionally **not part of the initial implementation checkpoint**.
+
+When a commercial model is eventually selected, model access as explicit backend/product capabilities rather than embedding pricing-plan names throughout gameplay code. Possible future concepts include:
 
 - account tier
-- active subscription status
+- supporter status
+- active subscription state
 - feature entitlements
 - package ownership/access
 - host/session limits
-- storage/publishing limits later
+- storage/publishing limits
 
-Gameplay code should ask for an entitlement or permission rather than embed pricing-plan names throughout the runtime.
+The important architectural rule is already known even though the commercial model is not: gameplay code should ask whether an authenticated identity has a capability or permission, not know whether that capability came from Patreon, ads, a subscription, a purchase, a promotion, or another mechanism.
 
-Billing-provider secrets and webhook processing must remain server-side. Never trust client-provided subscription state.
+Any future billing-provider secrets, payment verification, ad-entitlement verification, or webhook processing must remain server-side. Never trust client-provided commercial state.
 
 ## Session launcher
 
@@ -105,7 +137,7 @@ Catalog metadata can include:
 - locale support
 - package manifest URL
 - asset/package size estimates
-- access/ownership requirements
+- access requirements if such requirements exist in a future product model
 
 Actual game definition and runtime assets remain governed by the GamePackage and AssetResolver contracts.
 
@@ -151,7 +183,7 @@ This track can progress alongside the core runtime without blocking it.
 
 - responsive landing page
 - navigation
-- sign-in/sign-up placeholders or initial Firebase Auth
+- sign-in/sign-up entry points
 - visual design tokens
 - deployment preview
 
@@ -164,7 +196,7 @@ Checkpoint: usable from desktop and phone, independently deployable.
 - protected routes
 - logout/recovery flows
 
-Checkpoint: one user identity can be recognized consistently by web/backend and prepared for game launch.
+Checkpoint: unauthenticated users cannot enter protected application/session surfaces, and one authenticated user identity can be recognized consistently by web/backend and prepared for game launch.
 
 ### Web W2 — Lobby/session UX
 
@@ -174,7 +206,7 @@ Checkpoint: one user identity can be recognized consistently by web/backend and 
 - choose player/display role
 - launch Godot Web runtime with explicit session context
 
-Checkpoint: a user can go from the normal website to an active TEST/conformance game without manually editing URLs.
+Checkpoint: a signed-in user can go from the normal website to an active TEST/conformance game without manually editing URLs.
 
 ### Web W3 — Catalog and GamePackages
 
@@ -185,14 +217,18 @@ Checkpoint: a user can go from the normal website to an active TEST/conformance 
 
 Checkpoint: catalog metadata is independent of the BGO executable and points to GamePackage identities.
 
-### Web W4 — Billing/entitlements
+### Web W4 — Commercial model decision (deferred)
 
-- plan comparison
-- checkout/customer portal integration
-- backend-verified entitlements
-- feature gating
+Do not implement this during the initial MVP.
 
-Checkpoint: no gameplay client trusts billing state supplied by the browser alone.
+Before adding monetization infrastructure:
+
+- measure actual usage and hosting/runtime costs
+- decide whether the product benefits more from supporter, freemium, ads, subscription, marketplace, or another model
+- document the selected model and privacy/product implications
+- design provider-neutral entitlement contracts if needed
+
+Only after that decision should implementation-specific payment/ad/supporter integrations be scheduled.
 
 ### Web W5 — Creator/admin surfaces
 
@@ -211,9 +247,10 @@ AI-generated web code must follow the same project discipline as the Godot side:
 - inspect `AGENTS.md` first
 - use backend contracts, do not invent incompatible schemas
 - keep secrets server-side
-- do not bypass authorization for convenience
-- add automated tests for important auth/session/entitlement flows
+- do not bypass authentication/authorization for convenience
+- do not introduce billing, ads, or paid-plan assumptions before the commercial model is explicitly selected
+- add automated tests for important auth/session flows
 - keep gameplay logic out of the web frontend
 - update documentation when shared contracts change
 
-The web platform may iterate visually much faster than the game core, but changes to identity, session, package, or entitlement contracts must be coordinated and versioned.
+The web platform may iterate visually much faster than the game core, but changes to identity, session, package, or future entitlement contracts must be coordinated and versioned.
