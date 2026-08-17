@@ -2,6 +2,7 @@ class_name BgoLogger
 extends Node
 
 const LOG_ROOT := "debug"
+const PUBLIC_LOG_ROOT := "debug_public"
 const MAX_BUFFER_ENTRIES := 250
 const WEB_POLL_SECONDS := 1.0
 
@@ -130,6 +131,7 @@ func _upload_error_run(snapshot: Dictionary, source: String) -> void:
 		"browser": snapshot,
 	}
 	_adapter.write("%s/%s/%s/error_runs/%s" % [LOG_ROOT, game_id, client_id, _run_id], payload)
+	_adapter.write("%s/latest_error/%s" % [PUBLIC_LOG_ROOT, _sanitize_key(game_id)], payload)
 
 func _append_file(line: String) -> void:
 	var file: FileAccess
