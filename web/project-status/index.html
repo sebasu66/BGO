@@ -17,12 +17,23 @@
         <p class="hero-copy">Roadmap, checkpoints, bloqueos y salud del desarrollo en una sola vista.</p>
       </div>
       <div class="hero-actions">
+        <a class="button" href="/dev/">DEV Hub</a>
         <span id="overall-badge" class="badge neutral">Cargando…</span>
         <button id="refresh-button" class="button" type="button">Actualizar</button>
       </div>
     </header>
 
     <section id="summary-grid" class="summary-grid" aria-label="Resumen de salud"></section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="section-kicker">DEPLOY</p>
+          <h2>Versión desplegada</h2>
+        </div>
+      </div>
+      <div id="build-details"><p class="muted">Cargando metadata del build…</p></div>
+    </section>
 
     <section class="panel current-panel">
       <div class="panel-heading">
@@ -91,7 +102,7 @@
 
     <footer class="footer">
       <span>BGO development overview</span>
-      <span id="source-note">Fuente: web/project-status/status.json</span>
+      <span id="source-note">Fuente: web/project-status/status.json + build-info.json</span>
     </footer>
   </main>
 
