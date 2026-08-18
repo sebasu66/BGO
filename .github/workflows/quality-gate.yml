@@ -103,17 +103,16 @@ jobs:
         id: e2e_local
         run: npm run test:e2e
 
-      # DEV deployment is intentionally limited to develop. It uses a named
-      # preview channel so ordinary development can never overwrite the live
-      # Hosting channel. Configure the repository secret/variable documented in
-      # docs/CI_DEPLOYMENT_AND_E2E.md before enabling the develop branch flow.
+      # DEV deployment is intentionally limited to develop. The Firebase CLI
+      # created this repository secret; the project id is explicit so there is
+      # no second manual GitHub variable to maintain.
       - name: Deploy validated build to Firebase DEV channel
         id: deploy_dev
         if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          firebaseServiceAccount: ${{ secrets.FIREBASE_DEV_SERVICE_ACCOUNT }}
-          projectId: ${{ vars.FIREBASE_DEV_PROJECT_ID }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_BOARD_GAME_ONLINE_68C3F }}
+          projectId: board-game-online-68c3f
           channelId: dev
           expires: 30d
 
