@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-17T21:43:00-03:00",
+  "updated_at": "2026-08-17T22:38:00-03:00",
   "overall": {
     "status": "warning",
     "label": "EN DESARROLLO"
@@ -10,9 +10,9 @@
     "title": "Estabilizar el PoC componentizado",
     "status": "active",
     "status_label": "ACTIVO",
-    "progress_percent": 90,
-    "description": "TEST001 ya tiene build Web reproducible, CI headless, roles Display/P1/P2, gestos de cámara y diagnóstico de errores. La dirección de producto ahora converge en una mesa continua con secciones declarativas, sesión real y un primer juego abstracto completo.",
-    "next_action": "Automatizar el deploy DEV desde el artefacto Web validado de GitHub Actions; luego cerrar el modelo SessionState/turnos/resultado y el modelo lógico de mesa/secciones/slots para un fixture tipo ajedrez/damas."
+    "progress_percent": 92,
+    "description": "TEST001 ya tiene build Web reproducible, CI headless, Playwright E2E con evidencia, roles Display/P1/P2, gestos de cámara y diagnóstico de errores. El deploy DEV automático ya está preparado y aislado del canal live; falta únicamente configurar las credenciales/ID de Firebase DEV en GitHub.",
+    "next_action": "Configurar FIREBASE_DEV_SERVICE_ACCOUNT y FIREBASE_DEV_PROJECT_ID en GitHub; después validar el primer deploy automático al canal DEV y continuar con SessionState/turnos/resultado + mesa/secciones/slots para el fixture abstracto."
   },
   "health_checks": [
     {
@@ -25,13 +25,19 @@
       "name": "Web export",
       "status": "success",
       "label": "AUTOMATIZADO",
-      "detail": "GitHub Actions instala Godot 4.7.1 y export templates, ejecuta import/tests y produce un Web export validado. El build local ya no es técnicamente obligatorio para generar el artefacto."
+      "detail": "GitHub Actions instala Godot 4.7.1 y export templates, ejecuta import/tests y produce un Web export validado. El build local ya no es técnicamente obligatorio."
+    },
+    {
+      "name": "Browser E2E",
+      "status": "success",
+      "label": "IMPLEMENTADO",
+      "detail": "Playwright prueba project-status, launcher, Godot canvas/flight recorder y error viewer; conserva screenshots, trace, video, JSON y reporte HTML como artifacts."
     },
     {
       "name": "DEV auto deploy",
       "status": "warning",
-      "label": "PENDIENTE",
-      "detail": "Falta agregar credenciales/target Firebase de DEV y un paso condicionado que publique únicamente Hosting después de un quality gate verde. PROD seguirá siendo promoción manual."
+      "label": "LISTO PARA CREDENCIALES",
+      "detail": "El workflow despliega sólo pushes de develop al preview channel Firebase 'dev' y vuelve a correr Playwright contra la URL desplegada. Falta configurar el service account secret y project ID variable."
     },
     {
       "name": "Web package validation",
@@ -67,15 +73,15 @@
       "name": "GitHub Actions CI",
       "status": "success",
       "label": "ACTIVO",
-      "detail": "Quality Gate ejecuta estructura, lint/format, Godot import, tests, export Web validado y publica el artefacto de build."
+      "detail": "Quality Gate ejecuta estructura, lint/format, Godot import, tests, export Web validado, browser E2E y publica artifacts de build/evidencia."
     }
   ],
   "blockers": [
     {
-      "title": "Auto deploy DEV todavía no configurado",
+      "title": "Credenciales Firebase DEV todavía no configuradas",
       "status": "warning",
       "label": "INFRA",
-      "detail": "El build ya se genera en GitHub Actions; falta autenticar Firebase de forma segura y definir un destino DEV explícito antes de eliminar el deploy manual del flujo cotidiano."
+      "detail": "El código del auto deploy ya existe; GitHub necesita FIREBASE_DEV_SERVICE_ACCOUNT y FIREBASE_DEV_PROJECT_ID antes del primer push a develop."
     },
     {
       "title": "Ocupación física/lógica incompleta",
@@ -109,9 +115,9 @@
       "id": "1",
       "title": "Quality gate + CI/CD DEV",
       "status": "active",
-      "label": "EN USO",
-      "description": "CI ya genera el build Web. Siguiente paso: deploy DEV automático sólo después de validación verde y con destino Firebase explícito.",
-      "checkpoint": "Push de desarrollo verde produce una URL DEV actualizada sin intervención local; PROD permanece manual."
+      "label": "CASI LISTO",
+      "description": "CI genera el build Web, ejecuta Playwright y conserva evidencia. Deploy a Firebase DEV channel ya preparado; falta sólo la configuración segura de credenciales/target.",
+      "checkpoint": "Push a develop verde produce una URL DEV actualizada y re-testada sin intervención local; PROD permanece manual."
     },
     {
       "id": "2",
@@ -225,9 +231,9 @@
   ],
   "ci": {
     "status": "active",
-    "label": "GITHUB ACTIONS",
+    "label": "GITHUB ACTIONS + PLAYWRIGHT",
     "commit": "Ver ci.json",
     "run": "Automático por push/PR",
-    "note": "GitHub Actions ya puede construir BGO sin usar la PC del owner. Falta convertir el artefacto verde en deploy DEV automático con credenciales y target Firebase explícitos."
+    "note": "GitHub Actions construye y prueba BGO sin usar la PC del owner. Con las dos credenciales DEV configuradas, develop también se desplegará y re-testeará automáticamente en Firebase."
   }
 }
