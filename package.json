@@ -1,0 +1,12 @@
+{
+  "name": "bgo-ci-tools",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "serve:web": "node scripts/serve_web.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}
