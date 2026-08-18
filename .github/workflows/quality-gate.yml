@@ -19,7 +19,18 @@ permissions:
   contents: read
 
 jobs:
+  context-integrity:
+    name: Project context integrity
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    uses: sebasu66/AI_commit_integrity_check/.github/workflows/integrity.yml@356b44c065fa525336c52a2958a27ba63334d2c9
+    with:
+      skill_path: SKILL.md
+    permissions:
+      contents: read
+
   quality-gate:
+    needs: context-integrity
+    if: always() && (needs.context-integrity.result == 'success' || needs.context-integrity.result == 'skipped')
     runs-on: ubuntu-latest
     env:
       GODOT_VERSION: 4.7.1
@@ -64,20 +75,11 @@ jobs:
 
       - name: GDScript format
         id: format
-        continue-on-error: true
         run: gdformat --check src tests
 
       - name: GDScript lint
         id: lint
-        continue-on-error: true
         run: gdlint src tests
-
-      - name: Report baseline lint debt
-        if: steps.format.outcome != 'success' || steps.lint.outcome != 'success'
-        run: |
-          echo "::warning::Existing GDScript lint/format debt is advisory during the first baseline."
-          echo "Format: ${{ steps.format.outcome }}"
-          echo "Lint:   ${{ steps.lint.outcome }}"
 
       - name: Install Godot ${{ env.GODOT_VERSION }}
         shell: bash
