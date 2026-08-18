@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-17T15:06:00-03:00",
+  "updated_at": "2026-08-17T21:43:00-03:00",
   "overall": {
     "status": "warning",
     "label": "EN DESARROLLO"
@@ -10,34 +10,40 @@
     "title": "Estabilizar el PoC componentizado",
     "status": "active",
     "status_label": "ACTIVO",
-    "progress_percent": 88,
-    "description": "TEST001 ya exporta y corre en Web con Display, P1 y P2. El smoke multi-cliente reveló trabajo real de UX/dominio: PlayerArea vs Hand, cámaras por jugador, stacks, ocupación y filtros de cámara.",
-    "next_action": "Cerrar los hallazgos del smoke multi-cliente: split de stacks TAKE 1/ALL, ocupación lógica sin overlap, validar filtros de cámara y repetir Display + P1 + P2 con export validado."
+    "progress_percent": 90,
+    "description": "TEST001 ya tiene build Web reproducible, CI headless, roles Display/P1/P2, gestos de cámara y diagnóstico de errores. La dirección de producto ahora converge en una mesa continua con secciones declarativas, sesión real y un primer juego abstracto completo.",
+    "next_action": "Automatizar el deploy DEV desde el artefacto Web validado de GitHub Actions; luego cerrar el modelo SessionState/turnos/resultado y el modelo lógico de mesa/secciones/slots para un fixture tipo ajedrez/damas."
   },
   "health_checks": [
     {
       "name": "Godot multi-client smoke test",
       "status": "warning",
       "label": "EN PRUEBA",
-      "detail": "Display + P1 + P2 funcionan y sincronizan; el smoke encontró ajustes de interacción y layout todavía abiertos."
+      "detail": "Display + P1 + P2 funcionan y sincronizan; falta repetir el smoke después de los cambios recientes de cámara/UI y cerrar ocupación lógica."
     },
     {
       "name": "Web export",
       "status": "success",
       "label": "AUTOMATIZADO",
-      "detail": "scripts/export_web.ps1 y scripts/export_web.sh limpian, importan, exportan, sincronizan Web auxiliar y validan el artefacto."
+      "detail": "GitHub Actions instala Godot 4.7.1 y export templates, ejecuta import/tests y produce un Web export validado. El build local ya no es técnicamente obligatorio para generar el artefacto."
+    },
+    {
+      "name": "DEV auto deploy",
+      "status": "warning",
+      "label": "PENDIENTE",
+      "detail": "Falta agregar credenciales/target Firebase de DEV y un paso condicionado que publique únicamente Hosting después de un quality gate verde. PROD seguirá siendo promoción manual."
     },
     {
       "name": "Web package validation",
       "status": "success",
       "label": "ACTIVO",
-      "detail": "El validador comprueba flight recorder, TEST001 JSONH dentro del PCK, project-status y test-launcher antes de aceptar el build."
+      "detail": "El validador comprueba flight recorder, TEST001 JSONH dentro del PCK y las rutas Web auxiliares antes de aceptar el build."
     },
     {
       "name": "Browser error diagnostics",
       "status": "success",
       "label": "ACTIVO",
-      "detail": "Flight recorder + BgoLogger publican sólo corridas con error y detectan también si el recorder falta del HTML exportado."
+      "detail": "Flight recorder + BgoLogger publican corridas con error y existe un viewer HTML hospedado para inspección remota."
     },
     {
       "name": "GDScript lint / format",
@@ -49,7 +55,7 @@
       "name": "Unit / domain tests",
       "status": "success",
       "label": "ACTIVO",
-      "detail": "Runner headless disponible y ejecutado por GitHub Actions; ampliar cobertura a stacks, slots/ocupación y permisos."
+      "detail": "Runner headless disponible y ejecutado por GitHub Actions; ampliar cobertura a SessionState, ocupación, permisos y fixture abstracto."
     },
     {
       "name": "Architecture checks",
@@ -61,27 +67,33 @@
       "name": "GitHub Actions CI",
       "status": "success",
       "label": "ACTIVO",
-      "detail": "Quality Gate ejecuta estructura, lint/format, Godot import, tests y el mismo export Web validado que se usa localmente."
+      "detail": "Quality Gate ejecuta estructura, lint/format, Godot import, tests, export Web validado y publica el artefacto de build."
     }
   ],
   "blockers": [
     {
-      "title": "Stacks todavía no tienen split de cantidad",
+      "title": "Auto deploy DEV todavía no configurado",
       "status": "warning",
-      "label": "C0",
-      "detail": "Tomar o soltar un stack debe ofrecer TAKE [1] [+] [ALL] y crear/mergear cantidades mediante estado sincronizado."
+      "label": "INFRA",
+      "detail": "El build ya se genera en GitHub Actions; falta autenticar Firebase de forma segura y definir un destino DEV explícito antes de eliminar el deploy manual del flujo cotidiano."
     },
     {
       "title": "Ocupación física/lógica incompleta",
       "status": "warning",
       "label": "C0",
-      "detail": "El reflow evita overlap visual en colecciones, pero slots y PlayerArea necesitan restricciones lógicas de ocupación deterministas."
+      "detail": "Slots y secciones necesitan restricciones lógicas deterministas para impedir estados imposibles como overlap no permitido."
+    },
+    {
+      "title": "SessionState jugable todavía incompleto",
+      "status": "warning",
+      "label": "SIGUIENTE",
+      "detail": "Faltan lifecycle, participantes/asientos, host, turno activo, número de turno, final de partida y resultado/ganador."
     },
     {
       "title": "Smoke multi-cliente debe repetirse",
       "status": "warning",
       "label": "CHECKPOINT",
-      "detail": "Los fixes de cámara, Hand/PlayerArea, presence y filtros deben pasar nuevamente Display + P1 + P2 antes de cerrar C0."
+      "detail": "Los cambios recientes de cámara, UI, presence, Hand/PlayerArea y filtros deben pasar nuevamente Display + P1 + P2 antes de cerrar C0."
     }
   ],
   "core_roadmap": [
@@ -90,39 +102,39 @@
       "title": "Stabilize current PoC",
       "status": "active",
       "label": "ACTIVO",
-      "description": "Cerrar TEST001 con roles Display/P1/P2, player identity/presence, slots, ownership, PlayerArea/Hand, stacks y Web export validado.",
+      "description": "Cerrar TEST001 con export reproducible, diagnóstico, cámara jugador, presence, ocupación determinista y smoke multi-cliente.",
       "checkpoint": "Sesión compartida y export reproducible verificados sin regresiones."
     },
     {
       "id": "1",
-      "title": "Quality gate + CI",
+      "title": "Quality gate + CI/CD DEV",
       "status": "active",
       "label": "EN USO",
-      "description": "Lint, formatting, structure, tests, Godot headless y Web export validado en cada commit.",
-      "checkpoint": "Clean checkout verde y errores de packaging detectados automáticamente."
+      "description": "CI ya genera el build Web. Siguiente paso: deploy DEV automático sólo después de validación verde y con destino Firebase explícito.",
+      "checkpoint": "Push de desarrollo verde produce una URL DEV actualizada sin intervención local; PROD permanece manual."
     },
     {
       "id": "2",
-      "title": "Logical model",
+      "title": "Playable abstract-game core",
       "status": "planned",
       "label": "SIGUIENTE",
-      "description": "Session/Player/Turn/Phase/Tracks, slots, zones, ownership, permissions y comandos desacoplados de render/Firebase.",
-      "checkpoint": "Tests de turnos, tracks, permisos, ocupación, Hand/PlayerArea y convergencia."
+      "description": "SessionState con lifecycle/turnos/resultado + tabletop continuo con secciones/slots + miniaturas/piezas individuales para un fixture tipo ajedrez/damas.",
+      "checkpoint": "Una partida puede empezar, alternar turnos, mover piezas con ocupación legal y terminar con ganador/perdedor."
     },
     {
       "id": "3",
       "title": "External GamePackage",
       "status": "planned",
       "label": "PLAN",
-      "description": "Separar BGO Core de juegos externos mediante manifest, versión, hash, dependencias y package loader.",
-      "checkpoint": "TEST001 usa el mismo contrato que un mod externo."
+      "description": "Separar BGO Core de juegos externos mediante manifest, versión, hash, dependencias, tabletop/secciones declarativas y package loader.",
+      "checkpoint": "El fixture abstracto usa el mismo contrato que un mod externo."
     },
     {
       "id": "4",
       "title": "Conformance games",
       "status": "planned",
       "label": "PLAN",
-      "description": "Fixtures pequeños para board/slots, cards, dice, miniatures, ownership y cada familia de componentes.",
+      "description": "Fixtures pequeños guiados por juegos reales para board/slots, cards, dice, miniatures, stacks/counters, ownership y visibilidad.",
       "checkpoint": "Cada componente público tiene tests y fixture de capacidades."
     },
     {
@@ -146,7 +158,7 @@
       "title": "Multiple representations",
       "status": "planned",
       "label": "PLAN",
-      "description": "Mesh high/low, billboards, top-down sprites e iconos para un mismo objeto lógico.",
+      "description": "Mesh high/low, grupos/aggregates, billboards, top-down sprites e iconos para un mismo estado lógico.",
       "checkpoint": "Clientes con perfiles distintos comparten el mismo estado."
     },
     {
@@ -159,18 +171,18 @@
     },
     {
       "id": "9",
-      "title": "Asset authoring / photobooth",
+      "title": "Asset authoring / visual table editor",
       "status": "planned",
       "label": "PLAN",
-      "description": "Generar thumbnails, top-down y billboards desde assets ricos.",
-      "checkpoint": "Una miniatura fuente genera representaciones runtime válidas."
+      "description": "Editor visual de secciones/slots y herramientas para thumbnails, top-down y billboards.",
+      "checkpoint": "El editor escribe el mismo contrato declarativo que consume el runtime."
     },
     {
       "id": "10",
       "title": "MCP logical control MVP",
       "status": "planned",
       "label": "PLAN",
-      "description": "Exponer estado y comandos lógicos seguros sin raw Godot nodes.",
+      "description": "Exponer sesiones, turnos, estado visible y comandos seguros; preparar soporte para asistentes y participantes AI.",
       "checkpoint": "MCP usa la misma validación de comandos que clientes humanos."
     }
   ],
@@ -180,14 +192,14 @@
       "title": "Product shell",
       "status": "active",
       "label": "EN USO",
-      "description": "Dashboard de proyecto y test launcher ya viven como capa Web separada del runtime Godot."
+      "description": "Dashboard de proyecto, test launcher y error viewer viven como capa Web separada del runtime Godot."
     },
     {
       "id": "W1",
       "title": "Lobby / session UX",
       "status": "planned",
       "label": "SIGUIENTE",
-      "description": "Crear/unirse/reanudar partidas, elegir rol y lanzar Godot sin editar URLs."
+      "description": "Crear/unirse/reanudar partidas, elegir participante/asiento/rol y evitar entrar a una mesa interactiva sin sesión válida."
     },
     {
       "id": "W2",
@@ -216,6 +228,6 @@
     "label": "GITHUB ACTIONS",
     "commit": "Ver ci.json",
     "run": "Automático por push/PR",
-    "note": "El workflow genera ci.json dentro del artefacto Web y valida el mismo export reproducible disponible para desarrollo local."
+    "note": "GitHub Actions ya puede construir BGO sin usar la PC del owner. Falta convertir el artefacto verde en deploy DEV automático con credenciales y target Firebase explícitos."
   }
 }
