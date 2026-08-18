@@ -117,9 +117,6 @@ jobs:
         id: e2e_local
         run: npm run test:e2e
 
-      # DEV deployment is intentionally limited to develop. The Firebase CLI
-      # created this repository secret; the project id is explicit so there is
-      # no second manual GitHub variable to maintain.
       - name: Deploy validated build to Firebase DEV channel
         id: deploy_dev
         if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
@@ -166,6 +163,15 @@ jobs:
             "dev_url": "${{ steps.deploy_dev.outputs.details_url }}"
           }
           EOF
+
+      - name: Publish final CI metadata to Firebase DEV
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop' && steps.e2e_dev.outcome == 'success'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_BOARD_GAME_ONLINE_68C3F }}
+          projectId: board-game-online-68c3f
+          channelId: dev
+          expires: 30d
 
       - name: Upload validated Web build artifact
         if: always()
