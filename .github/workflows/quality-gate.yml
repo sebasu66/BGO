@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -108,6 +110,9 @@ jobs:
         shell: bash
         run: bash scripts/export_web.sh
 
+      - name: Write build and deploy metadata
+        run: node scripts/write_build_info.mjs
+
       - name: Browser E2E against exported build
         id: e2e_local
         run: npm run test:e2e
@@ -148,6 +153,7 @@ jobs:
             "commit": "${{ github.sha }}",
             "branch": "${{ github.ref_name }}",
             "run": "${{ github.run_id }}",
+            "run_number": "${{ github.run_number }}",
             "format": "${{ steps.format.outcome }}",
             "lint": "${{ steps.lint.outcome }}",
             "structure": "${{ steps.structure.outcome }}",
@@ -156,7 +162,8 @@ jobs:
             "web_export": "${{ steps.web_export.outcome }}",
             "e2e_local": "${{ steps.e2e_local.outcome }}",
             "deploy_dev": "${{ steps.deploy_dev.outcome }}",
-            "e2e_dev": "${{ steps.e2e_dev.outcome }}"
+            "e2e_dev": "${{ steps.e2e_dev.outcome }}",
+            "dev_url": "${{ steps.deploy_dev.outputs.details_url }}"
           }
           EOF
 
