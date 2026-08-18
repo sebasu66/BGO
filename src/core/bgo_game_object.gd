@@ -11,12 +11,15 @@ signal component_added(component_id: StringName, component: Node)
 var properties: Dictionary = {}
 var _components: Dictionary = {}
 
+
 func set_property_value(property_name: StringName, value: Variant) -> void:
 	properties[property_name] = value
 	property_changed.emit(property_name, value)
 
+
 func get_property_value(property_name: StringName, default_value: Variant = null) -> Variant:
 	return properties.get(property_name, default_value)
+
 
 func add_component(component_id: StringName, component: Node) -> void:
 	if _components.has(component_id):
@@ -27,11 +30,14 @@ func add_component(component_id: StringName, component: Node) -> void:
 	add_child(component)
 	component_added.emit(component_id, component)
 
+
 func get_component(component_id: StringName) -> Node:
 	return _components.get(component_id)
 
+
 func has_component(component_id: StringName) -> bool:
 	return _components.has(component_id)
+
 
 func serialize_state() -> Dictionary:
 	return {

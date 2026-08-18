@@ -25,14 +25,17 @@ extends Node3D
 
 var _rebuild_queued := false
 
+
 func _ready() -> void:
 	rebuild()
+
 
 func configure(new_columns: int, new_rows: int, new_cell_size: float) -> void:
 	columns = new_columns
 	rows = new_rows
 	cell_size = new_cell_size
 	rebuild()
+
 
 func rebuild() -> void:
 	_rebuild_queued = false
@@ -71,8 +74,10 @@ func rebuild() -> void:
 				mesh_instance.owner = get_tree().edited_scene_root
 				shape.owner = get_tree().edited_scene_root
 
+
 func slot_id(cell: Vector2i) -> String:
 	return "board:%d:%d" % [cell.x, cell.y]
+
 
 func parse_slot_id(value: String) -> Vector2i:
 	var parts := value.split(":")
@@ -81,11 +86,14 @@ func parse_slot_id(value: String) -> Vector2i:
 	var cell := Vector2i(int(parts[1]), int(parts[2]))
 	return cell if is_valid_cell(cell) else Vector2i(-1, -1)
 
+
 func is_valid_cell(cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.x < columns and cell.y >= 0 and cell.y < rows
 
+
 func is_valid_slot(value: String) -> bool:
 	return parse_slot_id(value).x >= 0
+
 
 func slot_world(value: String) -> Vector3:
 	var cell := parse_slot_id(value)
@@ -93,10 +101,14 @@ func slot_world(value: String) -> Vector3:
 		return Vector3.ZERO
 	return cell_world(cell)
 
+
 func cell_world(cell: Vector2i) -> Vector3:
 	var width := float(columns - 1) * cell_size
 	var depth := float(rows - 1) * cell_size
-	return Vector3(float(cell.x) * cell_size - width * 0.5, 0.0, float(cell.y) * cell_size - depth * 0.5)
+	return Vector3(
+		float(cell.x) * cell_size - width * 0.5, 0.0, float(cell.y) * cell_size - depth * 0.5
+	)
+
 
 func _queue_rebuild() -> void:
 	if not is_inside_tree() or _rebuild_queued:

@@ -3,6 +3,7 @@ extends RefCounted
 
 const JSONH_GD_PATH := "res://addons/JsonhGd/JsonhGd.gd"
 
+
 static func load_game(path: String) -> Dictionary:
 	var errors: Array[String] = []
 	var result := {
@@ -41,6 +42,7 @@ static func load_game(path: String) -> Dictionary:
 	result["data"] = data
 	return result
 
+
 static func _parse_jsonh(source: String) -> Dictionary:
 	if FileAccess.file_exists(JSONH_GD_PATH):
 		var jsonh_script: Script = load(JSONH_GD_PATH)
@@ -50,7 +52,9 @@ static func _parse_jsonh(source: String) -> Dictionary:
 				var parse_result: Variant = reader_class.call("parse_element_from_string", source)
 				if parse_result != null:
 					if bool(parse_result.get("is_error")):
-						return {"ok": false, "value": null, "error": str(parse_result.call("error"))}
+						return {
+							"ok": false, "value": null, "error": str(parse_result.call("error"))
+						}
 					return {"ok": true, "value": parse_result.call("value"), "error": ""}
 
 	# JSON is a strict subset of JSONH. This fallback means a game still loads
@@ -63,8 +67,13 @@ static func _parse_jsonh(source: String) -> Dictionary:
 	return {
 		"ok": false,
 		"value": null,
-		"error": "JsonhGd is not installed at %s, and strict JSON parsing also failed at line %d: %s" % [JSONH_GD_PATH, json.get_error_line(), json.get_error_message()]
+		"error":
+		(
+			"JsonhGd is not installed at %s, and strict JSON parsing also failed at line %d: %s"
+			% [JSONH_GD_PATH, json.get_error_line(), json.get_error_message()]
+		)
 	}
+
 
 static func validate_game(data: Dictionary) -> Array[String]:
 	var errors: Array[String] = []
@@ -138,12 +147,27 @@ static func validate_game(data: Dictionary) -> Array[String]:
 				_validate_component_reference(object_def, "setup.objects[%d]" % index, errors)
 				var owner_id := str(object_def.get("owner_id", ""))
 				if not owner_id.is_empty() and not player_ids.has(owner_id):
-					errors.append("setup.objects[%d].owner_id references unknown player '%s'." % [index, owner_id])
-				_validate_initial_location(object_def, index, board_columns, board_rows, occupied_initial_slots, errors)
+					errors.append(
+						(
+							"setup.objects[%d].owner_id references unknown player '%s'."
+							% [index, owner_id]
+						)
+					)
+				_validate_initial_location(
+					object_def, index, board_columns, board_rows, occupied_initial_slots, errors
+				)
 
 	return errors
 
-static func _validate_initial_location(object_def: Dictionary, index: int, columns: int, rows: int, occupied: Dictionary, errors: Array[String]) -> void:
+
+static func _validate_initial_location(
+	object_def: Dictionary,
+	index: int,
+	columns: int,
+	rows: int,
+	occupied: Dictionary,
+	errors: Array[String]
+) -> void:
 	var location: Variant = object_def.get("initial_location", {})
 	if not location is Dictionary:
 		errors.append("setup.objects[%d].initial_location must be an object." % index)
@@ -154,19 +178,28 @@ static func _validate_initial_location(object_def: Dictionary, index: int, colum
 	var slot_id := str(location.get("slot_id", ""))
 	var parts := slot_id.split(":")
 	if parts.size() != 3 or parts[0] != "board":
-		errors.append("setup.objects[%d] has invalid board slot '%s'. Expected board:x:y." % [index, slot_id])
+		errors.append(
+			"setup.objects[%d] has invalid board slot '%s'. Expected board:x:y." % [index, slot_id]
+		)
 		return
 	var x := int(parts[1])
 	var y := int(parts[2])
 	if x < 0 or y < 0 or x >= columns or y >= rows:
-		errors.append("setup.objects[%d] slot '%s' is outside the configured board." % [index, slot_id])
+		errors.append(
+			"setup.objects[%d] slot '%s' is outside the configured board." % [index, slot_id]
+		)
 		return
 	if occupied.has(slot_id):
-		errors.append("Initial slot '%s' is already occupied by '%s'." % [slot_id, str(occupied[slot_id])])
+		errors.append(
+			"Initial slot '%s' is already occupied by '%s'." % [slot_id, str(occupied[slot_id])]
+		)
 	else:
 		occupied[slot_id] = str(object_def.get("id", "unnamed"))
 
-static func _validate_component_reference(definition: Dictionary, label: String, errors: Array[String]) -> void:
+
+static func _validate_component_reference(
+	definition: Dictionary, label: String, errors: Array[String]
+) -> void:
 	var component_id := str(definition.get("component", ""))
 	if component_id.is_empty():
 		errors.append("%s.component is required." % label)

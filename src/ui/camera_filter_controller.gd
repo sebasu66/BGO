@@ -14,6 +14,7 @@ var _owner_enabled: Dictionary = {}
 var _type_enabled: Dictionary = {}
 var _elapsed := 0.0
 
+
 func _ready() -> void:
 	_root = get_parent()
 	_ui = _root.get_node_or_null("UI") as CanvasLayer
@@ -22,12 +23,14 @@ func _ready() -> void:
 	_build_ui()
 	call_deferred("_refresh_filters")
 
+
 func _process(delta: float) -> void:
 	_elapsed += delta
 	if _elapsed < REFRESH_SECONDS:
 		return
 	_elapsed = 0.0
 	_refresh_filters()
+
 
 func _build_ui() -> void:
 	_button = Button.new()
@@ -88,6 +91,7 @@ func _build_ui() -> void:
 	all_button.pressed.connect(_show_all)
 	root_box.add_child(all_button)
 
+
 func _toggle_popup() -> void:
 	if _popup.visible:
 		_popup.hide()
@@ -97,6 +101,7 @@ func _toggle_popup() -> void:
 	var position := Vector2i(maxi(int(viewport_size.x) - 350, 10), 68)
 	_popup.position = position
 	_popup.popup()
+
 
 func _refresh_filters() -> void:
 	if _root == null:
@@ -119,10 +124,13 @@ func _refresh_filters() -> void:
 			_owner_enabled[owner_id] = true
 		if not _type_enabled.has(type_id):
 			_type_enabled[type_id] = true
-		var enabled := bool(_owner_enabled.get(owner_id, true)) and bool(_type_enabled.get(type_id, true))
+		var enabled := (
+			bool(_owner_enabled.get(owner_id, true)) and bool(_type_enabled.get(type_id, true))
+		)
 		_apply_piece_filter(piece, enabled)
 	if _popup != null and _popup.visible:
 		_refresh_filter_controls()
+
 
 func _piece_type(piece: Node3D) -> String:
 	var component_id := str(piece.get_meta("component_id", ""))
@@ -131,21 +139,27 @@ func _piece_type(piece: Node3D) -> String:
 	var kind := BgoComponentRegistry.get_kind(component_id)
 	return kind if not kind.is_empty() else component_id
 
+
 func _apply_piece_filter(piece: Node3D, enabled: bool) -> void:
 	piece.set_meta("bgo_filtered_out", not enabled)
 	if piece is CollisionObject3D:
 		var body := piece as CollisionObject3D
 		if not body.has_meta("bgo_filter_original_collision_layer"):
 			body.set_meta("bgo_filter_original_collision_layer", body.collision_layer)
-		body.collision_layer = int(body.get_meta("bgo_filter_original_collision_layer", 1)) if enabled else 0
+		body.collision_layer = (
+			int(body.get_meta("bgo_filter_original_collision_layer", 1)) if enabled else 0
+		)
 	_apply_visual_alpha(piece, 1.0 if enabled else FILTER_ALPHA)
+
 
 func _apply_visual_alpha(node: Node, alpha: float) -> void:
 	if node is MeshInstance3D:
 		var mesh_instance := node as MeshInstance3D
 		if not mesh_instance.has_meta("bgo_filter_original_material"):
 			mesh_instance.set_meta("bgo_filter_original_material", mesh_instance.material_override)
-		var original: Material = mesh_instance.get_meta("bgo_filter_original_material", null) as Material
+		var original: Material = (
+			mesh_instance.get_meta("bgo_filter_original_material", null) as Material
+		)
 		if alpha >= 0.999:
 			mesh_instance.material_override = original
 		elif original is StandardMaterial3D:
@@ -163,11 +177,13 @@ func _apply_visual_alpha(node: Node, alpha: float) -> void:
 	for child in node.get_children():
 		_apply_visual_alpha(child, alpha)
 
+
 func _refresh_filter_controls() -> void:
 	if _owner_box == null or _type_box == null:
 		return
 	_rebuild_checkboxes(_owner_box, _owner_enabled, true)
 	_rebuild_checkboxes(_type_box, _type_enabled, false)
+
 
 func _rebuild_checkboxes(container: VBoxContainer, values: Dictionary, owner_group: bool) -> void:
 	for child in container.get_children():
@@ -183,10 +199,12 @@ func _rebuild_checkboxes(container: VBoxContainer, values: Dictionary, owner_gro
 		checkbox.toggled.connect(_on_filter_toggled.bind(key, owner_group))
 		container.add_child(checkbox)
 
+
 func _owner_label(owner_id: String) -> String:
 	if owner_id.is_empty():
 		return "Neutral / no owner"
 	return owner_id.replace("_", " ").capitalize()
+
 
 func _on_filter_toggled(enabled: bool, key: String, owner_group: bool) -> void:
 	if owner_group:
@@ -194,6 +212,7 @@ func _on_filter_toggled(enabled: bool, key: String, owner_group: bool) -> void:
 	else:
 		_type_enabled[key] = enabled
 	_refresh_filters()
+
 
 func _show_all() -> void:
 	for key in _owner_enabled.keys():

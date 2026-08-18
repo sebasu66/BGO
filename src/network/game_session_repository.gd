@@ -19,6 +19,7 @@ var _last_piece_snapshot: Dictionary = {}
 var _poll_in_flight := false
 var _definition_objects_checked := false
 
+
 func _ready() -> void:
 	_adapter = FirebaseRestAdapter.new()
 	add_child(_adapter)
@@ -31,12 +32,15 @@ func _ready() -> void:
 	_poll_timer.timeout.connect(refresh)
 	add_child(_poll_timer)
 
+
 func set_logger(value: BgoLogger) -> void:
 	logger = value
+
 
 func set_game_definition(value: Dictionary) -> void:
 	game_definition = value.duplicate(true)
 	_definition_objects_checked = false
+
 
 func start(target_game_id: String = DEFAULT_GAME_ID) -> void:
 	game_id = target_game_id
@@ -44,21 +48,25 @@ func start(target_game_id: String = DEFAULT_GAME_ID) -> void:
 	refresh()
 	_poll_timer.start()
 
+
 func refresh() -> void:
 	if _poll_in_flight:
 		return
 	_poll_in_flight = true
 	_adapter.read(_game_path())
 
+
 func ensure_demo_session() -> void:
 	var initial := _initial_session()
 	_log("FIREBASE_WRITE", {"operation": "seed", "path": _game_path()})
 	_adapter.write(_game_path(), initial)
 
+
 func pickup_piece(piece_id: String, actor_id: String) -> void:
 	# Compatibility with the first prototype: generic pickup now means moving a
 	# public physical object to the player's public area, not to the card hand.
 	move_to_player_area(piece_id, actor_id)
+
 
 func move_to_player_area(piece_id: String, actor_id: String) -> void:
 	var revision := Time.get_unix_time_from_system()
@@ -68,14 +76,21 @@ func move_to_player_area(piece_id: String, actor_id: String) -> void:
 		"location": {"type": "player_area", "player_id": actor_id},
 		"revision": revision
 	}
-	_log("FIREBASE_WRITE", {"operation": "player_area", "path": path, "piece_id": piece_id, "actor_id": actor_id})
+	_log(
+		"FIREBASE_WRITE",
+		{"operation": "player_area", "path": path, "piece_id": piece_id, "actor_id": actor_id}
+	)
 	_adapter.patch(path, patch)
-	_adapter.push("%s/events" % _game_path(), {
-		"type": "OBJECT_MOVED_TO_PLAYER_AREA",
-		"actor_id": actor_id,
-		"piece_id": piece_id,
-		"timestamp": revision
-	})
+	_adapter.push(
+		"%s/events" % _game_path(),
+		{
+			"type": "OBJECT_MOVED_TO_PLAYER_AREA",
+			"actor_id": actor_id,
+			"piece_id": piece_id,
+			"timestamp": revision
+		}
+	)
+
 
 func move_to_hand(piece_id: String, actor_id: String) -> void:
 	var revision := Time.get_unix_time_from_system()
@@ -85,14 +100,21 @@ func move_to_hand(piece_id: String, actor_id: String) -> void:
 		"location": {"type": "hand", "player_id": actor_id},
 		"revision": revision
 	}
-	_log("FIREBASE_WRITE", {"operation": "hand", "path": path, "piece_id": piece_id, "actor_id": actor_id})
+	_log(
+		"FIREBASE_WRITE",
+		{"operation": "hand", "path": path, "piece_id": piece_id, "actor_id": actor_id}
+	)
 	_adapter.patch(path, patch)
-	_adapter.push("%s/events" % _game_path(), {
-		"type": "OBJECT_MOVED_TO_HAND",
-		"actor_id": actor_id,
-		"piece_id": piece_id,
-		"timestamp": revision
-	})
+	_adapter.push(
+		"%s/events" % _game_path(),
+		{
+			"type": "OBJECT_MOVED_TO_HAND",
+			"actor_id": actor_id,
+			"piece_id": piece_id,
+			"timestamp": revision
+		}
+	)
+
 
 func place_piece(piece_id: String, actor_id: String, cell: Vector2i) -> void:
 	var revision := Time.get_unix_time_from_system()
@@ -104,25 +126,40 @@ func place_piece(piece_id: String, actor_id: String, cell: Vector2i) -> void:
 		"location": {"type": "slot", "slot_id": slot_id},
 		"revision": revision
 	}
-	_log("FIREBASE_WRITE", {"operation": "place", "path": path, "piece_id": piece_id, "actor_id": actor_id, "slot_id": slot_id})
+	_log(
+		"FIREBASE_WRITE",
+		{
+			"operation": "place",
+			"path": path,
+			"piece_id": piece_id,
+			"actor_id": actor_id,
+			"slot_id": slot_id
+		}
+	)
 	_adapter.patch(path, patch)
-	_adapter.push("%s/events" % _game_path(), {
-		"type": "OBJECT_PLACED",
-		"actor_id": actor_id,
-		"piece_id": piece_id,
-		"slot_id": slot_id,
-		"cell": {"x": cell.x, "y": cell.y},
-		"timestamp": revision
-	})
+	_adapter.push(
+		"%s/events" % _game_path(),
+		{
+			"type": "OBJECT_PLACED",
+			"actor_id": actor_id,
+			"piece_id": piece_id,
+			"slot_id": slot_id,
+			"cell": {"x": cell.x, "y": cell.y},
+			"timestamp": revision
+		}
+	)
+
 
 func move_piece(piece_id: String, actor_id: String, cell: Vector2i) -> void:
 	place_piece(piece_id, actor_id, cell)
+
 
 func _initial_session() -> Dictionary:
 	if game_definition.is_empty():
 		return {
 			"metadata": {"status": "prototype", "label": "BGO Proof of Concept 01"},
-			"pieces": {
+			"pieces":
+			{
 				"player_1_piece": _piece_payload("player_1", 1, Vector2i(1, 2), 1),
 				"player_2_stack": _piece_payload("player_2", 3, Vector2i(6, 3), 1)
 			}
@@ -130,7 +167,8 @@ func _initial_session() -> Dictionary:
 
 	var game: Dictionary = game_definition.get("game", {})
 	var initial := {
-		"metadata": {
+		"metadata":
+		{
 			"status": "prototype",
 			"definition_id": str(game.get("id", "test001")),
 			"schema_version": int(game_definition.get("schema_version", 1))
@@ -145,6 +183,7 @@ func _initial_session() -> Dictionary:
 		var object_def: Dictionary = object_def_variant
 		initial.pieces[str(object_def.get("id"))] = _state_from_definition(object_def)
 	return initial
+
 
 func _state_from_definition(object_def: Dictionary) -> Dictionary:
 	var owner_id := str(object_def.get("owner_id", ""))
@@ -163,6 +202,7 @@ func _state_from_definition(object_def: Dictionary) -> Dictionary:
 		"revision": Time.get_unix_time_from_system()
 	}
 
+
 func _piece_payload(owner_id: String, quantity: int, cell: Vector2i, revision: float) -> Dictionary:
 	return {
 		"component_id": "bgo.piece.basic_cylinder",
@@ -175,11 +215,13 @@ func _piece_payload(owner_id: String, quantity: int, cell: Vector2i, revision: f
 		"revision": revision
 	}
 
+
 func _cell_from_slot_id(slot_id: String) -> Vector2i:
 	var parts := slot_id.split(":")
 	if parts.size() == 3 and parts[0] == "board":
 		return Vector2i(int(parts[1]), int(parts[2]))
 	return Vector2i.ZERO
+
 
 func _ensure_definition_objects(session: Dictionary) -> void:
 	if _definition_objects_checked or game_definition.is_empty():
@@ -196,11 +238,16 @@ func _ensure_definition_objects(session: Dictionary) -> void:
 		if object_id.is_empty() or existing.has(object_id):
 			continue
 		var path := "%s/pieces/%s" % [_game_path(), object_id]
-		_log("FIREBASE_WRITE", {"operation": "add_definition_object", "path": path, "piece_id": object_id})
+		_log(
+			"FIREBASE_WRITE",
+			{"operation": "add_definition_object", "path": path, "piece_id": object_id}
+		)
 		_adapter.write(path, _state_from_definition(object_def))
+
 
 func _game_path() -> String:
 	return "games/%s" % game_id
+
 
 func _on_request_succeeded(operation: StringName, path: String, data: Variant) -> void:
 	if operation != &"read" or path != _game_path():
@@ -227,11 +274,19 @@ func _on_request_succeeded(operation: StringName, path: String, data: Variant) -
 			piece_changed.emit(str(piece_id), current)
 	_last_piece_snapshot = current_pieces.duplicate(true)
 
-func _on_request_failed(operation: StringName, path: String, http_code: int, message: String) -> void:
+
+func _on_request_failed(
+	operation: StringName, path: String, http_code: int, message: String
+) -> void:
 	if operation == &"read" and path == _game_path():
 		_poll_in_flight = false
-	_log("FIREBASE_ERROR", {"operation": str(operation), "path": path, "http_code": http_code, "message": message}, "error")
+	_log(
+		"FIREBASE_ERROR",
+		{"operation": str(operation), "path": path, "http_code": http_code, "message": message},
+		"error"
+	)
 	session_error.emit("Firebase %s %s failed (%d): %s" % [operation, path, http_code, message])
+
 
 func _log(event_name: String, payload: Dictionary = {}, level: String = "info") -> void:
 	if logger != null:

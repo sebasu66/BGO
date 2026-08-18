@@ -20,14 +20,17 @@ extends Area3D
 
 @onready var marker: MeshInstance3D = $Marker
 
+
 func _ready() -> void:
 	set_meta("bgo_slot", true)
 	set_meta("slot_id", slot_id)
 	set_meta("capacity", capacity)
 	_update_marker()
 
+
 func accepts(component_kind: String) -> bool:
 	return accepted_kinds.is_empty() or accepted_kinds.has(component_kind)
+
 
 func _update_marker() -> void:
 	if marker == null:

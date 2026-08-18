@@ -19,15 +19,19 @@ extends Node3D
 @onready var mesh_instance: MeshInstance3D = $MeshInstance3D
 @onready var label: Label3D = $Label3D
 
+
 func _ready() -> void:
 	_apply_visuals()
+
 
 func area_slot_world(slot: int) -> Vector3:
 	return global_position + Vector3(0.0, 0.38, -2.3 + float(slot) * 0.85)
 
+
 # Compatibility alias for early PoC code. A PlayerArea is deliberately not a Hand.
 func hand_slot_world(slot: int) -> Vector3:
 	return area_slot_world(slot)
+
 
 func _apply_visuals() -> void:
 	if not is_inside_tree():

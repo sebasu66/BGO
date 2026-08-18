@@ -5,6 +5,7 @@ extends Node3D
 @onready var nose: MeshInstance3D = $Nose
 @onready var name_label: Label3D = $Name
 
+
 func configure(player_name: String, player_color: Color) -> void:
 	name = "Presence_%s" % player_name.replace(" ", "_")
 	var material := StandardMaterial3D.new()
@@ -15,6 +16,7 @@ func configure(player_name: String, player_color: Color) -> void:
 	nose.material_override = material
 	name_label.text = player_name
 	name_label.modulate = Color.WHITE
+
 
 func set_pose(position: Vector3, forward: Vector3) -> void:
 	global_position = position
