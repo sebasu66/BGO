@@ -1,0 +1,18 @@
+name: BGO Context Integrity
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  context-integrity:
+    uses: sebasu66/AI_commit_integrity_check/.github/workflows/integrity.yml@356b44c065fa525336c52a2958a27ba63334d2c9
+    with:
+      skill_path: SKILL.md
+    permissions:
+      contents: read
