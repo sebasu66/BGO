@@ -8,6 +8,12 @@ const buildRoot = path.join(repoRoot, "build", "web");
 
 const staticRoutes = [
   {
+    name: "BGO DEV hub",
+    source: path.join(repoRoot, "web", "dev"),
+    destination: path.join(buildRoot, "dev"),
+    route: "/dev/",
+  },
+  {
     name: "Project status dashboard",
     source: path.join(repoRoot, "web", "project-status"),
     destination: path.join(buildRoot, "project-status"),
