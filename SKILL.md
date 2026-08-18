@@ -181,6 +181,60 @@ The integration quality gate should cover, as applicable:
 
 Objective checks may block integration. Heuristic maintainability findings should be reported clearly and only become blocking when the rule is deterministic and useful.
 
+## Code and repository conventions
+
+These are project-wide implementation rules. Backlog/tasks should normally state **what** must be built and say to implement it according to the current `SKILL.md`; they should not duplicate these conventions. The external AICI policy linter stores the machine-enforced copy of objective rules outside BGO so an ordinary feature change cannot relax them.
+
+### GDScript naming
+
+Use:
+
+- files and folders: `snake_case`;
+- `class_name`: `PascalCase`;
+- functions/methods: `snake_case`;
+- variables/properties: `snake_case`;
+- signals: `snake_case`;
+- constants: `UPPER_SNAKE_CASE`;
+- private/internal helpers: leading `_` plus `snake_case`.
+
+Names should express domain meaning. Avoid generic names such as `manager`, `helper`, `data`, or `thing` when a precise domain name exists.
+
+### Function documentation and size
+
+Public GDScript functions are part of the readable project contract and must have a preceding Godot documentation comment using `##` that explains purpose/contract when the name and types alone are insufficient. Private callbacks/helpers beginning with `_` do not require boilerplate documentation.
+
+Machine-enforced limits for newly changed GDScript files are currently:
+
+- maximum GDScript file length: **500 lines**;
+- maximum function length: **60 lines**.
+
+These limits are guardrails, not targets. Prefer smaller cohesive functions/classes. If an implementation needs to exceed an objective limit, refactor responsibilities rather than weakening the rule inside BGO.
+
+### File placement
+
+Use these ownership boundaries:
+
+- `src/core/` — logical/domain contracts, validation and state transitions that must not depend directly on rendering or Firebase;
+- `src/components/` — reusable component implementations and component-local presentation/configuration;
+- `src/network/` — Firebase/network transport adapters and synchronization infrastructure;
+- `src/demo/` — prototype/demo composition that is not authoritative domain logic;
+- `scenes/` — top-level/composition scenes;
+- `tests/` — focused automated/domain tests and test runner support;
+- `games/` — declarative fixture/game definitions, never internal implementation paths;
+- `web/` — static Web product/diagnostic surfaces outside the Godot runtime;
+- `docs/` — authoritative architecture, roadmap, UX and deployment documentation;
+- `scripts/` — development/build tooling, not runtime domain behavior.
+
+A reusable public component normally lives in a component-owned folder. When it has a `component.jsonh`, that folder must use `snake_case` and contain matching `<folder_name>.gd` and `<folder_name>.tscn` siblings. Existing component families may add one grouping directory, for example `src/components/boards/checkered_board/`; do not scatter one component's implementation across unrelated folders.
+
+Component manifests remain `component.jsonh`, stable component IDs use the `bgo.<family>.<name>` style, and external game definitions must never reference these internal file paths.
+
+### Tests and backlog
+
+A backlog item should not restate naming, file paths, function-size limits, documentation syntax, deployment policy or other general implementation rules. It should describe behavior/acceptance criteria and reference the current skill for implementation compliance.
+
+When a public behavior changes, add or update focused tests. Prefer making the correct implementation the easiest way to satisfy the acceptance tests and the policy linter.
+
 ## Maintainability rules
 
 Optimize for readable responsibilities, low coupling, explicit dependencies and testability rather than ceremony.
@@ -245,7 +299,7 @@ For every task:
 3. Identify the active roadmap checkpoint and affected product/domain surface.
 4. Check current official documentation first when the task depends on fast-changing external technology behavior.
 5. Make the smallest coherent vertical change.
-6. Preserve the architecture boundaries above.
+6. Preserve the architecture boundaries and code/repository conventions above.
 7. Add/update tests for changed public behavior.
 8. Update authoritative documentation when a contract, policy, roadmap state or significant architecture decision changes.
 9. Do not hide migration/schema errors or destructively reset existing session state to accommodate a schema addition.
