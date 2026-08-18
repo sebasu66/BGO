@@ -125,11 +125,15 @@ jobs:
           channelId: dev
           expires: 30d
 
+      - name: Show deployed DEV URL
+        if: steps.deploy_dev.outcome == 'success'
+        run: echo "DEV URL ${{ steps.deploy_dev.outputs.details_url }}"
+
       - name: Browser E2E against deployed DEV
         id: e2e_dev
         if: steps.deploy_dev.outcome == 'success'
         env:
-          BGO_E2E_BASE_URL: ${{ steps.deploy_dev.outputs.urls }}
+          BGO_E2E_BASE_URL: ${{ steps.deploy_dev.outputs.details_url }}
         run: npm run test:e2e
 
       - name: Write CI dashboard result
