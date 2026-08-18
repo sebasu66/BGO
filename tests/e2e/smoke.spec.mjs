@@ -1,4 +1,7 @@
+import { mkdir } from 'node:fs/promises';
 import { test, expect } from '@playwright/test';
+
+await mkdir('artifacts/screenshots', { recursive: true });
 
 function collectConsole(page) {
   const entries = [];
