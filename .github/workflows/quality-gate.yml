@@ -32,10 +32,19 @@ jobs:
       - name: Install GDScript tooling
         run: pip install "gdtoolkit==4.*"
 
-      - name: Install browser test tooling
-        run: |
-          npm install
-          npx playwright install --with-deps chromium
+      - name: Install browser test package
+        timeout-minutes: 5
+        run: npm install
+
+      - name: Install Chromium system dependencies
+        timeout-minutes: 10
+        run: npx playwright install-deps chromium
+
+      - name: Install Chromium headless shell
+        timeout-minutes: 5
+        env:
+          PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: "120000"
+        run: npx playwright install chromium --only-shell
 
       - name: Project structure and architecture
         id: structure
