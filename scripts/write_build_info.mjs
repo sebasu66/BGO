@@ -54,5 +54,6 @@ await writeFile(
   `${JSON.stringify(payload, null, 2)}\n`,
   "utf8",
 );
+execFileSync(process.execPath, ["scripts/inject_build_badge.mjs"], { stdio: "inherit" });
 console.log(`Build metadata: ${version}`);
 console.log(`Changes: ${changes.length} (${payload.change_basis})`);
