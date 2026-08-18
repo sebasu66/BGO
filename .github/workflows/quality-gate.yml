@@ -24,8 +24,18 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
       - name: Install GDScript tooling
         run: pip install "gdtoolkit==4.*"
+
+      - name: Install browser test tooling
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
 
       - name: Project structure and architecture
         id: structure
@@ -89,6 +99,31 @@ jobs:
         shell: bash
         run: bash scripts/export_web.sh
 
+      - name: Browser E2E against exported build
+        id: e2e_local
+        run: npm run test:e2e
+
+      # DEV deployment is intentionally limited to develop. It uses a named
+      # preview channel so ordinary development can never overwrite the live
+      # Hosting channel. Configure the repository secret/variable documented in
+      # docs/CI_DEPLOYMENT_AND_E2E.md before enabling the develop branch flow.
+      - name: Deploy validated build to Firebase DEV channel
+        id: deploy_dev
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          firebaseServiceAccount: ${{ secrets.FIREBASE_DEV_SERVICE_ACCOUNT }}
+          projectId: ${{ vars.FIREBASE_DEV_PROJECT_ID }}
+          channelId: dev
+          expires: 30d
+
+      - name: Browser E2E against deployed DEV
+        id: e2e_dev
+        if: steps.deploy_dev.outcome == 'success'
+        env:
+          BGO_E2E_BASE_URL: ${{ steps.deploy_dev.outputs.urls }}
+        run: npm run test:e2e
+
       - name: Write CI dashboard result
         if: always()
         shell: bash
@@ -106,7 +141,10 @@ jobs:
             "structure": "${{ steps.structure.outcome }}",
             "godot_import": "${{ steps.import.outcome }}",
             "core_tests": "${{ steps.tests.outcome }}",
-            "web_export": "${{ steps.web_export.outcome }}"
+            "web_export": "${{ steps.web_export.outcome }}",
+            "e2e_local": "${{ steps.e2e_local.outcome }}",
+            "deploy_dev": "${{ steps.deploy_dev.outcome }}",
+            "e2e_dev": "${{ steps.e2e_dev.outcome }}"
           }
           EOF
 
@@ -118,3 +156,12 @@ jobs:
           path: build/web
           if-no-files-found: warn
           retention-days: 7
+
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bgo-e2e-${{ github.run_id }}
+          path: artifacts
+          if-no-files-found: warn
+          retention-days: 14
