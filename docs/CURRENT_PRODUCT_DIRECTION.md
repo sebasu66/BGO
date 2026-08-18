@@ -193,6 +193,73 @@ A presence marker may be positioned/oriented from the player's current camera so
 
 A player disconnecting must not destroy the session. Durable state should allow everyone to leave and return later, enabling asynchronous turn-based play as well as synchronous sessions.
 
+## Agent-readable Web and discovery graph
+
+BGO should be human-readable, machine-readable and agent-operable from the same logical model.
+
+The Godot Web canvas remains the primary human renderer, but a Web page containing a running game should also expose a lightweight semantic representation that agents, browser automation and accessibility tooling can inspect without having to infer game state from pixels.
+
+The page itself does not need to embed every related piece of knowledge. Instead, it should participate in a discoverable graph of linked resources.
+
+A running session page may expose or reference resources such as:
+
+- current authorized semantic session state
+- viewer/role/seat identity
+- visible table sections and objects
+- legal/relevant actions for the current viewer
+- UI/control semantics useful for automation/debugging
+- GamePackage identity/version/hash
+- structured game rules
+- human-readable manual
+- agent integration documentation
+- capability descriptors
+- MCP endpoint/configuration later
+- authoring documentation later
+
+These resources may be linked through standard HTML metadata/links where possible and BGO-specific descriptors where needed. They do not need to be visible in the rendered player UI.
+
+Conceptually:
+
+```text
+/session/ABC123
+    ├── human Godot canvas/UI
+    ├── semantic/discovery metadata
+    ├── state resource
+    ├── rules resource
+    ├── manual resource
+    ├── capabilities resource
+    └── agent integration resource
+```
+
+The live state resource should stay compact and reference versioned/static knowledge rather than repeating full manuals or complete rules on every update.
+
+For example, a state snapshot may include package/rules references plus only the current dynamic state and legal actions.
+
+### Privacy boundary
+
+Agent-readable state must pass through the same visibility/authorization policy as human rendering. A player-facing page must never expose another player's private hand or hidden information merely because it is present in HTML, JavaScript state or a semantic endpoint.
+
+Spectator, display, player, host and future agent clients may therefore receive different filtered semantic views of the same underlying session.
+
+### Semantic UI shadow
+
+Because Godot UI renders inside a canvas, DOM inspection alone cannot describe every interactive control. BGO may maintain a compact semantic shadow of important runtime controls, for example:
+
+- control ID/label
+- enabled/disabled state
+- purpose/action
+- approximate screen rectangle when useful for browser-driving agents
+- selected/focused object
+- active interaction mode
+
+This is intended for diagnostics, E2E automation and agent interoperability, not as an alternate source of game truth.
+
+### Public discovery
+
+Public landing, catalog, game information and agent documentation should use normal indexable HTML and structured metadata so search engines and AI systems can discover what BGO is, which games/capabilities it supports, and how integrations work.
+
+A future well-known descriptor may advertise agent capabilities and stable documentation/integration endpoints without requiring an agent to reverse-engineer the application.
+
 ## MCP / AI direction
 
 MCP should operate on logical session/game concepts, not render nodes.
@@ -207,6 +274,28 @@ Future capabilities should include:
 - optionally control an AI participant/seat
 
 An AI participant should use the same permissions, visibility and command validation as a human participant.
+
+The Web semantic interface and MCP should not define competing game models. They should be separate projections/interfaces over the same domain state and command validation layer.
+
+## AI-assisted authoring direction
+
+Longer term, an agent should be able to help create a game through the declarative GamePackage model rather than arbitrary trusted code generation.
+
+Target flow:
+
+```text
+natural-language game intent
+    ↓
+GamePackage draft
+    ↓
+schema/capability validation
+    ↓
+preview / conformance checks
+    ↓
+publish
+```
+
+The public Web/agent documentation should eventually make authoring capabilities discoverable so an external assistant can understand how to create, validate and publish compatible game packages.
 
 ## Visual environment direction
 
@@ -232,8 +321,37 @@ Target workflow:
 3. headless import/tests/validated Web export
 4. update generated project-status/CI metadata
 5. only after green validation, deploy the DEV Hosting target automatically
-6. surface deployment/diagnostic status in the project dashboard
+6. run deployed-site smoke/E2E checks
+7. retain screenshots, browser traces, console/network failures and semantic-state evidence on failures
+8. surface deployment/diagnostic status in the project dashboard
 
 PROD promotion remains an explicit owner decision and must never be triggered automatically by ordinary development commits.
 
 The next infrastructure checkpoint is therefore automatic DEV deployment after the existing validated GitHub Actions Web export, with explicit environment targeting and no unrestricted Firebase deploy.
+
+## Implementation staging for agent-readable Web
+
+### Can start now
+
+- reserve a stable BGO semantic snapshot contract in the runtime
+- expose a small JavaScript bridge/read-only state object from Godot Web
+- include viewer/session/package identity and filtered visible-object state
+- expose current UI mode/selection and a minimal control descriptor for automated tests
+- add links/metadata from the Web shell to public agent/project documentation
+- make Playwright/E2E tests consume semantic state in addition to screenshots
+
+### Shortly after SessionState exists
+
+- expose lifecycle, turn, active player, result and event-summary state
+- expose legal actions from the same command validator used by the human UI
+- add spectator-specific semantic state
+- expose versioned rules/package references rather than embedding full rules repeatedly
+
+### Later
+
+- well-known agent capability descriptor
+- stable public rules/manual/capability resource graph per GamePackage
+- MCP projection using the same state/command layer
+- AI participant seats
+- AI-assisted GamePackage authoring/validation/publishing
+- richer semantic control geometry and browser-agent interoperability where it provides real value
