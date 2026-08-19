@@ -34,40 +34,43 @@ func _configure_camera() -> void:
 func _input(event: InputEvent) -> void:
 	if client_role != ROLE_PLAYER:
 		return
-
 	if event is InputEventScreenTouch:
 		_handle_screen_touch(event)
 		return
 	if event is InputEventScreenDrag:
 		_handle_screen_drag(event)
 		return
-
 	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
-			_zoom_player_camera(0.90)
-			return
-		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
-			_zoom_player_camera(1.10)
-			return
-		if event.button_index == MOUSE_BUTTON_LEFT:
-			if _pointer_is_over_controls(event.position):
-				return
-			if event.pressed:
-				_begin_pointer(event.position, "mouse")
-			else:
-				_end_pointer(event.position, "mouse")
-			return
+		_handle_player_mouse_button(event)
+		return
+	if event is InputEventMouseMotion:
+		_handle_player_mouse_motion(event)
 
-	if (
-		event is InputEventMouseMotion
-		and _pointer_down
-		and (event.button_mask & MOUSE_BUTTON_MASK_LEFT) != 0
-	):
-		if _pointer_is_over_controls(event.position):
-			return
-		if event.position.distance_to(_pointer_start) > 8.0:
-			_pointer_dragged = true
-		_pan_player_camera(event.relative)
+
+func _handle_player_mouse_button(event: InputEventMouseButton) -> void:
+	if event.button_index == MOUSE_BUTTON_WHEEL_UP and event.pressed:
+		_zoom_player_camera(0.90)
+		return
+	if event.button_index == MOUSE_BUTTON_WHEEL_DOWN and event.pressed:
+		_zoom_player_camera(1.10)
+		return
+	if event.button_index != MOUSE_BUTTON_LEFT or _pointer_is_over_controls(event.position):
+		return
+	if event.pressed:
+		_begin_pointer(event.position, "mouse")
+	else:
+		_end_pointer(event.position, "mouse")
+
+
+func _handle_player_mouse_motion(event: InputEventMouseMotion) -> void:
+	if not _pointer_down or (event.button_mask & MOUSE_BUTTON_MASK_LEFT) == 0:
+		return
+	if _pointer_is_over_controls(event.position):
+		return
+	if event.position.distance_to(_pointer_start) <= 8.0:
+		return
+	_pointer_dragged = true
+	_pan_player_camera(event.relative)
 
 
 func _handle_screen_touch(event: InputEventScreenTouch) -> void:
