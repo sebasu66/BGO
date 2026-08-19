@@ -1,0 +1,27 @@
+name: BGO Format Diagnostic
+
+on:
+  pull_request:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  format-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install exact formatter used by CI
+        run: pip install "gdtoolkit==4.*"
+
+      - name: Show exact formatter diff
+        run: gdformat --diff tests/test_runner.gd
