@@ -190,6 +190,7 @@ func _zoom_player_camera(multiplier: float) -> void:
 	_update_camera_transform()
 
 
+## Resets the player camera to the configured default view.
 func reset_player_camera() -> void:
 	if client_role != ROLE_PLAYER:
 		return

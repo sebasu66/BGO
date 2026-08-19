@@ -19,6 +19,7 @@ func _ready() -> void:
 	_apply_visuals()
 
 
+## Configures this object from the supplied project data.
 func configure(
 	entity_id: String, owner_id: String, holder_id: String, new_quantity: int, color: Color
 ) -> void:

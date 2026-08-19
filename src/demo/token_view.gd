@@ -27,10 +27,12 @@ func _draw() -> void:
 		)
 
 
+## Updates the token's selected visual state.
 func set_selected(value: bool) -> void:
 	selected = value
 	queue_redraw()
 
 
+## Returns whether the supplied global point intersects this token.
 func contains_global_point(point: Vector2) -> bool:
 	return global_position.distance_to(point) <= radius + 8.0

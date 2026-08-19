@@ -21,6 +21,7 @@ var _last_uploaded_generation := 0
 var _recorder_missing_reported := false
 
 
+## Configures this object from the supplied project data.
 func configure(target_game_id: String, target_client_id: String) -> void:
 	game_id = target_game_id
 	client_id = _sanitize_key(target_client_id)
@@ -43,6 +44,7 @@ func configure(target_game_id: String, target_client_id: String) -> void:
 	)
 
 
+## Records a structured BGO event using the configured logging sinks.
 func log_event(event_name: String, payload: Dictionary = {}, level: String = "info") -> void:
 	var entry := {
 		"ts": Time.get_unix_time_from_system(),
@@ -75,18 +77,22 @@ func log_event(event_name: String, payload: Dictionary = {}, level: String = "in
 			_flush_structured_error_run("bgo_logger")
 
 
+## Records a debug-level BGO log entry.
 func debug(event_name: String, payload: Dictionary = {}) -> void:
 	log_event(event_name, payload, "debug")
 
 
+## Records an informational BGO log entry.
 func info(event_name: String, payload: Dictionary = {}) -> void:
 	log_event(event_name, payload, "info")
 
 
+## Records a warning-level BGO log entry.
 func warning(event_name: String, payload: Dictionary = {}) -> void:
 	log_event(event_name, payload, "warning")
 
 
+## Records an error-level BGO log entry.
 func error(event_name: String, payload: Dictionary = {}) -> void:
 	log_event(event_name, payload, "error")
 

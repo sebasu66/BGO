@@ -16,12 +16,14 @@ func _ready() -> void:
 		push_error("MovableComponent must be a child of BGOGameObject.")
 
 
+## Requests a logical move and returns the resulting operation state.
 func request_move(target_position: Vector2) -> void:
 	if not enabled or entity == null:
 		return
 	move_requested.emit(entity, _snap(target_position))
 
 
+## Applies an already-authorized logical move to this component.
 func apply_move(target_position: Vector2) -> void:
 	if entity == null:
 		return

@@ -6,6 +6,7 @@ extends Node3D
 @onready var name_label: Label3D = $Name
 
 
+## Configures this object from the supplied project data.
 func configure(player_name: String, player_color: Color) -> void:
 	name = "Presence_%s" % player_name.replace(" ", "_")
 	var material := StandardMaterial3D.new()
@@ -18,6 +19,7 @@ func configure(player_name: String, player_color: Color) -> void:
 	name_label.modulate = Color.WHITE
 
 
+## Updates the published player-presence pose.
 func set_pose(position: Vector3, forward: Vector3) -> void:
 	global_position = position
 	var horizontal_forward := Vector3(forward.x, 0.0, forward.z)

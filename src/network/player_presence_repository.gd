@@ -25,12 +25,14 @@ func _ready() -> void:
 	add_child(_poll_timer)
 
 
+## Starts repository synchronization for the current session context.
 func start(target_game_id: String) -> void:
 	game_id = target_game_id
 	refresh()
 	_poll_timer.start()
 
 
+## Refreshes repository state from the remote source.
 func refresh() -> void:
 	if _read_in_flight:
 		return
@@ -38,6 +40,7 @@ func refresh() -> void:
 	_adapter.read(_players_path())
 
 
+## Publishes the current player's presence metadata.
 func publish_player(
 	player_id: String,
 	player_name: String,
@@ -63,6 +66,7 @@ func publish_player(
 	)
 
 
+## Publishes the current player's latest presence pose.
 func publish_pose(player_id: String, position: Vector3, forward: Vector3) -> void:
 	var path := "%s/%s" % [_players_path(), _sanitize_key(player_id)]
 	(

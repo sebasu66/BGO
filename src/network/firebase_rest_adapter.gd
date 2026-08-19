@@ -8,23 +8,28 @@ var auth_token: String = ""
 var _requests: Dictionary = {}
 
 
+## Reads a value from the configured Firebase Realtime Database path.
 func read(path: String) -> void:
 	_send(&"read", path, HTTPClient.METHOD_GET)
 
 
+## Writes a complete value to the configured Firebase Realtime Database path.
 func write(path: String, value: Variant) -> void:
 	_send(&"write", path, HTTPClient.METHOD_PUT, JSON.stringify(value))
 
 
+## Applies a partial update to the configured Firebase Realtime Database path.
 func patch(path: String, value: Dictionary) -> void:
 	_send(&"patch", path, HTTPClient.METHOD_PATCH, JSON.stringify(value))
 
 
+## Pushes a new child value to the configured Firebase Realtime Database path.
 func push(path: String, value: Variant) -> void:
 	# Firebase RTDB POST creates a unique child key and returns {"name": "..."}.
 	_send(&"push", path, HTTPClient.METHOD_POST, JSON.stringify(value))
 
 
+## Removes the value at the configured Firebase Realtime Database path.
 func remove(path: String) -> void:
 	_send(&"remove", path, HTTPClient.METHOD_DELETE)
 

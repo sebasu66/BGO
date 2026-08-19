@@ -1,7 +1,7 @@
 extends SceneTree
 
-const ComponentRegistry = preload("res://src/core/component_registry.gd")
-const GameDefinitionLoader = preload("res://src/core/game_definition_loader.gd")
+const COMPONENT_REGISTRY = preload("res://src/core/component_registry.gd")
+const GAME_DEFINITION_LOADER = preload("res://src/core/game_definition_loader.gd")
 
 var failures := 0
 var assertions := 0
@@ -42,17 +42,20 @@ func _test_component_registry() -> void:
 		"bgo.slot.basic",
 	]
 	for component_id in expected:
-		_check(ComponentRegistry.has_component(component_id), "registry resolves %s" % component_id)
 		_check(
-			ComponentRegistry.load_scene(component_id) != null, "scene exists for %s" % component_id
+			COMPONENT_REGISTRY.has_component(component_id), "registry resolves %s" % component_id
+		)
+		_check(
+			COMPONENT_REGISTRY.load_scene(component_id) != null,
+			"scene exists for %s" % component_id
 		)
 
 	_check(
-		not ComponentRegistry.has_component("bgo.missing.component"),
+		not COMPONENT_REGISTRY.has_component("bgo.missing.component"),
 		"unknown component is rejected"
 	)
 	_check(
-		ComponentRegistry.load_scene("bgo.missing.component") == null,
+		COMPONENT_REGISTRY.load_scene("bgo.missing.component") == null,
 		"unknown component has no scene"
 	)
 
@@ -60,30 +63,30 @@ func _test_component_registry() -> void:
 func _test_component_validation() -> void:
 	var valid_board := {"columns": 8, "rows": 6, "cell_size": 1.2}
 	_check(
-		ComponentRegistry.validate_config("bgo.board.checkered", valid_board).is_empty(),
+		COMPONENT_REGISTRY.validate_config("bgo.board.checkered", valid_board).is_empty(),
 		"valid board config passes"
 	)
 
 	var invalid_board := {"columns": 1, "rows": 6, "cell_size": 1.2}
 	_check(
-		not ComponentRegistry.validate_config("bgo.board.checkered", invalid_board).is_empty(),
+		not COMPONENT_REGISTRY.validate_config("bgo.board.checkered", invalid_board).is_empty(),
 		"invalid board columns are rejected"
 	)
 
 	_check(
-		not ComponentRegistry.validate_config("bgo.missing.component", {}).is_empty(),
+		not COMPONENT_REGISTRY.validate_config("bgo.missing.component", {}).is_empty(),
 		"unknown component config is rejected"
 	)
 
 
 func _test_game_definition() -> void:
-	var result: Dictionary = GameDefinitionLoader.load_game("res://games/test001/game.jsonh")
+	var result: Dictionary = GAME_DEFINITION_LOADER.load_game("res://games/test001/game.jsonh")
 	_check(bool(result.get("ok", false)), "TEST001 definition loads and validates")
 	if bool(result.get("ok", false)):
 		var data: Dictionary = result.get("data", {})
 		_check(int(data.get("schema_version", 0)) == 1, "TEST001 schema version is supported")
 
-	var missing: Dictionary = GameDefinitionLoader.load_game(
+	var missing: Dictionary = GAME_DEFINITION_LOADER.load_game(
 		"res://games/does-not-exist/game.jsonh"
 	)
 	_check(not bool(missing.get("ok", false)), "missing game definition fails safely")

@@ -30,6 +30,7 @@ func _ready() -> void:
 	rebuild()
 
 
+## Configures this object from the supplied project data.
 func configure(new_columns: int, new_rows: int, new_cell_size: float) -> void:
 	columns = new_columns
 	rows = new_rows
@@ -37,6 +38,7 @@ func configure(new_columns: int, new_rows: int, new_cell_size: float) -> void:
 	rebuild()
 
 
+## Rebuilds the runtime representation from the current configuration.
 func rebuild() -> void:
 	_rebuild_queued = false
 	for child in get_children():
@@ -75,10 +77,12 @@ func rebuild() -> void:
 				shape.owner = get_tree().edited_scene_root
 
 
+## Returns the stable slot identifier for the requested board cell.
 func slot_id(cell: Vector2i) -> String:
 	return "board:%d:%d" % [cell.x, cell.y]
 
 
+## Parses a stable slot identifier back into board coordinates.
 func parse_slot_id(value: String) -> Vector2i:
 	var parts := value.split(":")
 	if parts.size() != 3 or parts[0] != "board":
@@ -87,14 +91,17 @@ func parse_slot_id(value: String) -> Vector2i:
 	return cell if is_valid_cell(cell) else Vector2i(-1, -1)
 
 
+## Returns whether the supplied board coordinates identify a valid cell.
 func is_valid_cell(cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.x < columns and cell.y >= 0 and cell.y < rows
 
 
+## Returns whether the supplied slot identifier belongs to this board.
 func is_valid_slot(value: String) -> bool:
 	return parse_slot_id(value).x >= 0
 
 
+## Returns the world-space position represented by a logical slot identifier.
 func slot_world(value: String) -> Vector3:
 	var cell := parse_slot_id(value)
 	if cell.x < 0:
@@ -102,6 +109,7 @@ func slot_world(value: String) -> Vector3:
 	return cell_world(cell)
 
 
+## Returns the world-space position represented by board coordinates.
 func cell_world(cell: Vector2i) -> Vector3:
 	var width := float(columns - 1) * cell_size
 	var depth := float(rows - 1) * cell_size

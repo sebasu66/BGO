@@ -3,27 +3,32 @@ extends GutTest
 var _cleanups := []
 
 
+## Registers a temporary test resource for cleanup after the test.
 func add_cleanup(action: Callable) -> void:
 	_cleanups.insert(0, action)
 
 
+## Cleans up temporary test resources after each test case.
 func after_each():
 	for cleanup in _cleanups:
 		cleanup.call()
 	_cleanups.clear()
 
 
+## Verifies the default dice definition shape.
 func test__default_shape():
 	var dice = DiceDef.new()
 	assert_eq(dice.shape.name, "D6", "Default shape should be D6")
 
 
+## Verifies migration of legacy dice shape data.
 func test__shape_migration():
 	var dice = DiceDef.new()
 	dice.sides = 10  # This should migrate to shape 'D10'
 	assert_eq(dice.shape.name, "D10", "Shape migration from sides failed")
 
 
+## Builds legacy scene text used by the migration fixture.
 func legacy_scene_content() -> String:
 	return """
 [gd_scene load_steps=2 format=3 uid="uid://c6kn26wujp0my"]
@@ -45,6 +50,7 @@ my_dicedef = SubResource("Resource_ua0tv")
 """
 
 
+## Writes fixture content to a temporary test file.
 func write_file(file, content):
 	var f = FileAccess.open(file, FileAccess.WRITE)
 	f.store_string(content)
@@ -53,9 +59,10 @@ func write_file(file, content):
 
 
 const SCENE_PATH := "./test_migration.tscn"
-const NodeWithDiceDef = preload("./node_with_dice_def.gd")
+const NODE_WITH_DICE_DEF = preload("./node_with_dice_def.gd")
 
 
+## Verifies legacy dice shape migration while loading a scene.
 func test__scene_loading_shape_migration():
 	write_file(SCENE_PATH, legacy_scene_content())
 

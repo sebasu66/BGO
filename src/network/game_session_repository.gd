@@ -33,15 +33,18 @@ func _ready() -> void:
 	add_child(_poll_timer)
 
 
+## Sets the logger used by the session repository.
 func set_logger(value: BgoLogger) -> void:
 	logger = value
 
 
+## Sets the declarative game definition used by the session repository.
 func set_game_definition(value: Dictionary) -> void:
 	game_definition = value.duplicate(true)
 	_definition_objects_checked = false
 
 
+## Starts repository synchronization for the current session context.
 func start(target_game_id: String = DEFAULT_GAME_ID) -> void:
 	game_id = target_game_id
 	_log("SESSION_START", {"path": _game_path(), "poll_seconds": poll_interval_seconds})
@@ -49,6 +52,7 @@ func start(target_game_id: String = DEFAULT_GAME_ID) -> void:
 	_poll_timer.start()
 
 
+## Refreshes repository state from the remote source.
 func refresh() -> void:
 	if _poll_in_flight:
 		return
@@ -56,18 +60,21 @@ func refresh() -> void:
 	_adapter.read(_game_path())
 
 
+## Ensures the development demo session exists with valid initial state.
 func ensure_demo_session() -> void:
 	var initial := _initial_session()
 	_log("FIREBASE_WRITE", {"operation": "seed", "path": _game_path()})
 	_adapter.write(_game_path(), initial)
 
 
+## Moves a logical piece into the requesting player's held state.
 func pickup_piece(piece_id: String, actor_id: String) -> void:
 	# Compatibility with the first prototype: generic pickup now means moving a
 	# public physical object to the player's public area, not to the card hand.
 	move_to_player_area(piece_id, actor_id)
 
 
+## Moves a logical piece into a player's public area.
 func move_to_player_area(piece_id: String, actor_id: String) -> void:
 	var revision := Time.get_unix_time_from_system()
 	var path := "%s/pieces/%s" % [_game_path(), piece_id]
@@ -92,6 +99,7 @@ func move_to_player_area(piece_id: String, actor_id: String) -> void:
 	)
 
 
+## Moves a logical piece into a player's private hand.
 func move_to_hand(piece_id: String, actor_id: String) -> void:
 	var revision := Time.get_unix_time_from_system()
 	var path := "%s/pieces/%s" % [_game_path(), piece_id]
@@ -116,6 +124,7 @@ func move_to_hand(piece_id: String, actor_id: String) -> void:
 	)
 
 
+## Places a logical piece into an authorized destination slot.
 func place_piece(piece_id: String, actor_id: String, cell: Vector2i) -> void:
 	var revision := Time.get_unix_time_from_system()
 	var path := "%s/pieces/%s" % [_game_path(), piece_id]
@@ -150,6 +159,7 @@ func place_piece(piece_id: String, actor_id: String, cell: Vector2i) -> void:
 	)
 
 
+## Moves a logical piece between authorized logical locations.
 func move_piece(piece_id: String, actor_id: String, cell: Vector2i) -> void:
 	place_piece(piece_id, actor_id, cell)
 

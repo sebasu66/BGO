@@ -28,6 +28,7 @@ func _ready() -> void:
 	_update_marker()
 
 
+## Returns whether this slot accepts the supplied logical object.
 func accepts(component_kind: String) -> bool:
 	return accepted_kinds.is_empty() or accepted_kinds.has(component_kind)
 
