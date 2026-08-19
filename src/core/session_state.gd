@@ -134,19 +134,18 @@ func advance_turn(requesting_participant_id: String) -> bool:
 	return true
 
 
-## Records an ended lifecycle with an explicit outcome and optional winners.
-## Only an ACTIVE session may end; LOBBY cannot skip to ENDED. Returns true
-## when the transition is accepted.
+## Ends an ACTIVE session with a stable result payload.
+## Winners must be unique seated players; an empty winner list is valid for draws.
 func end_session(outcome: String, winner_participant_ids: Array = []) -> bool:
-	if lifecycle != Lifecycle.ACTIVE:
+	if lifecycle != Lifecycle.ACTIVE or outcome.is_empty():
 		return false
-	if outcome.is_empty():
+	if not _winner_ids_are_valid(winner_participant_ids):
 		return false
-	lifecycle = Lifecycle.ENDED
-	active_participant_id = ""
 	var winners: Array[String] = []
 	for winner in winner_participant_ids:
 		winners.append(str(winner))
+	lifecycle = Lifecycle.ENDED
+	active_participant_id = ""
 	result = {
 		"outcome": outcome,
 		"winner_participant_ids": winners,
@@ -167,6 +166,20 @@ func to_dictionary() -> Dictionary:
 		"turn_number": turn_number,
 		"result": result.duplicate(true),
 	}
+
+
+func _winner_ids_are_valid(winner_participant_ids: Array) -> bool:
+	var seen: Dictionary = {}
+	for winner in winner_participant_ids:
+		var participant_id := str(winner)
+		if participant_id.is_empty() or seen.has(participant_id):
+			return false
+		if not participant_seats.has(participant_id):
+			return false
+		if str(participant_roles.get(participant_id, "")) != "player":
+			return false
+		seen[participant_id] = true
+	return true
 
 
 func _ordered_players() -> Array[String]:
