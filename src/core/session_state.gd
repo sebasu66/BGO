@@ -99,15 +99,18 @@ func set_host(participant_id: String) -> void:
 
 
 ## Transitions a lobby session into the active lifecycle with an initial turn.
-## Requires at least one seated participant. Returns true on success.
+## Requires at least one seated participant. Default starter is the occupant of
+## the first seat in seat_order. Returns true on success.
 func start_session(initial_participant_id: String = "") -> bool:
 	if lifecycle != Lifecycle.LOBBY:
 		return false
-	if participant_seats.is_empty():
+	if participant_seats.is_empty() or seat_order.is_empty():
 		return false
 	var starter := initial_participant_id
 	if starter.is_empty():
-		starter = str(participant_seats.keys()[0])
+		starter = _participant_for_seat(seat_order[0])
+		if starter.is_empty():
+			return false
 	elif not participant_seats.has(starter):
 		return false
 	lifecycle = Lifecycle.ACTIVE
@@ -118,9 +121,10 @@ func start_session(initial_participant_id: String = "") -> bool:
 
 
 ## Records an ended lifecycle with an explicit outcome and optional winners.
-## Returns true when the transition is accepted.
+## Only an ACTIVE session may end; LOBBY cannot skip to ENDED. Returns true
+## when the transition is accepted.
 func end_session(outcome: String, winner_participant_ids: Array = []) -> bool:
-	if lifecycle == Lifecycle.ENDED:
+	if lifecycle != Lifecycle.ACTIVE:
 		return false
 	if outcome.is_empty():
 		return false
@@ -149,6 +153,13 @@ func to_dictionary() -> Dictionary:
 		"turn_number": turn_number,
 		"result": result.duplicate(true),
 	}
+
+
+func _participant_for_seat(seat_id: String) -> String:
+	for participant_id in participant_seats:
+		if participant_seats[participant_id] == seat_id:
+			return str(participant_id)
+	return ""
 
 
 func _seat_still_occupied(seat_id: String) -> bool:

@@ -108,6 +108,12 @@ func _test_session_state_foundation() -> void:
 	_check(not session.is_ended(), "lobby session is not ended")
 
 	_check(
+		not session.end_session("abandoned"),
+		"lobby session cannot end without becoming active"
+	)
+	_check(session.lifecycle == SESSION_STATE.Lifecycle.LOBBY, "rejected end leaves lobby intact")
+
+	_check(
 		session.assign_participant("host-a", "seat-1", "player"),
 		"host can be assigned a seat"
 	)
@@ -126,12 +132,16 @@ func _test_session_state_foundation() -> void:
 	_check(session.participant_seats["player-b"] == "seat-2", "seat assignment is stored")
 	_check(session.participant_roles["player-b"] == "player", "role assignment is stored")
 	_check(session.seat_order.size() == 2, "seat order tracks assigned seats")
+	_check(session.seat_order[0] == "seat-1", "first seat in order is seat-1")
 
 	_check(not session.start_session("missing"), "start rejects unknown participant")
-	_check(session.start_session("host-a"), "session can start with seated host")
+	_check(session.start_session(), "default start uses first seat in seat_order")
 	_check(session.is_active(), "started session is active")
 	_check(session.lifecycle == SESSION_STATE.Lifecycle.ACTIVE, "lifecycle becomes active")
-	_check(session.active_participant_id == "host-a", "active player is represented")
+	_check(
+		session.active_participant_id == "host-a",
+		"default active player is occupant of first seat"
+	)
 	_check(session.turn_number == 1, "turn number starts at 1")
 	_check(not session.start_session(), "already active session cannot start again")
 
@@ -157,3 +167,14 @@ func _test_session_state_foundation() -> void:
 
 	var empty_lobby: SessionState = SESSION_STATE.create_lobby("sess-empty")
 	_check(not empty_lobby.start_session(), "empty lobby cannot start without participants")
+
+	var ordered: SessionState = SESSION_STATE.create_lobby("sess-order")
+	_check(ordered.assign_participant("p-late", "seat-b"), "late participant assigned")
+	_check(ordered.assign_participant("p-first", "seat-a"), "first seat participant assigned")
+	# seat_order follows assignment order: seat-b then seat-a
+	_check(ordered.seat_order[0] == "seat-b", "seat_order preserves assignment order")
+	_check(ordered.start_session(), "ordered session starts from seat_order")
+	_check(
+		ordered.active_participant_id == "p-late",
+		"default starter matches first seat_order occupant not dictionary key order"
+	)
