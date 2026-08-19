@@ -2,6 +2,7 @@ extends SceneTree
 
 const COMPONENT_REGISTRY = preload("res://src/core/component_registry.gd")
 const GAME_DEFINITION_LOADER = preload("res://src/core/game_definition_loader.gd")
+const GAMEPLAY_STATE_TEST = preload("res://tests/gameplay_state_test.gd")
 const LOGICAL_OBJECT_STATE = preload("res://src/core/logical_object_state.gd")
 const SESSION_STATE = preload("res://src/core/session_state.gd")
 const TABLETOP_STATE = preload("res://src/core/tabletop_state.gd")
@@ -23,6 +24,7 @@ func _run() -> void:
 	_test_session_completion()
 	_test_tabletop_state()
 	_test_logical_object_state()
+	GAMEPLAY_STATE_TEST.run(_check)
 
 	if failures > 0:
 		printerr("BGO TESTS FAILED: %d/%d assertions failed." % [failures, assertions])
