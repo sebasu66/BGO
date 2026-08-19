@@ -75,7 +75,7 @@ Implement this task according to the current `SKILL.md`.
 
 ## BGO-005 — Logical object state
 
-**Status:** READY
+**Status:** IMPLEMENTED
 
 Introduce a rendering-independent logical object model for tabletop gameplay.
 
@@ -92,7 +92,7 @@ Implement this task according to the current `SKILL.md`.
 
 ## BGO-006 — Validated move command
 
-**Status:** QUEUED
+**Status:** IMPLEMENTED
 
 Add a domain command that moves a logical object between valid tabletop slots.
 
@@ -108,7 +108,7 @@ Implement this task according to the current `SKILL.md`.
 
 ## BGO-007 — Complete turn command flow
 
-**Status:** QUEUED
+**Status:** IMPLEMENTED
 
 Combine one validated gameplay action with deterministic turn progression.
 
@@ -124,7 +124,7 @@ Implement this task according to the current `SKILL.md`.
 
 ## BGO-008 — First complete conformance game
 
-**Status:** QUEUED
+**Status:** IMPLEMENTED
 
 Create a small declarative turn-based conformance fixture that can be played from setup to explicit winner using the public logical contracts.
 
@@ -135,5 +135,53 @@ Acceptance criteria:
 - invalid moves are rejected through the same public validation path;
 - the session ends with an explicit winner/result;
 - an automated fixture test plays one complete game from initial state to result.
+
+Implement this task according to the current `SKILL.md`.
+
+## BGO-009 — Runtime session adapter
+
+**Status:** READY
+
+Connect the current playable runtime to the logical session, tabletop and gameplay contracts.
+
+Acceptance criteria:
+
+- the runtime creates or loads one logical gameplay state for the active session;
+- visible piece movement is driven by accepted logical commands rather than bypassing the domain state;
+- current player and turn number are available to the player UI;
+- rejected commands do not animate or persist as successful moves;
+- focused tests cover the adapter boundary where practical.
+
+Implement this task according to the current `SKILL.md`.
+
+## BGO-010 — Player turn controls
+
+**Status:** QUEUED
+
+Expose the complete turn flow through the current player client.
+
+Acceptance criteria:
+
+- the active player can perform an allowed move and complete the turn;
+- non-active players cannot complete gameplay actions;
+- the UI clearly identifies the active player and turn number;
+- ended sessions disable gameplay actions and expose the result;
+- existing camera, hand and lobby navigation behavior remains intact.
+
+Implement this task according to the current `SKILL.md`.
+
+## BGO-011 — Shared-session persistence
+
+**Status:** QUEUED
+
+Persist and synchronize the logical session/gameplay state through the existing repository/network boundary.
+
+Acceptance criteria:
+
+- accepted logical state is persisted through the network adapter rather than direct UI writes;
+- two clients converge after accepted commands;
+- stale or rejected commands do not overwrite newer valid state;
+- session lifecycle, active player, turn number and result survive reconnect;
+- focused tests cover serialization and adapter behavior where practical.
 
 Implement this task according to the current `SKILL.md`.
