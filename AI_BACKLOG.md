@@ -185,3 +185,21 @@ Acceptance criteria:
 - focused tests cover serialization and adapter behavior where practical.
 
 Implement this task according to the current `SKILL.md`.
+
+## BGO-012 — Independent whole-project Copilot audit
+
+**Status:** IMPLEMENTED
+
+Add an advisory second-agent review that evaluates the entire BGO repository after successful DEV integration rather than only reviewing the latest diff.
+
+Acceptance criteria:
+
+- a repository-scoped Copilot custom agent is dedicated to whole-project architectural and project-health review;
+- the review is advisory and cannot block merges, change backlog evidence, alter project status, deploy, or promote releases automatically;
+- after a successful `develop` Quality Gate, automation requests a Copilot audit of the current full codebase;
+- the audit covers architecture/product alignment, modularity, maintainability, tests, CI/CD, risks, stale documentation/status, and optimization opportunities;
+- material findings cite concrete repository paths and distinguish evidence from inference;
+- the latest written report has a stable repository path and is linked from the project-status dashboard;
+- if automatic Copilot assignment is unavailable, the audit request remains visible for manual assignment instead of silently disappearing.
+
+Implement this task according to the current `SKILL.md`.
