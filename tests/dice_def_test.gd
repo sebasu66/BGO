@@ -41,26 +41,29 @@ func legacy_scene_content() -> String:
 		'[ext_resource type="Script" uid="uid://cohd4ovwrydr0" '
 		+ 'path="res://addons/dice_roller/dice_def.gd" id="3_qrebk"]'
 	)
-	return "\n".join(
-		[
-			'[gd_scene load_steps=2 format=3 uid="uid://c6kn26wujp0my"]',
-			"",
-			'[ext_resource type="Script" path="res://tests/node_with_dice_def.gd" id="1_rhmaj"]',
-			dice_shape_resource,
-			dice_def_resource,
-			"",
-			'[sub_resource type="Resource" id="Resource_ua0tv"]',
-			'script = ExtResource("3_qrebk")',
-			'name = "Definition 100"',
-			'color = Color(0, 1, 0, 1)',
-			'sides = 100',
-			'metadata/_custom_type_script = "uid://cohd4ovwrydr0"',
-			"",
-			'[node name="Node3D" type="Node3D" node_paths=PackedStringArray("lala")]',
-			'script = ExtResource("1_rhmaj")',
-			'my_dicedef = SubResource("Resource_ua0tv")',
-			"",
-		]
+	return (
+		"\n"
+		. join(
+			[
+				'[gd_scene load_steps=2 format=3 uid="uid://c6kn26wujp0my"]',
+				"",
+				'[ext_resource type="Script" path="res://tests/node_with_dice_def.gd" id="1_rhmaj"]',
+				dice_shape_resource,
+				dice_def_resource,
+				"",
+				'[sub_resource type="Resource" id="Resource_ua0tv"]',
+				'script = ExtResource("3_qrebk")',
+				'name = "Definition 100"',
+				"color = Color(0, 1, 0, 1)",
+				"sides = 100",
+				'metadata/_custom_type_script = "uid://cohd4ovwrydr0"',
+				"",
+				'[node name="Node3D" type="Node3D" node_paths=PackedStringArray("lala")]',
+				'script = ExtResource("1_rhmaj")',
+				'my_dicedef = SubResource("Resource_ua0tv")',
+				"",
+			]
+		)
 	)
 
 

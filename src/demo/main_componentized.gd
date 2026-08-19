@@ -387,23 +387,23 @@ func _request_landscape_orientation() -> void:
 	if DisplayServer.has_feature(DisplayServer.FEATURE_ORIENTATION):
 		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_SENSOR_LANDSCAPE)
 	if OS.has_feature("web"):
-		(
-			JavaScriptBridge
-			. eval(
-				"document.documentElement.style.background='#05070a'; document.body.style.margin='0'; document.body.style.overflow='hidden';",
-				true
-			)
+		var page_style := (
+			"document.documentElement.style.background='#05070a';"
+			+ "document.body.style.margin='0';"
+			+ "document.body.style.overflow='hidden';"
 		)
+		JavaScriptBridge.eval(page_style, true)
 
 
 func _enter_web_fullscreen() -> void:
 	if not OS.has_feature("web"):
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 		return
-	(
-		JavaScriptBridge
-		. eval(
-			"(async()=>{try{const e=document.documentElement;if(e.requestFullscreen)await e.requestFullscreen();if(screen.orientation&&screen.orientation.lock)await screen.orientation.lock('landscape');}catch(e){console.warn('BGO fullscreen/orientation:',e);}})();",
-			true
-		)
+	var fullscreen_script := (
+		"(async()=>{try{const e=document.documentElement;"
+		+ "if(e.requestFullscreen)await e.requestFullscreen();"
+		+ "if(screen.orientation&&screen.orientation.lock)"
+		+ "await screen.orientation.lock('landscape');"
+		+ "}catch(e){console.warn('BGO fullscreen/orientation:',e);}})();"
 	)
+	JavaScriptBridge.eval(fullscreen_script, true)

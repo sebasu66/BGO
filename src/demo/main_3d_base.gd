@@ -12,10 +12,6 @@ const MOVE_DURATION := 1.25
 const PLAYER_AREA_X := 6.15
 const PLAYER_AREA_DEPTH := 7.2
 
-@onready var camera: Camera3D = $Camera3D
-@onready var title_label: Label = $UI/Title
-@onready var hint_label: Label = $UI/Hint
-
 var repository: GameSessionRepository
 var logger: BgoLogger
 var client_role := ROLE_DISPLAY
@@ -45,6 +41,10 @@ var _player_controls: Control
 var _hand_strip: HBoxContainer
 var _pickup_button: Button
 var _place_button: Button
+
+@onready var camera: Camera3D = $Camera3D
+@onready var title_label: Label = $UI/Title
+@onready var hint_label: Label = $UI/Hint
 
 
 func _animate_piece(piece: Node3D, target: Vector3, reason: String) -> void:
@@ -86,10 +86,15 @@ func _create_hud() -> void:
 	$UI.add_child(_status_label)
 
 	if client_role == ROLE_DISPLAY:
-		hint_label.text = "Shared display · Firebase TEST001 · player hand areas live outside the board."
+		hint_label.text = (
+			"Shared display · Firebase TEST001 · " + "player hand areas live outside the board."
+		)
 		return
 
-	hint_label.text = "Drag to orbit · PICK UP moves a piece into your hand · PLACE moves the active hand piece to the board."
+	hint_label.text = (
+		"Drag to orbit · PICK UP moves a piece into your hand · "
+		+ "PLACE moves the active hand piece to the board."
+	)
 
 	# Explicit bottom HUD geometry: no scroll/container compression in mobile Web.
 	var panel := PanelContainer.new()
