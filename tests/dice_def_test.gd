@@ -1,5 +1,8 @@
 extends GutTest
 
+const SCENE_PATH := "./test_migration.tscn"
+const NODE_WITH_DICE_DEF := preload("./node_with_dice_def.gd")
+
 var _cleanups := []
 
 
@@ -16,13 +19,13 @@ func after_each():
 
 
 ## Verifies the default dice definition shape.
-func test__default_shape():
+func test_default_shape():
 	var dice = DiceDef.new()
 	assert_eq(dice.shape.name, "D6", "Default shape should be D6")
 
 
 ## Verifies migration of legacy dice shape data.
-func test__shape_migration():
+func test_shape_migration():
 	var dice = DiceDef.new()
 	dice.sides = 10  # This should migrate to shape 'D10'
 	assert_eq(dice.shape.name, "D10", "Shape migration from sides failed")
@@ -30,24 +33,35 @@ func test__shape_migration():
 
 ## Builds legacy scene text used by the migration fixture.
 func legacy_scene_content() -> String:
-	return """
-[gd_scene load_steps=2 format=3 uid="uid://c6kn26wujp0my"]
-
-[ext_resource type="Script" path="res://tests/node_with_dice_def.gd" id="1_rhmaj"]
-[ext_resource type="Script" uid="uid://xsgh2gwr4gub" path="res://addons/dice_roller/dice_shape.gd" id="2_qrebk"]
-[ext_resource type="Script" uid="uid://cohd4ovwrydr0" path="res://addons/dice_roller/dice_def.gd" id="3_qrebk"]
-
-[sub_resource type="Resource" id="Resource_ua0tv"]
-script = ExtResource("3_qrebk")
-name = "Definition 100"
-color = Color(0, 1, 0, 1)
-sides = 100
-metadata/_custom_type_script = "uid://cohd4ovwrydr0"
-
-[node name="Node3D" type="Node3D" node_paths=PackedStringArray("lala")]
-script = ExtResource("1_rhmaj")
-my_dicedef = SubResource("Resource_ua0tv")
-"""
+	var dice_shape_resource := (
+		'[ext_resource type="Script" uid="uid://xsgh2gwr4gub" '
+		+ 'path="res://addons/dice_roller/dice_shape.gd" id="2_qrebk"]'
+	)
+	var dice_def_resource := (
+		'[ext_resource type="Script" uid="uid://cohd4ovwrydr0" '
+		+ 'path="res://addons/dice_roller/dice_def.gd" id="3_qrebk"]'
+	)
+	return "\n".join(
+		[
+			'[gd_scene load_steps=2 format=3 uid="uid://c6kn26wujp0my"]',
+			"",
+			'[ext_resource type="Script" path="res://tests/node_with_dice_def.gd" id="1_rhmaj"]',
+			dice_shape_resource,
+			dice_def_resource,
+			"",
+			'[sub_resource type="Resource" id="Resource_ua0tv"]',
+			'script = ExtResource("3_qrebk")',
+			'name = "Definition 100"',
+			'color = Color(0, 1, 0, 1)',
+			'sides = 100',
+			'metadata/_custom_type_script = "uid://cohd4ovwrydr0"',
+			"",
+			'[node name="Node3D" type="Node3D" node_paths=PackedStringArray("lala")]',
+			'script = ExtResource("1_rhmaj")',
+			'my_dicedef = SubResource("Resource_ua0tv")',
+			"",
+		]
+	)
 
 
 ## Writes fixture content to a temporary test file.
@@ -58,12 +72,8 @@ func write_file(file, content):
 	add_cleanup(func(): DirAccess.remove_absolute(SCENE_PATH))
 
 
-const SCENE_PATH := "./test_migration.tscn"
-const NODE_WITH_DICE_DEF = preload("./node_with_dice_def.gd")
-
-
 ## Verifies legacy dice shape migration while loading a scene.
-func test__scene_loading_shape_migration():
+func test_scene_loading_shape_migration():
 	write_file(SCENE_PATH, legacy_scene_content())
 
 	var packed_scene: PackedScene = ResourceLoader.load(SCENE_PATH)
