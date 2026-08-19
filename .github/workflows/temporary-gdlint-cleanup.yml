@@ -1,0 +1,42 @@
+name: Temporary GDLint Cleanup
+
+on:
+  push:
+    branches:
+      - feature/dev-workbench
+    paths:
+      - scripts/temporary_gdlint_cleanup.py
+      - .github/workflows/temporary-gdlint-cleanup.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: feature/dev-workbench
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install 'gdtoolkit==4.*'
+      - run: python3 scripts/temporary_gdlint_cleanup.py
+      - run: gdformat src tests
+      - run: gdlint src tests
+      - run: |
+          rm scripts/temporary_gdlint_cleanup.py
+          rm .github/workflows/temporary-gdlint-cleanup.yml
+      - name: Commit cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src tests scripts .github/workflows
+          git commit -m 'style: satisfy blocking GDScript lint'
+          git push origin HEAD:feature/dev-workbench
