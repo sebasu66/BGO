@@ -22,7 +22,7 @@ jobs:
   context-integrity:
     name: Project context integrity
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
-    uses: sebasu66/AI_commit_integrity_check/.github/workflows/integrity.yml@d51a38acd6d488b3c2dc07c7ed904319b6ef4ad8
+    uses: sebasu66/AI_commit_integrity_check/.github/workflows/integrity.yml@3f3fab1bc1cc38745a8ec8763a0a8463de2ba0f1
     with:
       skill_path: SKILL.md
     permissions:
@@ -30,7 +30,7 @@ jobs:
 
   project-policy:
     name: Protected code policy
-    uses: sebasu66/AI_commit_integrity_check/.github/workflows/project-policy.yml@d51a38acd6d488b3c2dc07c7ed904319b6ef4ad8
+    uses: sebasu66/AI_commit_integrity_check/.github/workflows/project-policy.yml@3f3fab1bc1cc38745a8ec8763a0a8463de2ba0f1
     with:
       policy: BGO
       base_sha: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'push' && github.event.before || '' }}
