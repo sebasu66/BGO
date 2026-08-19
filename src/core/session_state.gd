@@ -98,25 +98,39 @@ func set_host(participant_id: String) -> void:
 	host_participant_id = participant_id
 
 
-## Transitions a lobby session into the active lifecycle with an initial turn.
-## Requires at least one seated participant. Default starter is the occupant of
-## the first seat in seat_order. Returns true on success.
+## Transitions a lobby session into the active lifecycle with an initial player.
+## The default starter is the first seated participant with role "player".
 func start_session(initial_participant_id: String = "") -> bool:
 	if lifecycle != Lifecycle.LOBBY:
 		return false
-	if participant_seats.is_empty() or seat_order.is_empty():
+	var players := _ordered_players()
+	if players.is_empty():
 		return false
 	var starter := initial_participant_id
 	if starter.is_empty():
-		starter = _participant_for_seat(seat_order[0])
-		if starter.is_empty():
-			return false
-	elif not participant_seats.has(starter):
+		starter = players[0]
+	elif not players.has(starter):
 		return false
 	lifecycle = Lifecycle.ACTIVE
 	active_participant_id = starter
 	turn_number = 1
 	result = {}
+	return true
+
+
+## Advances an active session to the next seated player in deterministic seat order.
+## Only the currently active participant may advance the turn.
+func advance_turn(requesting_participant_id: String) -> bool:
+	if lifecycle != Lifecycle.ACTIVE:
+		return false
+	if requesting_participant_id != active_participant_id:
+		return false
+	var players := _ordered_players()
+	var current_index := players.find(active_participant_id)
+	if current_index < 0:
+		return false
+	active_participant_id = players[(current_index + 1) % players.size()]
+	turn_number += 1
 	return true
 
 
@@ -153,6 +167,17 @@ func to_dictionary() -> Dictionary:
 		"turn_number": turn_number,
 		"result": result.duplicate(true),
 	}
+
+
+func _ordered_players() -> Array[String]:
+	var players: Array[String] = []
+	for seat_id in seat_order:
+		var participant_id := _participant_for_seat(seat_id)
+		if participant_id.is_empty():
+			continue
+		if str(participant_roles.get(participant_id, "player")) == "player":
+			players.append(participant_id)
+	return players
 
 
 func _participant_for_seat(seat_id: String) -> String:
