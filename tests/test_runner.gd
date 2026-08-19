@@ -47,7 +47,8 @@ func _test_component_registry() -> void:
 	]
 	for component_id in expected:
 		_check(
-			COMPONENT_REGISTRY.has_component(component_id), "registry resolves %s" % component_id
+			COMPONENT_REGISTRY.has_component(component_id),
+			"registry resolves %s" % component_id
 		)
 		_check(
 			COMPONENT_REGISTRY.load_scene(component_id) != null,
@@ -89,8 +90,7 @@ func _test_game_definition() -> void:
 	if bool(result.get("ok", false)):
 		var data: Dictionary = result.get("data", {})
 		_check(
-			int(data.get("schema_version", 0)) == 1,
-			"TEST001 schema version is supported"
+			int(data.get("schema_version", 0)) == 1, "TEST001 schema version is supported"
 		)
 
 	var missing: Dictionary = GAME_DEFINITION_LOADER.load_game(
@@ -107,20 +107,17 @@ func _test_session_state() -> void:
 	var session: SessionState = SESSION_STATE.create_lobby("sess-1", "p1")
 	_check(session.is_host("p1"), "host identity is explicit")
 	_check(
-		session.assign_participant("p1", "seat-1", "player"),
-		"host seat assignment succeeds"
+		session.assign_participant("p1", "seat-1", "player"), "host seat assignment succeeds"
 	)
 	_check(
 		session.assign_participant("watcher", "seat-2", "spectator"),
 		"spectator seat assignment succeeds"
 	)
 	_check(
-		session.assign_participant("p2", "seat-3", "player"),
-		"second player assignment succeeds"
+		session.assign_participant("p2", "seat-3", "player"), "second player assignment succeeds"
 	)
 	_check(
-		not session.assign_participant("p3", "seat-1", "player"),
-		"duplicate seat is rejected"
+		not session.assign_participant("p3", "seat-1", "player"), "duplicate seat is rejected"
 	)
 	_check(session.start_session(), "session starts with seated players")
 	_check(session.active_participant_id == "p1", "first valid player starts")
@@ -136,19 +133,16 @@ func _test_session_state() -> void:
 	var before_invalid_end := session.to_dictionary()
 	_check(not session.end_session("victory", ["watcher"]), "spectator cannot be winner")
 	_check(
-		session.to_dictionary() == before_invalid_end,
-		"invalid completion preserves state"
+		session.to_dictionary() == before_invalid_end, "invalid completion preserves state"
 	)
 	_check(
-		session.end_session("victory", ["p2"]),
-		"active session ends with valid winner"
+		session.end_session("victory", ["p2"]), "active session ends with valid winner"
 	)
 	_check(session.is_ended(), "session reports ended lifecycle")
 	_check(session.active_participant_id.is_empty(), "ended session clears active player")
 	_check(str(session.result.get("outcome", "")) == "victory", "result outcome is explicit")
 	_check(
-		(session.result.get("winner_participant_ids", []) as Array) == ["p2"],
-		"winner is explicit"
+		(session.result.get("winner_participant_ids", []) as Array) == ["p2"], "winner is explicit"
 	)
 	var ended_snapshot := session.to_dictionary()
 	_check(not session.advance_turn("p2"), "ended session rejects turn progression")
@@ -173,8 +167,7 @@ func _test_tabletop_state() -> void:
 	_check(table.to_dictionary() == before_move, "rejected move preserves table state")
 	_check(table.remove_object("piece-3"), "object can leave a slot")
 	_check(
-		table.move_object("piece-1", "pool"),
-		"move succeeds when capacity becomes available"
+		table.move_object("piece-1", "pool"), "move succeeds when capacity becomes available"
 	)
 	_check(table.object_slot("piece-1") == "pool", "logical object location updates")
 	_check(table.slot_occupants("a1").is_empty(), "source occupancy clears after move")
