@@ -203,12 +203,23 @@ Names should express domain meaning. Avoid generic names such as `manager`, `hel
 
 Public GDScript functions are part of the readable project contract and must have a preceding Godot documentation comment using `##` that explains purpose/contract when the name and types alone are insufficient. Private callbacks/helpers beginning with `_` do not require boilerplate documentation.
 
-Machine-enforced limits for newly changed GDScript files are currently:
+<!-- AICI:POLICY:START -->
+### Machine-enforced policy
+
+This block is generated from the protected AICI policy. Do not edit it by hand.
 
 - maximum GDScript file length: **500 lines**;
-- maximum function length: **60 lines**.
+- maximum function length: **85 lines**;
+- maximum decision complexity per function: **10**;
+- public function `##` documentation required: **yes**;
+- GDScript files/functions/variables/signals: `snake_case` / `snake_case` / `snake_case` / `snake_case`;
+- classes: `PascalCase`; constants: `UPPER_SNAKE_CASE`.
+- component root: `src/components`;
+- component manifest: `component.jsonh`;
+- each component manifest folder must be snake_case and own at least one local `.gd` and `.tscn` file.
+<!-- AICI:POLICY:END -->
 
-These limits are guardrails, not targets. Prefer smaller cohesive functions/classes. If an implementation needs to exceed an objective limit, refactor responsibilities rather than weakening the rule inside BGO.
+These limits are guardrails, not targets. Prefer smaller cohesive functions/classes. If an implementation needs to exceed an objective limit, refactor responsibilities rather than weakening the rule inside the target repository.
 
 ### File placement
 
