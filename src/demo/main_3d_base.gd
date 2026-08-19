@@ -328,3 +328,13 @@ func _vec3_payload(value: Vector3) -> Dictionary:
 
 func _cell_payload(value: Vector2i) -> Dictionary:
 	return {"x": value.x, "y": value.y}
+
+
+func _pointer_is_over_controls(position: Vector2) -> bool:
+	return _player_controls != null and _player_controls.get_global_rect().has_point(position)
+
+
+func _orbit_camera(relative: Vector2) -> void:
+	_camera_yaw -= relative.x * 0.008
+	_camera_pitch = clampf(_camera_pitch + relative.y * 0.006, deg_to_rad(28.0), deg_to_rad(72.0))
+	_update_camera_transform()

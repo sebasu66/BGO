@@ -71,10 +71,6 @@ func _handle_pointer_mouse_motion(event: InputEventMouseMotion) -> void:
 	_orbit_camera(event.relative)
 
 
-func _pointer_is_over_controls(position: Vector2) -> bool:
-	return _player_controls != null and _player_controls.get_global_rect().has_point(position)
-
-
 func _begin_pointer(position: Vector2, source: String) -> void:
 	_pointer_down = true
 	_pointer_dragged = false
@@ -104,12 +100,6 @@ func _end_pointer(position: Vector2, source: String) -> void:
 	else:
 		logger.info("CAMERA_DRAG_END", {"yaw": _camera_yaw, "pitch": _camera_pitch})
 		_set_debug("drag end")
-
-
-func _orbit_camera(relative: Vector2) -> void:
-	_camera_yaw -= relative.x * 0.008
-	_camera_pitch = clampf(_camera_pitch + relative.y * 0.006, deg_to_rad(28.0), deg_to_rad(72.0))
-	_update_camera_transform()
 
 
 func _pick_at(screen_position: Vector2) -> void:
