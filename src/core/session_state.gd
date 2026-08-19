@@ -69,7 +69,10 @@ func assign_participant(participant_id: String, seat_id: String, role: String = 
 	if participant_id.is_empty() or seat_id.is_empty():
 		return false
 	for existing_participant in participant_seats:
-		if participant_seats[existing_participant] == seat_id and existing_participant != participant_id:
+		if (
+			participant_seats[existing_participant] == seat_id
+			and existing_participant != participant_id
+		):
 			return false
 	participant_seats[participant_id] = seat_id
 	participant_roles[participant_id] = role
