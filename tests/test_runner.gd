@@ -18,6 +18,7 @@ func _run() -> void:
 	_test_game_definition()
 	_test_session_state_foundation()
 	_test_session_turn_progression()
+	_test_session_completion()
 
 	if failures > 0:
 		printerr("BGO TESTS FAILED: %d/%d assertions failed." % [failures, assertions])
@@ -217,3 +218,38 @@ func _test_session_turn_progression() -> void:
 		spectator_first.active_participant_id == "p1",
 		"default starter is first valid player"
 	)
+
+
+func _test_session_completion() -> void:
+	var session: SessionState = SESSION_STATE.create_lobby("sess-complete", "p1")
+	_check(session.assign_participant("p1", "seat-1", "player"), "completion p1 assigned")
+	_check(session.assign_participant("p2", "seat-2", "player"), "completion p2 assigned")
+	_check(session.assign_participant("watcher", "seat-3", "spectator"), "completion spectator assigned")
+	_check(session.start_session(), "completion session starts")
+
+	_check(not session.end_session("victory", ["missing"]), "unknown winner is rejected")
+	_check(session.is_active(), "invalid winner does not end session")
+	_check(not session.end_session("victory", ["watcher"]), "spectator winner is rejected")
+	_check(session.is_active(), "invalid spectator winner preserves active session")
+	_check(not session.end_session("victory", ["p1", "p1"]), "duplicate winner is rejected")
+	_check(session.is_active(), "duplicate winner rejection preserves active session")
+
+	_check(session.end_session("victory", ["p2"]), "valid player winner ends session")
+	_check(session.is_ended(), "completion lifecycle is ended")
+	_check(session.active_participant_id.is_empty(), "ended completion clears active participant")
+	_check(str(session.result.get("outcome", "")) == "victory", "completion outcome is explicit")
+	var winners: Array = session.result.get("winner_participant_ids", [])
+	_check(winners == ["p2"], "completion winner list is explicit")
+
+	var ended_snapshot := session.to_dictionary()
+	_check(ended_snapshot.get("lifecycle") == "ended", "ended lifecycle serializes explicitly")
+	_check(not session.advance_turn("p2"), "ended session rejects gameplay turn transition")
+	_check(not session.start_session(), "ended session rejects restart transition")
+	_check(not session.end_session("draw"), "ended session rejects second completion")
+	_check(session.to_dictionary() == ended_snapshot, "rejected ended transitions preserve state")
+
+	var draw: SessionState = SESSION_STATE.create_lobby("sess-draw")
+	_check(draw.assign_participant("p1", "seat-1", "player"), "draw player assigned")
+	_check(draw.start_session(), "draw session starts")
+	_check(draw.end_session("draw"), "draw may end without winners")
+	_check((draw.result.get("winner_participant_ids", []) as Array).is_empty(), "draw winners stay empty")
