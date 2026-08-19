@@ -6,7 +6,7 @@ Implement every task in compliance with `SKILL.md` and leave the branch passing 
 
 ## BGO-001 — SessionState domain foundation
 
-**Status:** READY
+**Status:** IMPLEMENTED
 
 Introduce the first logical `SessionState` foundation described by the current project direction.
 
@@ -25,7 +25,7 @@ Implement this task according to the current `SKILL.md`.
 
 ## BGO-002 — Session turn progression
 
-**Status:** QUEUED
+**Status:** IMPLEMENTED
 
 Add logical turn progression on top of the `SessionState` foundation.
 
@@ -42,7 +42,7 @@ Implement this task according to the current `SKILL.md`.
 
 ## BGO-003 — Session completion and result
 
-**Status:** QUEUED
+**Status:** IMPLEMENTED
 
 Complete the logical session lifecycle with explicit game completion and result state.
 
@@ -58,7 +58,7 @@ Implement this task according to the current `SKILL.md`.
 
 ## BGO-004 — Table sections, zones, and slot capacity
 
-**Status:** QUEUED
+**Status:** IMPLEMENTED
 
 Formalize the next logical tabletop slice after the session lifecycle is stable.
 
@@ -70,5 +70,70 @@ Acceptance criteria:
 - invalid occupancy changes are rejected without corrupting state;
 - focused automated tests cover valid and invalid occupancy behavior;
 - existing behavior remains green under the required project checks.
+
+Implement this task according to the current `SKILL.md`.
+
+## BGO-005 — Logical object state
+
+**Status:** READY
+
+Introduce a rendering-independent logical object model for tabletop gameplay.
+
+Acceptance criteria:
+
+- objects have stable identity;
+- owner and holder/controller are represented separately;
+- neutral ownership is representable;
+- logical location is represented independently of rendering coordinates;
+- object visibility metadata can be represented without exposing private state;
+- focused automated tests cover ownership, holder and location behavior.
+
+Implement this task according to the current `SKILL.md`.
+
+## BGO-006 — Validated move command
+
+**Status:** QUEUED
+
+Add a domain command that moves a logical object between valid tabletop slots.
+
+Acceptance criteria:
+
+- only an authorized active participant can move a controlled object;
+- neutral objects can be acquired when the command explicitly permits it;
+- invalid ownership, turn or destination conditions reject without mutating state;
+- successful movement updates logical location and tabletop occupancy consistently;
+- focused automated tests cover valid and rejected commands.
+
+Implement this task according to the current `SKILL.md`.
+
+## BGO-007 — Complete turn command flow
+
+**Status:** QUEUED
+
+Combine one validated gameplay action with deterministic turn progression.
+
+Acceptance criteria:
+
+- a valid move can complete the current player's turn;
+- rejected moves do not advance the turn;
+- successful turns produce a stable logical result suitable for persistence/network adapters;
+- two logical clients applying the same accepted command sequence converge on the same state;
+- focused automated tests cover multi-turn convergence.
+
+Implement this task according to the current `SKILL.md`.
+
+## BGO-008 — First complete conformance game
+
+**Status:** QUEUED
+
+Create a small declarative turn-based conformance fixture that can be played from setup to explicit winner using the public logical contracts.
+
+Acceptance criteria:
+
+- the fixture uses declarative game data rather than executable game-package scripts;
+- two players can complete a deterministic legal game sequence;
+- invalid moves are rejected through the same public validation path;
+- the session ends with an explicit winner/result;
+- an automated fixture test plays one complete game from initial state to result.
 
 Implement this task according to the current `SKILL.md`.
