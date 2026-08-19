@@ -1,0 +1,83 @@
+name: Copilot Project Audit
+
+on:
+  workflow_run:
+    workflows:
+      - BGO Quality Gate
+    types:
+      - completed
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  request-audit:
+    name: Request whole-project Copilot audit
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'develop'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create audit issue and assign Copilot
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          INTEGRATED_SHA: ${{ github.event.workflow_run.head_sha }}
+          SOURCE_RUN: ${{ github.event.workflow_run.html_url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          title="Project audit after DEV integration ${INTEGRATED_SHA:0:8}"
+          body=$(cat <<EOF
+          Perform a whole-project advisory audit of BGO after the successful DEV integration at commit ${INTEGRATED_SHA}.
+
+          Do not limit the analysis to the latest diff. Inspect the current `develop` codebase broadly and use the repository's `project-auditor` custom agent instructions.
+
+          Produce the full written assessment in:
+
+          `docs/audits/copilot-project-audit.md`
+
+          Replace the previous report if one exists. The report must clearly identify the audited commit and source Quality Gate run. Do not modify source code, backlog state, project-status values, workflows, release branches, or product decisions. This task is advisory only.
+
+          Audited commit: ${INTEGRATED_SHA}
+          Quality Gate: ${SOURCE_RUN}
+          EOF
+          )
+
+          issue_json=$(gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "/repos/${REPOSITORY}/issues" \
+            -f title="$title" \
+            -f body="$body")
+
+          issue_number=$(printf '%s' "$issue_json" | jq -r '.number')
+
+          if ! gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "/repos/${REPOSITORY}/issues/${issue_number}/assignees" \
+            --input - <<EOF
+          {
+            "assignees": ["copilot-swe-agent[bot]"],
+            "agent_assignment": {
+              "target_repo": "${REPOSITORY}",
+              "base_branch": "develop",
+              "custom_instructions": "Use the project-auditor custom agent and produce only the requested advisory report file.",
+              "custom_agent": "project-auditor"
+            }
+          }
+          EOF
+          then
+            gh issue comment "$issue_number" \
+              --repo "$REPOSITORY" \
+              --body "Automatic Copilot assignment failed. The audit request remains open for manual assignment to Copilot using the project-auditor custom agent."
+            exit 1
+          fi
+
+          echo "Requested Copilot project audit in issue #${issue_number}."
