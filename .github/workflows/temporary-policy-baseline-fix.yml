@@ -1,0 +1,57 @@
+name: Temporary Policy Baseline Fix
+
+on:
+  push:
+    branches:
+      - feature/dev-workbench
+    paths:
+      - scripts/temporary_policy_baseline_fix.py
+      - .github/workflows/temporary-policy-baseline-fix.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout workbench
+        uses: actions/checkout@v6
+        with:
+          ref: feature/dev-workbench
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install GDScript formatter
+        run: pip install 'gdtoolkit==4.*'
+
+      - name: Apply deterministic baseline fixes
+        run: python3 scripts/temporary_policy_baseline_fix.py
+
+      - name: Format GDScript
+        run: gdformat src tests
+
+      - name: Remove temporary fixer
+        run: |
+          rm scripts/temporary_policy_baseline_fix.py
+          rm .github/workflows/temporary-policy-baseline-fix.yml
+
+      - name: Commit baseline cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src tests scripts .github/workflows
+          if git diff --cached --quiet; then
+            echo 'No baseline fixes required.'
+            exit 0
+          fi
+          git commit -m 'style: align GDScript baseline with protected policy'
+          git push origin HEAD:feature/dev-workbench
