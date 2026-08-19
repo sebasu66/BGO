@@ -17,6 +17,7 @@ func _run() -> void:
 	_test_component_validation()
 	_test_game_definition()
 	_test_session_state_foundation()
+	_test_session_turn_progression()
 
 	if failures > 0:
 		printerr("BGO TESTS FAILED: %d/%d assertions failed." % [failures, assertions])
@@ -171,10 +172,48 @@ func _test_session_state_foundation() -> void:
 	var ordered: SessionState = SESSION_STATE.create_lobby("sess-order")
 	_check(ordered.assign_participant("p-late", "seat-b"), "late participant assigned")
 	_check(ordered.assign_participant("p-first", "seat-a"), "first seat participant assigned")
-	# seat_order follows assignment order: seat-b then seat-a
 	_check(ordered.seat_order[0] == "seat-b", "seat_order preserves assignment order")
 	_check(ordered.start_session(), "ordered session starts from seat_order")
 	_check(
 		ordered.active_participant_id == "p-late",
 		"default starter matches first seat_order occupant not dictionary key order"
+	)
+
+
+func _test_session_turn_progression() -> void:
+	var session: SessionState = SESSION_STATE.create_lobby("sess-turns", "p1")
+	_check(session.assign_participant("p1", "seat-1", "player"), "turn p1 assigned")
+	_check(session.assign_participant("watcher", "seat-2", "spectator"), "spectator assigned")
+	_check(session.assign_participant("p2", "seat-3", "player"), "turn p2 assigned")
+	_check(session.start_session(), "turn session starts")
+	_check(session.active_participant_id == "p1", "first player starts")
+
+	var before_turn := session.turn_number
+	var before_active := session.active_participant_id
+	_check(not session.advance_turn("p2"), "non-active participant cannot advance turn")
+	_check(session.turn_number == before_turn, "rejected advance preserves turn number")
+	_check(session.active_participant_id == before_active, "rejected advance preserves active player")
+
+	_check(session.advance_turn("p1"), "active participant advances turn")
+	_check(session.active_participant_id == "p2", "spectator seat is skipped")
+	_check(session.turn_number == 2, "turn number increments once")
+	_check(session.advance_turn("p2"), "second player advances turn")
+	_check(session.active_participant_id == "p1", "turn order wraps deterministically")
+	_check(session.turn_number == 3, "wrapped turn increments deterministically")
+
+	_check(session.end_session("complete", ["p1"]), "turn session can end")
+	var ended_turn := session.turn_number
+	_check(not session.advance_turn("p1"), "ended session rejects turn advance")
+	_check(session.turn_number == ended_turn, "ended rejection preserves turn number")
+
+	var spectator_first: SessionState = SESSION_STATE.create_lobby("sess-spectator-first")
+	_check(
+		spectator_first.assign_participant("watcher", "seat-1", "spectator"),
+		"leading spectator assigned"
+	)
+	_check(spectator_first.assign_participant("p1", "seat-2", "player"), "player after spectator")
+	_check(spectator_first.start_session(), "session can start with spectator in first seat")
+	_check(
+		spectator_first.active_participant_id == "p1",
+		"default starter is first valid player"
 	)
