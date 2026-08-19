@@ -3,6 +3,7 @@ extends SceneTree
 const COMPONENT_REGISTRY = preload("res://src/core/component_registry.gd")
 const GAME_DEFINITION_LOADER = preload("res://src/core/game_definition_loader.gd")
 const SESSION_STATE = preload("res://src/core/session_state.gd")
+const TABLETOP_STATE = preload("res://src/core/tabletop_state.gd")
 
 var failures := 0
 var assertions := 0
@@ -19,6 +20,7 @@ func _run() -> void:
 	_test_session_state_foundation()
 	_test_session_turn_progression()
 	_test_session_completion()
+	_test_tabletop_state()
 
 	if failures > 0:
 		printerr("BGO TESTS FAILED: %d/%d assertions failed." % [failures, assertions])
@@ -253,3 +255,31 @@ func _test_session_completion() -> void:
 	_check(draw.start_session(), "draw session starts")
 	_check(draw.end_session("draw"), "draw may end without winners")
 	_check((draw.result.get("winner_participant_ids", []) as Array).is_empty(), "draw winners stay empty")
+
+
+func _test_tabletop_state() -> void:
+	var table: TabletopState = TABLETOP_STATE.new()
+	_check(table.add_section("main"), "table section is added")
+	_check(not table.add_section("main"), "duplicate section is rejected")
+	_check(table.add_zone("board", "main"), "zone belongs to section")
+	_check(not table.add_zone("lost", "missing"), "zone rejects unknown section")
+	_check(table.add_slot("a1", "board", 1), "single-capacity slot is added")
+	_check(table.add_slot("pool", "board", 2), "multi-capacity slot is added")
+	_check(not table.add_slot("bad", "board", 0), "non-positive capacity is rejected")
+
+	_check(table.place_object("piece-1", "a1"), "object occupies free slot")
+	_check(not table.place_object("piece-2", "a1"), "full slot rejects another object")
+	_check(table.slot_occupants("a1") == ["piece-1"], "capacity rejection preserves occupants")
+	_check(table.object_slot("piece-1") == "a1", "object location is explicit")
+
+	_check(table.place_object("piece-2", "pool"), "object occupies multi-capacity slot")
+	_check(table.place_object("piece-3", "pool"), "second object fits multi-capacity slot")
+	var before_move := table.to_dictionary()
+	_check(not table.move_object("piece-1", "pool"), "move rejects full destination")
+	_check(table.to_dictionary() == before_move, "rejected move preserves complete table state")
+
+	_check(table.remove_object("piece-3"), "object can leave a slot")
+	_check(table.move_object("piece-1", "pool"), "object moves when destination gains capacity")
+	_check(table.object_slot("piece-1") == "pool", "move updates object location")
+	_check(table.slot_occupants("a1").is_empty(), "move clears source occupancy")
+	_check(not table.place_object("piece-1", "a1"), "already placed object cannot duplicate")
