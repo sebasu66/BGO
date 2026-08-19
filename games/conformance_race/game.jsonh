@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "game": {
+    "id": "conformance_race",
+    "name": "BGO Conformance Race",
+    "min_players": 2,
+    "max_players": 2,
+    "turn_based": true
+  },
+  "board": {
+    "component": "bgo.board.checkered",
+    "config": {
+      "columns": 3,
+      "rows": 2,
+      "cell_size": 1.0
+    }
+  },
+  "players": [
+    {"id": "player_1", "name": "Player 1"},
+    {"id": "player_2", "name": "Player 2"}
+  ],
+  "setup": {
+    "objects": [
+      {
+        "id": "player_1_piece",
+        "component": "bgo.piece.basic_cylinder",
+        "owner_id": "player_1",
+        "quantity": 1,
+        "config": {"color_source": "fixed", "color": "#ffffff"},
+        "initial_location": {"type": "slot", "slot_id": "board:0:0"}
+      },
+      {
+        "id": "player_2_piece",
+        "component": "bgo.piece.basic_cylinder",
+        "owner_id": "player_2",
+        "quantity": 1,
+        "config": {"color_source": "fixed", "color": "#999999"},
+        "initial_location": {"type": "slot", "slot_id": "board:0:1"}
+      }
+    ]
+  },
+  "conformance": {
+    "turns": [
+      {"participant_id": "player_1", "object_id": "player_1_piece", "to_slot_id": "board:1:0"},
+      {"participant_id": "player_2", "object_id": "player_2_piece", "to_slot_id": "board:1:1"},
+      {"participant_id": "player_1", "object_id": "player_1_piece", "to_slot_id": "board:2:0"}
+    ],
+    "completion": {
+      "outcome": "victory",
+      "winner_participant_ids": ["player_1"]
+    }
+  }
+}
