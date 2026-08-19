@@ -51,13 +51,36 @@ func move_object(
 	object.set_location("slot", target_slot_id)
 	return {
 		"ok": true,
-		"event": {
-			"type": "object_moved",
-			"object_id": object_id,
-			"participant_id": requesting_participant_id,
-			"from_slot_id": source_slot_id,
-			"to_slot_id": target_slot_id,
-		},
+		"event": _move_event(
+			requesting_participant_id, object_id, source_slot_id, target_slot_id
+		),
+	}
+
+
+## Applies one valid move and advances the turn only when the move succeeds.
+func move_and_end_turn(
+	requesting_participant_id: String,
+	object_id: String,
+	target_slot_id: String,
+	allow_neutral_acquire: bool = false
+) -> Dictionary:
+	var move_result := move_object(
+		requesting_participant_id, object_id, target_slot_id, allow_neutral_acquire
+	)
+	if not bool(move_result.get("ok", false)):
+		return move_result
+	if not session.advance_turn(requesting_participant_id):
+		return _rejected("turn_advance_rejected")
+	return {
+		"ok": true,
+		"events": [
+			move_result.get("event", {}),
+			{
+				"type": "turn_advanced",
+				"turn_number": session.turn_number,
+				"active_participant_id": session.active_participant_id,
+			},
+		],
 	}
 
 
@@ -104,6 +127,18 @@ func _can_control(
 	if object.holder_id.is_empty() and object.owner_id == participant_id:
 		return true
 	return object.is_neutral() and object.holder_id.is_empty() and allow_neutral_acquire
+
+
+func _move_event(
+	participant_id: String, object_id: String, source_slot_id: String, target_slot_id: String
+) -> Dictionary:
+	return {
+		"type": "object_moved",
+		"object_id": object_id,
+		"participant_id": participant_id,
+		"from_slot_id": source_slot_id,
+		"to_slot_id": target_slot_id,
+	}
 
 
 func _rejected(reason: String) -> Dictionary:
