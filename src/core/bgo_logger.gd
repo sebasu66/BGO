@@ -20,6 +20,8 @@ var _web_poll_timer: Timer
 var _last_uploaded_generation := 0
 var _recorder_missing_reported := false
 
+
+## Configures this object from the supplied project data.
 func configure(target_game_id: String, target_client_id: String) -> void:
 	game_id = target_game_id
 	client_id = _sanitize_key(target_client_id)
@@ -36,12 +38,13 @@ func configure(target_game_id: String, target_client_id: String) -> void:
 		DirAccess.make_dir_recursive_absolute(directory)
 		_file_path = "user://logs/bgo-%s.jsonl" % client_id
 
-	log_event("LOGGER_STARTED", {
-		"platform": OS.get_name(),
-		"web": OS.has_feature("web"),
-		"run_id": _run_id
-	})
+	log_event(
+		"LOGGER_STARTED",
+		{"platform": OS.get_name(), "web": OS.has_feature("web"), "run_id": _run_id}
+	)
 
+
+## Records a structured BGO event using the configured logging sinks.
 func log_event(event_name: String, payload: Dictionary = {}, level: String = "info") -> void:
 	var entry := {
 		"ts": Time.get_unix_time_from_system(),
@@ -73,17 +76,26 @@ func log_event(event_name: String, payload: Dictionary = {}, level: String = "in
 		else:
 			_flush_structured_error_run("bgo_logger")
 
+
+## Records a debug-level BGO log entry.
 func debug(event_name: String, payload: Dictionary = {}) -> void:
 	log_event(event_name, payload, "debug")
 
+
+## Records an informational BGO log entry.
 func info(event_name: String, payload: Dictionary = {}) -> void:
 	log_event(event_name, payload, "info")
 
+
+## Records a warning-level BGO log entry.
 func warning(event_name: String, payload: Dictionary = {}) -> void:
 	log_event(event_name, payload, "warning")
 
+
+## Records an error-level BGO log entry.
 func error(event_name: String, payload: Dictionary = {}) -> void:
 	log_event(event_name, payload, "error")
+
 
 func _start_web_flight_recorder_poll() -> void:
 	_web_poll_timer = Timer.new()
@@ -94,16 +106,23 @@ func _start_web_flight_recorder_poll() -> void:
 	_web_poll_timer.timeout.connect(_poll_web_flight_recorder)
 	_poll_web_flight_recorder.call_deferred()
 
+
 func _mark_web_error(reason: String) -> void:
 	if not OS.has_feature("web"):
 		return
 	var encoded_reason := JSON.stringify(reason)
-	JavaScriptBridge.eval("window.__bgoFlightRecorder&&window.__bgoFlightRecorder.markError(%s);" % encoded_reason, true)
+	JavaScriptBridge.eval(
+		"window.__bgoFlightRecorder&&window.__bgoFlightRecorder.markError(%s);" % encoded_reason,
+		true
+	)
+
 
 func _poll_web_flight_recorder() -> void:
 	if not firebase_enabled or _adapter == null:
 		return
-	var snapshot_json: Variant = JavaScriptBridge.eval("window.__bgoFlightRecorder?JSON.stringify(window.__bgoFlightRecorder.snapshot()):'';", true)
+	var snapshot_json: Variant = JavaScriptBridge.eval(
+		"window.__bgoFlightRecorder?JSON.stringify(window.__bgoFlightRecorder.snapshot()):'';", true
+	)
 	if not snapshot_json is String or snapshot_json.is_empty():
 		_report_missing_web_recorder()
 		return
@@ -116,6 +135,7 @@ func _poll_web_flight_recorder() -> void:
 		return
 	_last_uploaded_generation = generation
 	_upload_error_run(snapshot, "web_flight_recorder")
+
 
 func _report_missing_web_recorder() -> void:
 	if _recorder_missing_reported:
@@ -132,13 +152,17 @@ func _report_missing_web_recorder() -> void:
 		"payload": {"message": "window.__bgoFlightRecorder is missing from exported HTML"}
 	}
 	_buffer.append(entry)
-	_upload_error_run({
-		"error_generation": _last_uploaded_generation + 1,
-		"error_seen": true,
-		"entries": [],
-		"recorder_available": false,
-	}, "flight_recorder_missing")
+	_upload_error_run(
+		{
+			"error_generation": _last_uploaded_generation + 1,
+			"error_seen": true,
+			"entries": [],
+			"recorder_available": false,
+		},
+		"flight_recorder_missing"
+	)
 	_last_uploaded_generation += 1
+
 
 func _report_invalid_web_recorder_snapshot(raw_value: String) -> void:
 	if _recorder_missing_reported:
@@ -155,25 +179,33 @@ func _report_invalid_web_recorder_snapshot(raw_value: String) -> void:
 		"payload": {"raw_snapshot": raw_value.left(512)}
 	}
 	_buffer.append(entry)
-	_upload_error_run({
-		"error_generation": _last_uploaded_generation + 1,
-		"error_seen": true,
-		"entries": [],
-		"recorder_available": true,
-		"snapshot_valid": false,
-	}, "flight_recorder_invalid")
+	_upload_error_run(
+		{
+			"error_generation": _last_uploaded_generation + 1,
+			"error_seen": true,
+			"entries": [],
+			"recorder_available": true,
+			"snapshot_valid": false,
+		},
+		"flight_recorder_invalid"
+	)
 	_last_uploaded_generation += 1
+
 
 func _flush_structured_error_run(source: String) -> void:
 	if not firebase_enabled or _adapter == null:
 		return
-	_upload_error_run({
-		"error_generation": _last_uploaded_generation + 1,
-		"error_seen": true,
-		"entries": _buffer.duplicate(true),
-		"source": source,
-	}, source)
+	_upload_error_run(
+		{
+			"error_generation": _last_uploaded_generation + 1,
+			"error_seen": true,
+			"entries": _buffer.duplicate(true),
+			"source": source,
+		},
+		source
+	)
 	_last_uploaded_generation += 1
+
 
 func _upload_error_run(snapshot: Dictionary, source: String) -> void:
 	var payload := {
@@ -189,6 +221,7 @@ func _upload_error_run(snapshot: Dictionary, source: String) -> void:
 	_adapter.write("%s/%s/%s/error_runs/%s" % [LOG_ROOT, game_id, client_id, _run_id], payload)
 	_adapter.write("%s/latest_error/%s" % [PUBLIC_LOG_ROOT, _sanitize_key(game_id)], payload)
 
+
 func _append_file(line: String) -> void:
 	var file: FileAccess
 	if FileAccess.file_exists(_file_path):
@@ -203,9 +236,15 @@ func _append_file(line: String) -> void:
 	file.store_line(line)
 	file.close()
 
-func _on_log_request_failed(operation: StringName, path: String, http_code: int, message: String) -> void:
+
+func _on_log_request_failed(
+	operation: StringName, path: String, http_code: int, message: String
+) -> void:
 	# Never feed Firebase logging failures back into the Firebase logger itself.
-	push_warning("BGO debug log upload failed: %s %s (%d) %s" % [operation, path, http_code, message])
+	push_warning(
+		"BGO debug log upload failed: %s %s (%d) %s" % [operation, path, http_code, message]
+	)
+
 
 func _sanitize_key(value: String) -> String:
 	var result := value

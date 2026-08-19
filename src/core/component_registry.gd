@@ -2,35 +2,43 @@ class_name BgoComponentRegistry
 extends RefCounted
 
 const COMPONENTS := {
-	"bgo.board.checkered": {
+	"bgo.board.checkered":
+	{
 		"kind": "board",
 		"scene": "res://src/components/boards/checkered_board/checkered_board.tscn",
 	},
-	"bgo.piece.basic_cylinder": {
+	"bgo.piece.basic_cylinder":
+	{
 		"kind": "piece",
 		"scene": "res://src/components/pieces/basic_cylinder/basic_cylinder_piece.tscn",
 	},
-	"bgo.player_area.basic": {
+	"bgo.player_area.basic":
+	{
 		"kind": "player_area",
 		"scene": "res://src/components/player_area/player_area.tscn",
 	},
-	"bgo.player_presence.basic_mask": {
+	"bgo.player_presence.basic_mask":
+	{
 		"kind": "player_presence",
 		"scene": "res://src/components/player_presence/basic_mask/player_presence_mask.tscn",
 	},
-	"bgo.slot.basic": {
+	"bgo.slot.basic":
+	{
 		"kind": "slot",
 		"scene": "res://src/components/slots/basic_slot/basic_slot.tscn",
 	},
 }
 
+
 static func has_component(component_id: String) -> bool:
 	return COMPONENTS.has(component_id)
+
 
 static func get_kind(component_id: String) -> String:
 	if not COMPONENTS.has(component_id):
 		return ""
 	return str(COMPONENTS[component_id].get("kind", ""))
+
 
 static func load_scene(component_id: String) -> PackedScene:
 	if not COMPONENTS.has(component_id):
@@ -39,6 +47,7 @@ static func load_scene(component_id: String) -> PackedScene:
 	if scene_path.is_empty() or not ResourceLoader.exists(scene_path):
 		return null
 	return load(scene_path) as PackedScene
+
 
 static func validate_config(component_id: String, config: Dictionary) -> Array[String]:
 	var errors: Array[String] = []
@@ -61,7 +70,15 @@ static func validate_config(component_id: String, config: Dictionary) -> Array[S
 				_validate_int_range(config, "capacity", 1, 1000, errors)
 	return errors
 
-static func _validate_int_range(config: Dictionary, key: String, minimum: int, maximum: int, errors: Array[String], optional := false) -> void:
+
+static func _validate_int_range(
+	config: Dictionary,
+	key: String,
+	minimum: int,
+	maximum: int,
+	errors: Array[String],
+	optional := false
+) -> void:
 	if not config.has(key):
 		if not optional:
 			errors.append("Missing required property '%s'." % key)
@@ -74,7 +91,15 @@ static func _validate_int_range(config: Dictionary, key: String, minimum: int, m
 	if float(int_value) != float(value) or int_value < minimum or int_value > maximum:
 		errors.append("'%s' must be an integer between %d and %d." % [key, minimum, maximum])
 
-static func _validate_float_range(config: Dictionary, key: String, minimum: float, maximum: float, errors: Array[String], optional := false) -> void:
+
+static func _validate_float_range(
+	config: Dictionary,
+	key: String,
+	minimum: float,
+	maximum: float,
+	errors: Array[String],
+	optional := false
+) -> void:
 	if not config.has(key):
 		if not optional:
 			errors.append("Missing required property '%s'." % key)

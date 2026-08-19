@@ -7,36 +7,58 @@ signal request_failed(operation: StringName, path: String, http_code: int, messa
 var auth_token: String = ""
 var _requests: Dictionary = {}
 
+
+## Reads a value from the configured Firebase Realtime Database path.
 func read(path: String) -> void:
 	_send(&"read", path, HTTPClient.METHOD_GET)
 
+
+## Writes a complete value to the configured Firebase Realtime Database path.
 func write(path: String, value: Variant) -> void:
 	_send(&"write", path, HTTPClient.METHOD_PUT, JSON.stringify(value))
 
+
+## Applies a partial update to the configured Firebase Realtime Database path.
 func patch(path: String, value: Dictionary) -> void:
 	_send(&"patch", path, HTTPClient.METHOD_PATCH, JSON.stringify(value))
 
+
+## Pushes a new child value to the configured Firebase Realtime Database path.
 func push(path: String, value: Variant) -> void:
 	# Firebase RTDB POST creates a unique child key and returns {"name": "..."}.
 	_send(&"push", path, HTTPClient.METHOD_POST, JSON.stringify(value))
 
+
+## Removes the value at the configured Firebase Realtime Database path.
 func remove(path: String) -> void:
 	_send(&"remove", path, HTTPClient.METHOD_DELETE)
 
-func _send(operation: StringName, path: String, method: HTTPClient.Method, body: String = "") -> void:
+
+func _send(
+	operation: StringName, path: String, method: HTTPClient.Method, body: String = ""
+) -> void:
 	var request := HTTPRequest.new()
 	add_child(request)
 	_requests[request] = {"operation": operation, "path": path}
 	request.request_completed.connect(_on_request_completed.bind(request))
 
 	var headers := PackedStringArray(["Content-Type: application/json"])
-	var error := request.request(FirebaseConfig.database_path(path, auth_token), headers, method, body)
+	var error := request.request(
+		FirebaseConfig.database_path(path, auth_token), headers, method, body
+	)
 	if error != OK:
 		_requests.erase(request)
 		request.queue_free()
 		request_failed.emit(operation, path, 0, error_string(error))
 
-func _on_request_completed(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray, request: HTTPRequest) -> void:
+
+func _on_request_completed(
+	result: int,
+	response_code: int,
+	_headers: PackedStringArray,
+	body: PackedByteArray,
+	request: HTTPRequest
+) -> void:
 	var meta: Dictionary = _requests.get(request, {})
 	_requests.erase(request)
 	request.queue_free()

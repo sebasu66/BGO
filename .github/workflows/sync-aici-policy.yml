@@ -1,0 +1,57 @@
+name: Sync AICI Policy Into Skill
+
+on:
+  push:
+    branches:
+      - feature/dev-workbench
+    paths:
+      - .github/workflows/quality-gate.yml
+      - .github/workflows/sync-aici-policy.yml
+      - SKILL.md
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout BGO workbench
+        uses: actions/checkout@v6
+        with:
+          ref: feature/dev-workbench
+          fetch-depth: 0
+
+      - name: Resolve pinned AICI revision
+        id: aici
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha=$(grep -oE 'AI_commit_integrity_check/.github/workflows/project-policy\.yml@[0-9a-f]{40}' .github/workflows/quality-gate.yml | head -1 | sed 's/.*@//')
+          test -n "$sha"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout pinned integrity framework
+        uses: actions/checkout@v6
+        with:
+          repository: sebasu66/AI_commit_integrity_check
+          ref: ${{ steps.aici.outputs.sha }}
+          path: .aici
+
+      - name: Regenerate managed policy block
+        run: python3 .aici/render_policy_skill.py --policy .aici/policies/BGO.json --skill SKILL.md
+
+      - name: Commit regenerated skill
+        shell: bash
+        run: |
+          if git diff --quiet -- SKILL.md; then
+            echo 'SKILL policy projection already current.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add SKILL.md
+          git commit -m 'docs: sync protected AICI policy into skill'
+          git push origin HEAD:feature/dev-workbench

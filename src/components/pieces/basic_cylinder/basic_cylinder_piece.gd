@@ -14,10 +14,15 @@ extends StaticBody3D
 @onready var mesh_instance: MeshInstance3D = $MeshInstance3D
 @onready var quantity_label: Label3D = $QuantityLabel
 
+
 func _ready() -> void:
 	_apply_visuals()
 
-func configure(entity_id: String, owner_id: String, holder_id: String, new_quantity: int, color: Color) -> void:
+
+## Configures this object from the supplied project data.
+func configure(
+	entity_id: String, owner_id: String, holder_id: String, new_quantity: int, color: Color
+) -> void:
 	name = entity_id
 	set_meta("bgo_piece", true)
 	set_meta("entity_id", entity_id)
@@ -27,6 +32,7 @@ func configure(entity_id: String, owner_id: String, holder_id: String, new_quant
 	quantity = new_quantity
 	piece_color = color
 	_apply_visuals()
+
 
 func _apply_visuals() -> void:
 	if not is_inside_tree():

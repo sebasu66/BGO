@@ -14,6 +14,7 @@ var _repository: PlayerPresenceRepository
 var _camera: Camera3D
 var _publish_elapsed := 0.0
 
+
 func _ready() -> void:
 	_read_launch_options()
 	_load_player_definitions()
@@ -25,8 +26,15 @@ func _ready() -> void:
 	_repository.start(game_id)
 	if client_role == "player":
 		var definition := _player_definition(local_player_id)
-		_repository.publish_player(local_player_id, str(definition.get("name", _fallback_name(local_player_id))), str(definition.get("color", "#D9D9D9")), "player", false)
+		_repository.publish_player(
+			local_player_id,
+			str(definition.get("name", _fallback_name(local_player_id))),
+			str(definition.get("color", "#D9D9D9")),
+			"player",
+			false
+		)
 	call_deferred("_update_client_identity_hud")
+
 
 func _process(delta: float) -> void:
 	if client_role != "player" or _camera == null or _repository == null:
@@ -35,10 +43,15 @@ func _process(delta: float) -> void:
 	if _publish_elapsed < POSE_PUBLISH_SECONDS:
 		return
 	_publish_elapsed = 0.0
-	_repository.publish_pose(local_player_id, _camera.global_position, -_camera.global_transform.basis.z.normalized())
+	_repository.publish_pose(
+		local_player_id, _camera.global_position, -_camera.global_transform.basis.z.normalized()
+	)
+
 
 func _load_player_definitions() -> void:
-	var result := BgoGameDefinitionLoader.load_game("res://games/%s/game.jsonh" % game_id.to_lower())
+	var result := BgoGameDefinitionLoader.load_game(
+		"res://games/%s/game.jsonh" % game_id.to_lower()
+	)
 	if not bool(result.get("ok", false)):
 		return
 	var definition: Dictionary = result.get("data", {})
@@ -48,6 +61,7 @@ func _load_player_definitions() -> void:
 			var id := str(value.get("id", ""))
 			if not id.is_empty():
 				definitions[id] = value.duplicate(true)
+
 
 func _on_players_received(players: Dictionary) -> void:
 	for player_id_variant in players:
@@ -61,8 +75,12 @@ func _on_players_received(players: Dictionary) -> void:
 		var mask := _ensure_mask(player_id, state)
 		if mask == null:
 			continue
-		mask.visible = bool(state.get("connected", true)) and not (client_role == "player" and player_id == local_player_id)
+		mask.visible = (
+			bool(state.get("connected", true))
+			and not (client_role == "player" and player_id == local_player_id)
+		)
 		_apply_pose(mask, player_id, state)
+
 
 func _ensure_mask(player_id: String, state: Dictionary) -> BgoPlayerPresenceMask:
 	if masks.has(player_id):
@@ -86,11 +104,13 @@ func _ensure_mask(player_id: String, state: Dictionary) -> BgoPlayerPresenceMask
 	_apply_fallback_pose(mask, player_id)
 	return mask
 
+
 func _configure_mask(mask: BgoPlayerPresenceMask, player_id: String, state: Dictionary) -> void:
 	var definition := _player_definition(player_id)
 	var player_name := str(state.get("name", definition.get("name", _fallback_name(player_id))))
 	var color_text := str(state.get("color", definition.get("color", "#D9D9D9")))
 	mask.configure(player_name, Color.from_string(color_text, Color(0.85, 0.85, 0.85)))
+
 
 func _apply_pose(mask: BgoPlayerPresenceMask, player_id: String, state: Dictionary) -> void:
 	var pose_variant: Variant = state.get("camera_pose", {})
@@ -105,6 +125,7 @@ func _apply_pose(mask: BgoPlayerPresenceMask, player_id: String, state: Dictiona
 		return
 	mask.set_pose(position, forward)
 
+
 func _apply_fallback_pose(mask: BgoPlayerPresenceMask, player_id: String) -> void:
 	var area_name := "Player2Area" if player_id == "player_2" else "Player1Area"
 	var area := get_parent().get_node_or_null(area_name) as Node3D
@@ -115,6 +136,7 @@ func _apply_fallback_pose(mask: BgoPlayerPresenceMask, player_id: String) -> voi
 	var position := area_position + outward * 1.0 + Vector3.UP * 1.25
 	mask.set_pose(position, (Vector3(0.0, position.y, 0.0) - position).normalized())
 
+
 func _update_client_identity_hud() -> void:
 	if client_role != "player":
 		return
@@ -123,14 +145,21 @@ func _update_client_identity_hud() -> void:
 		return
 	var definition := _player_definition(local_player_id)
 	var player_name := str(definition.get("name", _fallback_name(local_player_id)))
-	title.text = "%s · %s · %s" % [title.text, local_player_id.to_upper().replace("_", " "), player_name]
-	title.add_theme_color_override("font_color", Color.from_string(str(definition.get("color", "#D9D9D9")), Color.WHITE))
+	title.text = (
+		"%s · %s · %s" % [title.text, local_player_id.to_upper().replace("_", " "), player_name]
+	)
+	title.add_theme_color_override(
+		"font_color", Color.from_string(str(definition.get("color", "#D9D9D9")), Color.WHITE)
+	)
+
 
 func _player_definition(player_id: String) -> Dictionary:
 	return definitions.get(player_id, {}) as Dictionary
 
+
 func _fallback_name(player_id: String) -> String:
 	return player_id.replace("_", " ").capitalize()
+
 
 func _dictionary_to_vec3(value: Variant) -> Vector3:
 	if not value is Dictionary:
@@ -138,11 +167,27 @@ func _dictionary_to_vec3(value: Variant) -> Vector3:
 	var data: Dictionary = value
 	return Vector3(float(data.get("x", 0.0)), float(data.get("y", 0.0)), float(data.get("z", 0.0)))
 
+
 func _read_launch_options() -> void:
 	if OS.has_feature("web"):
-		client_role = str(JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('role') || 'display'", true)).to_lower()
-		game_id = str(JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('game') || 'TEST001'", true))
-		local_player_id = str(JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('player') || 'player_1'", true))
+		client_role = (
+			str(
+				JavaScriptBridge.eval(
+					"new URLSearchParams(window.location.search).get('role') || 'display'", true
+				)
+			)
+			. to_lower()
+		)
+		game_id = str(
+			JavaScriptBridge.eval(
+				"new URLSearchParams(window.location.search).get('game') || 'TEST001'", true
+			)
+		)
+		local_player_id = str(
+			JavaScriptBridge.eval(
+				"new URLSearchParams(window.location.search).get('player') || 'player_1'", true
+			)
+		)
 	else:
 		for arg in OS.get_cmdline_user_args():
 			if arg.begins_with("--role="):
@@ -153,6 +198,7 @@ func _read_launch_options() -> void:
 				local_player_id = arg.trim_prefix("--player=")
 	if client_role != "player":
 		client_role = "display"
+
 
 func _on_presence_error(message: String) -> void:
 	push_warning(message)

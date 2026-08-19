@@ -9,16 +9,21 @@ signal moved(entity: BGOGameObject, from_position: Vector2, to_position: Vector2
 
 var entity: BGOGameObject
 
+
 func _ready() -> void:
 	entity = get_parent() as BGOGameObject
 	if entity == null:
 		push_error("MovableComponent must be a child of BGOGameObject.")
 
+
+## Requests a logical move and returns the resulting operation state.
 func request_move(target_position: Vector2) -> void:
 	if not enabled or entity == null:
 		return
 	move_requested.emit(entity, _snap(target_position))
 
+
+## Applies an already-authorized logical move to this component.
 func apply_move(target_position: Vector2) -> void:
 	if entity == null:
 		return
@@ -27,10 +32,10 @@ func apply_move(target_position: Vector2) -> void:
 	entity.position = final_position
 	moved.emit(entity, from_position, final_position)
 
+
 func _snap(value: Vector2) -> Vector2:
 	if snap_size.x <= 0.0 or snap_size.y <= 0.0:
 		return value
 	return Vector2(
-		round(value.x / snap_size.x) * snap_size.x,
-		round(value.y / snap_size.y) * snap_size.y
+		round(value.x / snap_size.x) * snap_size.x, round(value.y / snap_size.y) * snap_size.y
 	)
