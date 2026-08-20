@@ -91,7 +91,7 @@ static func _test_turn_flow_and_convergence(check: Callable) -> void:
 	var commands := [
 		["p1", "p1-piece", "board:c"],
 		["p2", "p2-piece", "board:a"],
-		["p1", "p1-piece", "board:b"],
+		["p1", "p1-piece", "board:d"],
 	]
 	for command in commands:
 		var first_result := first.move_and_end_turn(command[0], command[1], command[2])
@@ -126,7 +126,7 @@ static func _test_turn_flow_and_convergence(check: Callable) -> void:
 		)
 
 	var before_rejected := first.to_dictionary()
-	var rejected := first.move_and_end_turn("p2", "p2-piece", "board:c")
+	var rejected := first.move_and_end_turn("p1", "p1-piece", "board:c")
 	(
 		check
 		. call(
