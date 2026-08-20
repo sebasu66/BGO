@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cv02cvbpac4ct"]
 
-[ext_resource type="Script" path="res://src/demo/main_filtered.gd" id="1_main"]
+[ext_resource type="Script" path="res://src/demo/main_logical_runtime.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://src/components/boards/checkered_board/checkered_board.tscn" id="2_board"]
 [ext_resource type="PackedScene" path="res://src/components/player_area/player_area.tscn" id="3_area"]
 [ext_resource type="PackedScene" path="res://src/components/pieces/basic_cylinder/basic_cylinder_piece.tscn" id="4_piece"]

@@ -5,6 +5,7 @@ const CONFORMANCE_GAME_TEST = preload("res://tests/conformance_game_test.gd")
 const GAME_DEFINITION_LOADER = preload("res://src/core/game_definition_loader.gd")
 const GAMEPLAY_STATE_TEST = preload("res://tests/gameplay_state_test.gd")
 const LOGICAL_OBJECT_STATE = preload("res://src/core/logical_object_state.gd")
+const RUNTIME_SESSION_ADAPTER_TEST = preload("res://tests/runtime_session_adapter_test.gd")
 const SESSION_STATE = preload("res://src/core/session_state.gd")
 const TABLETOP_STATE = preload("res://src/core/tabletop_state.gd")
 
@@ -24,6 +25,7 @@ func _run() -> void:
 	_test_tabletop_state()
 	_test_logical_object_state()
 	GAMEPLAY_STATE_TEST.run(_check)
+	RUNTIME_SESSION_ADAPTER_TEST.run(_check)
 	CONFORMANCE_GAME_TEST.run(_check)
 
 	if failures > 0:
