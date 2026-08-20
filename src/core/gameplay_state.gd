@@ -113,6 +113,27 @@ func move_object_to_collection(
 	}
 
 
+## Advances the active participant's turn and optionally records a turn comment.
+func end_turn(requesting_participant_id: String, comment: String = "") -> Dictionary:
+	if session == null or not session.is_active():
+		return _rejected("session_not_active")
+	if requesting_participant_id != session.active_participant_id:
+		return _rejected("not_active_participant")
+	var previous_participant_id := session.active_participant_id
+	if not session.advance_turn(requesting_participant_id):
+		return _rejected("turn_advance_rejected")
+	var event := {
+		"type": "turn_advanced",
+		"previous_participant_id": previous_participant_id,
+		"turn_number": session.turn_number,
+		"active_participant_id": session.active_participant_id,
+	}
+	var normalized_comment := comment.strip_edges()
+	if not normalized_comment.is_empty():
+		event["comment"] = normalized_comment
+	return {"ok": true, "event": event}
+
+
 ## Applies one valid move and advances the turn only when the move succeeds.
 func move_and_end_turn(
 	requesting_participant_id: String,
@@ -125,19 +146,12 @@ func move_and_end_turn(
 	)
 	if not bool(move_result.get("ok", false)):
 		return move_result
-	if not session.advance_turn(requesting_participant_id):
-		return _rejected("turn_advance_rejected")
+	var turn_result := end_turn(requesting_participant_id)
+	if not bool(turn_result.get("ok", false)):
+		return turn_result
 	return {
 		"ok": true,
-		"events":
-		[
-			move_result.get("event", {}),
-			{
-				"type": "turn_advanced",
-				"turn_number": session.turn_number,
-				"active_participant_id": session.active_participant_id,
-			},
-		],
+		"events": [move_result.get("event", {}), turn_result.get("event", {})],
 	}
 
 
