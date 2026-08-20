@@ -11,6 +11,7 @@ const TABLETOP_STATE = preload("res://src/core/tabletop_state.gd")
 static func run(check: Callable) -> void:
 	_test_validated_moves(check)
 	_test_collection_moves(check)
+	_test_explicit_end_turn(check)
 	_test_turn_flow_and_convergence(check)
 
 
@@ -128,6 +129,25 @@ static func _test_collection_moves(check: Callable) -> void:
 		game.session.active_participant_id == "p2", "accepted placement advances active player"
 	)
 	check.call(game.session.turn_number == 2, "accepted placement advances turn number")
+
+
+static func _test_explicit_end_turn(check: Callable) -> void:
+	var game := _create_fixture()
+	var before := game.to_dictionary()
+	var wrong_turn := game.end_turn("p2", "should not persist")
+	check.call(not bool(wrong_turn.get("ok", false)), "non-active player cannot end the turn")
+	check.call(game.to_dictionary() == before, "rejected explicit end turn preserves state")
+
+	var accepted := game.end_turn("p1", "ready for p2")
+	check.call(bool(accepted.get("ok", false)), "active player can explicitly end the turn")
+	var event: Dictionary = accepted.get("event", {})
+	check.call(event.get("type", "") == "turn_advanced", "explicit end turn emits turn event")
+	check.call(event.get("previous_participant_id", "") == "p1", "turn event records previous player")
+	check.call(event.get("active_participant_id", "") == "p2", "turn event records next player")
+	check.call(int(event.get("turn_number", 0)) == 2, "turn event records incremented turn number")
+	check.call(event.get("comment", "") == "ready for p2", "turn event preserves optional comment")
+	check.call(game.session.active_participant_id == "p2", "explicit end turn advances active player")
+	check.call(game.session.turn_number == 2, "explicit end turn advances turn number")
 
 
 static func _test_turn_flow_and_convergence(check: Callable) -> void:
