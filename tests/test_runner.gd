@@ -1,7 +1,10 @@
 extends SceneTree
 
 const COMPONENT_REGISTRY = preload("res://src/core/component_registry.gd")
+const CONFORMANCE_GAME_TEST = preload("res://tests/conformance_game_test.gd")
 const GAME_DEFINITION_LOADER = preload("res://src/core/game_definition_loader.gd")
+const GAMEPLAY_STATE_TEST = preload("res://tests/gameplay_state_test.gd")
+const LOGICAL_OBJECT_STATE = preload("res://src/core/logical_object_state.gd")
 const SESSION_STATE = preload("res://src/core/session_state.gd")
 const TABLETOP_STATE = preload("res://src/core/tabletop_state.gd")
 
@@ -19,6 +22,9 @@ func _run() -> void:
 	_test_game_definition()
 	_test_session_state()
 	_test_tabletop_state()
+	_test_logical_object_state()
+	GAMEPLAY_STATE_TEST.run(_check)
+	CONFORMANCE_GAME_TEST.run(_check)
 
 	if failures > 0:
 		printerr("BGO TESTS FAILED: %d/%d assertions failed." % [failures, assertions])
@@ -173,3 +179,30 @@ func _test_tabletop_state() -> void:
 	)
 	_check(table.object_slot("piece-1") == "pool", "logical object location updates")
 	_check(table.slot_occupants("a1").is_empty(), "source occupancy clears after move")
+
+
+func _test_logical_object_state() -> void:
+	var neutral: LogicalObjectState = LOGICAL_OBJECT_STATE.create("neutral-token")
+	_check(neutral.object_id == "neutral-token", "logical object keeps stable identity")
+	_check(neutral.is_neutral(), "empty owner represents neutral ownership")
+	_check(neutral.holder_id.is_empty(), "neutral object starts unheld")
+	neutral.set_holder("p1")
+	_check(neutral.holder_id == "p1", "holder is independent from owner")
+	_check(neutral.owner_id.is_empty(), "holding does not change neutral ownership")
+	_check(
+		neutral.set_location("slot", "board:a1"),
+		"logical location can be assigned",
+	)
+	_check(neutral.location_type == "slot", "location type is explicit")
+	_check(neutral.location_id == "board:a1", "location id is explicit")
+	var before_invalid := neutral.to_dictionary()
+	_check(not neutral.set_location("", "missing"), "invalid location is rejected")
+	_check(
+		neutral.to_dictionary() == before_invalid,
+		"invalid location preserves object state",
+	)
+	neutral.visibility = "owner_only"
+	var snapshot := neutral.to_dictionary()
+	_check(snapshot.get("visibility") == "owner_only", "visibility metadata is represented")
+	neutral.clear_location()
+	_check(neutral.location_id.is_empty(), "logical location can be cleared")
