@@ -51,9 +51,7 @@ func move_object(
 	object.set_location("slot", target_slot_id)
 	return {
 		"ok": true,
-		"event": _move_event(
-			requesting_participant_id, object_id, source_slot_id, target_slot_id
-		),
+		"event": _move_event(requesting_participant_id, object_id, source_slot_id, target_slot_id),
 	}
 
 
@@ -73,7 +71,8 @@ func move_and_end_turn(
 		return _rejected("turn_advance_rejected")
 	return {
 		"ok": true,
-		"events": [
+		"events":
+		[
 			move_result.get("event", {}),
 			{
 				"type": "turn_advanced",
