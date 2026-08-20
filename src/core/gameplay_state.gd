@@ -102,19 +102,23 @@ func _validate_move(
 	target_slot_id: String,
 	allow_neutral_acquire: bool
 ) -> Dictionary:
+	var reason := ""
 	if session == null or tabletop == null or not session.is_active():
-		return _rejected("session_not_active")
-	if requesting_participant_id != session.active_participant_id:
-		return _rejected("not_active_participant")
-	if not objects.has(object_id):
-		return _rejected("unknown_object")
-	var object: LogicalObjectState = objects[object_id]
-	if object.location_type != "slot" or object.location_id.is_empty():
-		return _rejected("object_not_in_slot")
-	if not tabletop.can_accept(target_slot_id):
-		return _rejected("destination_unavailable")
-	if not _can_control(object, requesting_participant_id, allow_neutral_acquire):
-		return _rejected("not_authorized")
+		reason = "session_not_active"
+	elif requesting_participant_id != session.active_participant_id:
+		reason = "not_active_participant"
+	elif not objects.has(object_id):
+		reason = "unknown_object"
+	else:
+		var object: LogicalObjectState = objects[object_id]
+		if object.location_type != "slot" or object.location_id.is_empty():
+			reason = "object_not_in_slot"
+		elif not tabletop.can_accept(target_slot_id):
+			reason = "destination_unavailable"
+		elif not _can_control(object, requesting_participant_id, allow_neutral_acquire):
+			reason = "not_authorized"
+	if not reason.is_empty():
+		return _rejected(reason)
 	return {"ok": true}
 
 
