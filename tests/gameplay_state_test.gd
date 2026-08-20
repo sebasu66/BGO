@@ -105,19 +105,28 @@ static func _test_collection_moves(check: Callable) -> void:
 	check.call(piece.holder_id == "p1", "collection move assigns the active holder")
 	check.call(piece.location_type == "player_area", "player area location is explicit")
 	check.call(piece.location_id == "p1", "collection location identifies its player")
-	check.call(game.tabletop.object_slot("p1-piece").is_empty(), "collection move clears board occupancy")
+	check.call(
+		game.tabletop.object_slot("p1-piece").is_empty(), "collection move clears board occupancy"
+	)
 
 	var to_hand := game.move_object_to_collection("p1", "p1-piece", "hand")
 	check.call(bool(to_hand.get("ok", false)), "held object can move from player area to hand")
 	check.call(piece.location_type == "hand", "hand remains distinct from player area")
-	check.call(game.tabletop.object_slot("p1-piece").is_empty(), "hand object stays outside board occupancy")
+	check.call(
+		game.tabletop.object_slot("p1-piece").is_empty(),
+		"hand object stays outside board occupancy"
+	)
 
 	var placed := game.move_and_end_turn("p1", "p1-piece", "board:c")
 	check.call(bool(placed.get("ok", false)), "held object can return to a valid slot and end turn")
 	check.call(piece.location_type == "slot", "placed collection object returns to slot location")
 	check.call(piece.location_id == "board:c", "placed collection object records destination slot")
-	check.call(game.tabletop.object_slot("p1-piece") == "board:c", "placed object restores board occupancy")
-	check.call(game.session.active_participant_id == "p2", "accepted placement advances active player")
+	check.call(
+		game.tabletop.object_slot("p1-piece") == "board:c", "placed object restores board occupancy"
+	)
+	check.call(
+		game.session.active_participant_id == "p2", "accepted placement advances active player"
+	)
 	check.call(game.session.turn_number == 2, "accepted placement advances turn number")
 
 

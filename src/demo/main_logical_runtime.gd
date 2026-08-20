@@ -1,8 +1,6 @@
 extends "res://src/demo/main_filtered.gd"
 
-const LOGICAL_SESSION_REPOSITORY = preload(
-	"res://src/network/logical_game_session_repository.gd"
-)
+const LOGICAL_SESSION_REPOSITORY = preload("res://src/network/logical_game_session_repository.gd")
 const RUNTIME_SESSION_ADAPTER = preload("res://src/demo/runtime_session_adapter.gd")
 
 var _runtime_session: RuntimeSessionAdapter
@@ -57,10 +55,13 @@ func _pick_up_piece(piece: Node3D) -> void:
 		_set_status("Logical session is still loading")
 		return
 	var piece_id := str(piece.get_meta("entity_id"))
-	var result := _runtime_session.move_object_to_collection(
-		player_id,
-		piece_id,
-		"player_area",
+	var result := (
+		_runtime_session
+		. move_object_to_collection(
+			player_id,
+			piece_id,
+			"player_area",
+		)
 	)
 	if not _persist_accepted_command(result, "pickup"):
 		return
@@ -104,10 +105,13 @@ func _move_selected_to_area() -> void:
 	if selected_piece == null or _runtime_session == null:
 		return
 	var piece_id := str(selected_piece.get_meta("entity_id"))
-	var result := _runtime_session.move_object_to_collection(
-		player_id,
-		piece_id,
-		"player_area",
+	var result := (
+		_runtime_session
+		. move_object_to_collection(
+			player_id,
+			piece_id,
+			"player_area",
+		)
 	)
 	if not _persist_accepted_command(result, "to_player_area"):
 		return
@@ -138,10 +142,13 @@ func _place_selected_piece(destination: Vector2i) -> void:
 	var piece := selected_piece
 	var piece_id := str(piece.get_meta("entity_id"))
 	var target_slot_id := board.slot_id(destination)
-	var result := _runtime_session.move_object_and_end_turn(
-		player_id,
-		piece_id,
-		target_slot_id,
+	var result := (
+		_runtime_session
+		. move_object_and_end_turn(
+			player_id,
+			piece_id,
+			target_slot_id,
+		)
 	)
 	if not _persist_accepted_command(result, "place_and_end_turn"):
 		return
@@ -172,9 +179,12 @@ func _update_transfer_buttons() -> void:
 func _persist_accepted_command(result: Dictionary, operation: String) -> bool:
 	if not bool(result.get("ok", false)):
 		var reason := str(result.get("reason", "rejected"))
-		logger.warning(
-			"LOGICAL_COMMAND_REJECTED",
-			{"operation": operation, "player_id": player_id, "reason": reason},
+		(
+			logger
+			. warning(
+				"LOGICAL_COMMAND_REJECTED",
+				{"operation": operation, "player_id": player_id, "reason": reason},
+			)
 		)
 		_set_status("Action rejected · %s" % reason)
 		_refresh_logical_turn_ui()
@@ -185,13 +195,16 @@ func _persist_accepted_command(result: Dictionary, operation: String) -> bool:
 		_set_status("Logical persistence adapter is unavailable")
 		return false
 	logical_repository.persist_logical_patch(patch)
-	logger.info(
-		"LOGICAL_COMMAND_ACCEPTED",
-		{
-			"operation": operation,
-			"player_id": player_id,
-			"revision": int(result.get("revision", 0)),
-		},
+	(
+		logger
+		. info(
+			"LOGICAL_COMMAND_ACCEPTED",
+			{
+				"operation": operation,
+				"player_id": player_id,
+				"revision": int(result.get("revision", 0)),
+			},
+		)
 	)
 	return true
 
@@ -209,11 +222,14 @@ func _refresh_logical_turn_ui() -> void:
 		return
 	var active_id := _runtime_session.active_participant_id()
 	var is_my_turn := _runtime_session.is_active_participant(player_id)
-	_turn_status_label.text = "TURN %d · %s%s" % [
-		_runtime_session.turn_number(),
-		active_id.replace("_", " ").to_upper(),
-		" · YOUR TURN" if is_my_turn else "",
-	]
+	_turn_status_label.text = (
+		"TURN %d · %s%s"
+		% [
+			_runtime_session.turn_number(),
+			active_id.replace("_", " ").to_upper(),
+			" · YOUR TURN" if is_my_turn else "",
+		]
+	)
 	_set_gameplay_buttons_enabled(is_my_turn)
 
 

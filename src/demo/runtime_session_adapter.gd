@@ -68,11 +68,14 @@ func move_object_to_collection(
 	if gameplay_state == null:
 		return _rejected("session_not_loaded")
 	var allow_neutral_acquire := _object_is_available_neutral(object_id)
-	var result := gameplay_state.move_object_to_collection(
-		participant_id,
-		object_id,
-		collection_type,
-		allow_neutral_acquire,
+	var result := (
+		gameplay_state
+		. move_object_to_collection(
+			participant_id,
+			object_id,
+			collection_type,
+			allow_neutral_acquire,
+		)
 	)
 	return _finalize_command(result, object_id)
 
@@ -84,11 +87,14 @@ func move_object_and_end_turn(
 	if gameplay_state == null:
 		return _rejected("session_not_loaded")
 	var allow_neutral_acquire := _object_is_available_neutral(object_id)
-	var result := gameplay_state.move_and_end_turn(
-		participant_id,
-		object_id,
-		target_slot_id,
-		allow_neutral_acquire,
+	var result := (
+		gameplay_state
+		. move_and_end_turn(
+			participant_id,
+			object_id,
+			target_slot_id,
+			allow_neutral_acquire,
+		)
 	)
 	return _finalize_command(result, object_id)
 
@@ -124,10 +130,13 @@ func _new_session_from_definition(
 		var participant_id := str(player.get("id", ""))
 		if participant_id.is_empty():
 			return null
-		if not session.assign_participant(
-			participant_id,
-			"seat-%d" % (index + 1),
-			"player",
+		if not (
+			session
+			. assign_participant(
+				participant_id,
+				"seat-%d" % (index + 1),
+				"player",
+			)
 		):
 			return null
 	if not session.start_session():
@@ -143,12 +152,12 @@ func _session_from_snapshot(p_session_id: String, persisted: Dictionary) -> Sess
 	session.host_participant_id = str(persisted.get("host_participant_id", ""))
 	for seat_id in persisted.get("seat_order", []):
 		session.seat_order.append(str(seat_id))
-	session.participant_seats = (
-		(persisted.get("participant_seats", {}) as Dictionary).duplicate(true)
-	)
-	session.participant_roles = (
-		(persisted.get("participant_roles", {}) as Dictionary).duplicate(true)
-	)
+	session.participant_seats = ((persisted.get("participant_seats", {}) as Dictionary).duplicate(
+		true
+	))
+	session.participant_roles = ((persisted.get("participant_roles", {}) as Dictionary).duplicate(
+		true
+	))
 	session.active_participant_id = str(persisted.get("active_participant_id", ""))
 	session.turn_number = int(persisted.get("turn_number", 0))
 	session.result = (persisted.get("result", {}) as Dictionary).duplicate(true)
@@ -180,9 +189,12 @@ func _load_objects(gameplay: GameplayState, repository_state: Dictionary) -> Dic
 	for object_id_variant in pieces:
 		var object_id := str(object_id_variant)
 		var piece_state: Dictionary = pieces[object_id_variant]
-		var object := LOGICAL_OBJECT_STATE.create(
-			object_id,
-			str(piece_state.get("owner_id", "")),
+		var object := (
+			LOGICAL_OBJECT_STATE
+			. create(
+				object_id,
+				str(piece_state.get("owner_id", "")),
+			)
 		)
 		object.set_holder(str(piece_state.get("holder_id", "")))
 		object.visibility = str(piece_state.get("visibility", "public"))

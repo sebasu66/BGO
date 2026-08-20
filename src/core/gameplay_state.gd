@@ -65,7 +65,8 @@ func move_object(
 	object.set_location("slot", target_slot_id)
 	return {
 		"ok": true,
-		"event": _move_event(
+		"event":
+		_move_event(
 			requesting_participant_id,
 			object_id,
 			source_type,
@@ -99,7 +100,8 @@ func move_object_to_collection(
 	object.set_location(collection_type, requesting_participant_id)
 	return {
 		"ok": true,
-		"event": {
+		"event":
+		{
 			"type": "object_moved_to_collection",
 			"object_id": object_id,
 			"participant_id": requesting_participant_id,
@@ -193,9 +195,7 @@ func _validate_collection_move(
 
 
 func _validate_actor_and_object(
-	requesting_participant_id: String,
-	object_id: String,
-	allow_neutral_acquire: bool
+	requesting_participant_id: String, object_id: String, allow_neutral_acquire: bool
 ) -> Dictionary:
 	if session == null or tabletop == null or not session.is_active():
 		return _rejected("session_not_active")

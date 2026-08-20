@@ -27,17 +27,28 @@ static func _test_load_and_command_boundary(check: Callable) -> void:
 	check.call(bool(pickup.get("ok", false)), "accepted runtime pickup updates logical state")
 	check.call(adapter.state_revision == 1, "accepted runtime command increments revision")
 	var pickup_patch: Dictionary = pickup.get("persistence_patch", {})
-	check.call(int(pickup_patch.get("state_revision", 0)) == 1, "accepted command exposes persistence revision")
 	check.call(
-		pickup_patch.get("pieces/p1-piece/location") == {
-			"type": "player_area",
-			"player_id": "p1",
-		},
-		"pickup persistence is derived from logical location",
+		int(pickup_patch.get("state_revision", 0)) == 1,
+		"accepted command exposes persistence revision"
+	)
+	(
+		check
+		. call(
+			(
+				pickup_patch.get("pieces/p1-piece/location")
+				== {
+					"type": "player_area",
+					"player_id": "p1",
+				}
+			),
+			"pickup persistence is derived from logical location",
+		)
 	)
 
 	var to_hand := adapter.move_object_to_collection("p1", "p1-piece", "hand")
-	check.call(bool(to_hand.get("ok", false)), "runtime adapter keeps hand distinct from player area")
+	check.call(
+		bool(to_hand.get("ok", false)), "runtime adapter keeps hand distinct from player area"
+	)
 	check.call(adapter.state_revision == 2, "second accepted command increments revision")
 
 	var placed := adapter.move_object_and_end_turn("p1", "p1-piece", "board:2:0")
@@ -46,17 +57,28 @@ static func _test_load_and_command_boundary(check: Callable) -> void:
 	check.call(adapter.turn_number() == 2, "accepted turn exposes advanced turn number")
 	var place_patch: Dictionary = placed.get("persistence_patch", {})
 	var session_patch: Dictionary = place_patch.get("session", {})
-	check.call(
-		str(session_patch.get("active_participant_id", "")) == "p2",
-		"turn persistence carries next active player",
+	(
+		check
+		. call(
+			str(session_patch.get("active_participant_id", "")) == "p2",
+			"turn persistence carries next active player",
+		)
 	)
-	check.call(int(session_patch.get("turn_number", 0)) == 2, "turn persistence carries turn number")
 	check.call(
-		place_patch.get("pieces/p1-piece/location") == {
-			"type": "slot",
-			"slot_id": "board:2:0",
-		},
-		"placement persistence carries logical slot",
+		int(session_patch.get("turn_number", 0)) == 2, "turn persistence carries turn number"
+	)
+	(
+		check
+		. call(
+			(
+				place_patch.get("pieces/p1-piece/location")
+				== {
+					"type": "slot",
+					"slot_id": "board:2:0",
+				}
+			),
+			"placement persistence carries logical slot",
+		)
 	)
 
 
@@ -72,7 +94,10 @@ static func _test_reconnect_and_stale_remote_state(check: Callable) -> void:
 	stale["state_revision"] = 2
 	var stale_result := adapter.load_session("runtime-test", _game_definition(), stale)
 	check.call(not bool(stale_result.get("ok", false)), "older remote revision is rejected")
-	check.call(adapter.snapshot() == accepted_snapshot, "stale remote state cannot overwrite accepted state")
+	check.call(
+		adapter.snapshot() == accepted_snapshot,
+		"stale remote state cannot overwrite accepted state"
+	)
 
 	var persisted := _repository_state()
 	persisted["state_revision"] = int(accepted.get("revision", 0))
@@ -84,12 +109,17 @@ static func _test_reconnect_and_stale_remote_state(check: Callable) -> void:
 	p1_piece["cell"] = {"x": 2, "y": 0}
 
 	var reconnected := RUNTIME_SESSION_ADAPTER.new()
-	var reconnect_result := reconnected.load_session(
-		"runtime-test",
-		_game_definition(),
-		persisted,
+	var reconnect_result := (
+		reconnected
+		. load_session(
+			"runtime-test",
+			_game_definition(),
+			persisted,
+		)
 	)
-	check.call(bool(reconnect_result.get("ok", false)), "persisted logical session reloads after reconnect")
+	check.call(
+		bool(reconnect_result.get("ok", false)), "persisted logical session reloads after reconnect"
+	)
 	check.call(reconnected.active_participant_id() == "p2", "reconnect restores active player")
 	check.call(reconnected.turn_number() == 2, "reconnect restores turn number")
 	check.call(reconnected.state_revision == 3, "reconnect restores logical revision")
@@ -98,7 +128,8 @@ static func _test_reconnect_and_stale_remote_state(check: Callable) -> void:
 static func _game_definition() -> Dictionary:
 	return {
 		"board": {"config": {"columns": 3, "rows": 2}},
-		"players": [
+		"players":
+		[
 			{"id": "p1", "name": "Player 1"},
 			{"id": "p2", "name": "Player 2"},
 		],
@@ -108,14 +139,17 @@ static func _game_definition() -> Dictionary:
 static func _repository_state() -> Dictionary:
 	return {
 		"state_revision": 0,
-		"pieces": {
-			"p1-piece": {
+		"pieces":
+		{
+			"p1-piece":
+			{
 				"owner_id": "p1",
 				"holder_id": "",
 				"location": {"type": "slot", "slot_id": "board:0:0"},
 				"cell": {"x": 0, "y": 0},
 			},
-			"p2-piece": {
+			"p2-piece":
+			{
 				"owner_id": "p2",
 				"holder_id": "",
 				"location": {"type": "slot", "slot_id": "board:1:1"},
