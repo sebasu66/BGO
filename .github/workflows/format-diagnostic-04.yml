@@ -1,0 +1,28 @@
+name: BGO Format Diagnostic 04
+
+on:
+  pull_request:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  gdformat-diff:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install gdtoolkit
+        run: pip install "gdtoolkit==4.*"
+
+      - name: Show exact gdformat diff
+        run: |
+          gdformat --diff src/core/gameplay_state.gd src/demo/runtime_session_adapter.gd src/demo/main_logical_runtime.gd tests/gameplay_state_test.gd tests/runtime_session_adapter_test.gd
