@@ -18,46 +18,70 @@ static func _test_validated_moves(check: Callable) -> void:
 	var before := game.to_dictionary()
 	var wrong_turn := game.move_object("p2", "p2-piece", "board:c")
 	check.call(not bool(wrong_turn.get("ok", false)), "wrong-turn move is rejected")
-	check.call(
-		game.to_dictionary() == before,
-		"wrong-turn rejection preserves gameplay state",
+	(
+		check
+		. call(
+			game.to_dictionary() == before,
+			"wrong-turn rejection preserves gameplay state",
+		)
 	)
 
 	var unauthorized := game.move_object("p1", "p2-piece", "board:c")
-	check.call(
-		not bool(unauthorized.get("ok", false)),
-		"other player's object is rejected",
+	(
+		check
+		. call(
+			not bool(unauthorized.get("ok", false)),
+			"other player's object is rejected",
+		)
 	)
-	check.call(
-		game.to_dictionary() == before,
-		"ownership rejection preserves gameplay state",
+	(
+		check
+		. call(
+			game.to_dictionary() == before,
+			"ownership rejection preserves gameplay state",
+		)
 	)
 
 	var neutral_denied := game.move_object("p1", "neutral", "board:c")
-	check.call(
-		not bool(neutral_denied.get("ok", false)),
-		"neutral move requires explicit acquire",
+	(
+		check
+		. call(
+			not bool(neutral_denied.get("ok", false)),
+			"neutral move requires explicit acquire",
+		)
 	)
-	check.call(
-		game.to_dictionary() == before,
-		"neutral denial preserves gameplay state",
+	(
+		check
+		. call(
+			game.to_dictionary() == before,
+			"neutral denial preserves gameplay state",
+		)
 	)
 
 	var neutral_move := game.move_object("p1", "neutral", "board:c", true)
-	check.call(
-		bool(neutral_move.get("ok", false)),
-		"active player can explicitly acquire neutral object",
+	(
+		check
+		. call(
+			bool(neutral_move.get("ok", false)),
+			"active player can explicitly acquire neutral object",
+		)
 	)
 	var neutral: LogicalObjectState = game.objects["neutral"]
 	check.call(neutral.owner_id.is_empty(), "neutral acquisition does not change ownership")
 	check.call(neutral.holder_id == "p1", "neutral acquisition assigns holder")
-	check.call(
-		neutral.location_id == "board:c",
-		"successful move updates logical object location",
+	(
+		check
+		. call(
+			neutral.location_id == "board:c",
+			"successful move updates logical object location",
+		)
 	)
-	check.call(
-		game.tabletop.object_slot("neutral") == "board:c",
-		"successful move updates occupancy",
+	(
+		check
+		. call(
+			game.tabletop.object_slot("neutral") == "board:c",
+			"successful move updates occupancy",
+		)
 	)
 
 
@@ -72,32 +96,50 @@ static func _test_turn_flow_and_convergence(check: Callable) -> void:
 	for command in commands:
 		var first_result := first.move_and_end_turn(command[0], command[1], command[2])
 		var second_result := second.move_and_end_turn(command[0], command[1], command[2])
-		check.call(
-			bool(first_result.get("ok", false)),
-			"first client accepts deterministic turn command",
+		(
+			check
+			. call(
+				bool(first_result.get("ok", false)),
+				"first client accepts deterministic turn command",
+			)
 		)
-		check.call(
-			bool(second_result.get("ok", false)),
-			"second client accepts deterministic turn command",
+		(
+			check
+			. call(
+				bool(second_result.get("ok", false)),
+				"second client accepts deterministic turn command",
+			)
 		)
-		check.call(
-			first_result == second_result,
-			"accepted command results are deterministic",
+		(
+			check
+			. call(
+				first_result == second_result,
+				"accepted command results are deterministic",
+			)
 		)
-		check.call(
-			first.to_dictionary() == second.to_dictionary(),
-			"logical clients converge after command",
+		(
+			check
+			. call(
+				first.to_dictionary() == second.to_dictionary(),
+				"logical clients converge after command",
+			)
 		)
 
 	var before_rejected := first.to_dictionary()
 	var rejected := first.move_and_end_turn("p2", "p2-piece", "board:c")
-	check.call(
-		not bool(rejected.get("ok", false)),
-		"rejected move does not complete a turn",
+	(
+		check
+		. call(
+			not bool(rejected.get("ok", false)),
+			"rejected move does not complete a turn",
+		)
 	)
-	check.call(
-		first.to_dictionary() == before_rejected,
-		"rejected turn command preserves state",
+	(
+		check
+		. call(
+			first.to_dictionary() == before_rejected,
+			"rejected turn command preserves state",
+		)
 	)
 
 
