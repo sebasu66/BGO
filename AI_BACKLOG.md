@@ -140,7 +140,7 @@ Implement this task according to the current `SKILL.md`.
 
 ## BGO-009 — Runtime session adapter
 
-**Status:** READY
+**Status:** IMPLEMENTED
 
 Connect the current playable runtime to the logical session, tabletop and gameplay contracts.
 
