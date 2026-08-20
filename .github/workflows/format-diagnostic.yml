@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  format-diff:
+  format-output:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,9 +23,19 @@ jobs:
       - name: Install exact formatter used by CI
         run: pip install "gdtoolkit==4.*"
 
-      - name: Show exact formatter diff
+      - name: Apply exact formatter output
         run: >-
-          gdformat --diff
+          gdformat
           src/core/gameplay_state.gd
           tests/gameplay_state_test.gd
           tests/conformance_game_test.gd
+
+      - name: Upload formatted files
+        uses: actions/upload-artifact@v4
+        with:
+          name: bgo-formatted-files
+          path: |
+            src/core/gameplay_state.gd
+            tests/gameplay_state_test.gd
+            tests/conformance_game_test.gd
+          retention-days: 1
