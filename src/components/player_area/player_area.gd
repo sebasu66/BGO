@@ -29,12 +29,6 @@ func area_slot_world(slot: int) -> Vector3:
 	return global_position + Vector3(0.0, 0.38, -2.3 + float(slot) * 0.85)
 
 
-# Compatibility alias for early PoC code. A PlayerArea is deliberately not a Hand.
-## Returns the world-space position of a private-hand slot.
-func hand_slot_world(slot: int) -> Vector3:
-	return area_slot_world(slot)
-
-
 func _apply_visuals() -> void:
 	if not is_inside_tree():
 		return

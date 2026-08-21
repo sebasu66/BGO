@@ -99,6 +99,12 @@ static func validate_game(data: Dictionary) -> Array[String]:
 	else:
 		_validate_component_reference(board, "board", errors)
 
+	var table: Variant = data.get("table")
+	if not table is Dictionary:
+		errors.append("Missing object 'table'.")
+	else:
+		_validate_table(table, errors)
+
 	var flow: Variant = data.get("flow")
 	if not flow is Dictionary:
 		errors.append("Missing object 'flow'.")
@@ -190,3 +196,37 @@ static func _validate_component_reference(
 		return
 	for component_error in BgoComponentRegistry.validate_config(component_id, config):
 		errors.append("%s: %s" % [label, component_error])
+
+
+static func _validate_table(table: Dictionary, errors: Array[String]) -> void:
+	if float(table.get("width", 0.0)) <= 0.0 or float(table.get("depth", 0.0)) <= 0.0:
+		errors.append("table.width and table.depth must be positive.")
+	var areas: Variant = table.get("areas", [])
+	if not areas is Array:
+		errors.append("table.areas must be an array.")
+		return
+	var ids: Dictionary = {}
+	for index in areas.size():
+		var area: Variant = areas[index]
+		if not area is Dictionary:
+			errors.append("table.areas[%d] must be an object." % index)
+			continue
+		var area_id := str(area.get("id", ""))
+		if area_id.is_empty() or ids.has(area_id):
+			errors.append("table.areas[%d].id must be unique and non-empty." % index)
+		else:
+			ids[area_id] = true
+		var mode := str(area.get("placement_mode", "free_or_slot"))
+		if mode not in ["free", "slots_only", "free_or_slot"]:
+			errors.append("table.areas[%d].placement_mode is invalid." % index)
+		var bounds: Variant = area.get("bounds")
+		if not bounds is Dictionary:
+			errors.append("table.areas[%d].bounds is required." % index)
+			continue
+		var size: Variant = bounds.get("size")
+		if (
+			not size is Dictionary
+			or float(size.get("x", 0.0)) <= 0.0
+			or float(size.get("z", 0.0)) <= 0.0
+		):
+			errors.append("table.areas[%d].bounds.size must be positive." % index)

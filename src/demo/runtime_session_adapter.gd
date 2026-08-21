@@ -239,6 +239,27 @@ func _build_tabletop(p_game_definition: Dictionary) -> TabletopState:
 	var tabletop: TabletopState = TABLETOP_STATE.new()
 	if not tabletop.add_section("main") or not tabletop.add_zone("board", "main"):
 		return null
+	var table_definition: Dictionary = p_game_definition.get("table", {})
+	var areas: Variant = table_definition.get("areas", [])
+	if areas is Array:
+		for area_variant in areas:
+			if not area_variant is Dictionary:
+				return null
+			var area: Dictionary = area_variant
+			var area_id := str(area.get("id", ""))
+			if not tabletop.add_zone(area_id, "main", area):
+				return null
+			var area_slots: Variant = area.get("slots", [])
+			if not area_slots is Array:
+				return null
+			for slot_variant in area_slots:
+				if not slot_variant is Dictionary:
+					return null
+				var slot: Dictionary = slot_variant
+				if not tabletop.add_slot(
+					str(slot.get("id", "")), area_id, int(slot.get("capacity", 1)), slot
+				):
+					return null
 	for y in rows:
 		for x in columns:
 			if not tabletop.add_slot("board:%d:%d" % [x, y], "board", 1):

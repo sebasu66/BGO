@@ -95,9 +95,9 @@ Public information intended for AI discovery should use normal semantic HTML, JS
 
 Logical placement is authoritative. Slots and zones decide whether objects may share a location through capacity and acceptance rules. Physics is never the source of legality.
 
-For normal board games, occupancy prevents overlap deterministically without rigid-body instability. Visual colliders may assist picking, hover and animation but must not push authoritative objects or create divergent states between clients.
+Slots prevent overlap deterministically through capacity and acceptance rules. A slot owns a stable snap pose (position and rotation) and may whitelist component IDs or kinds.
 
-Free-form tabletop positioning is a separate future capability. It will require an explicit footprint/bounds contract and deterministic placement resolver. It must not be simulated implicitly by uncontrolled physics.
+Zones may allow free placement, slots only, or both. During direct manipulation a client may simulate local rigid-body physics for natural dropping and stacking. When manipulation settles, the stable logical pose is committed and becomes authoritative for synchronization, history and replay. Physics never independently changes authoritative state on multiple clients. Objects leaving valid bounds return to their last valid pose or declared home.
 
 Moving between table, hand and player area is handled by the shared placement/collection command handlers, not reimplemented independently by every visual component.
 

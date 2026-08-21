@@ -202,6 +202,48 @@ func _test_tabletop_state() -> void:
 	)
 	_check(table.object_slot("piece-1") == "pool", "logical object location updates")
 	_check(table.slot_occupants("a1").is_empty(), "source occupancy clears after move")
+	_check(
+		table.add_zone(
+			"studio",
+			"main",
+			{
+				"placement_mode": "free_or_slot",
+				"bounds": {"center": {"x": 0, "z": 0}, "size": {"x": 20, "z": 12}},
+			}
+		),
+		"table zone supports bounded free placement",
+	)
+	var pose := {
+		"position": {"x": 2.5, "y": 0.0, "z": -1.0},
+		"rotation": {"x": 0.0, "y": 0.4, "z": 0.0},
+	}
+	_check(table.place_object_free("loose-die", "studio", pose, "die"), "free pose is placed")
+	_check(table.object_poses["loose-die"]["pose"] == pose, "free pose is authoritative")
+	var before_invalid_pose := table.to_dictionary()
+	var outside_pose := pose.duplicate(true)
+	outside_pose["position"] = {"x": 50.0, "y": 0.0, "z": 0.0}
+	_check(
+		not table.move_object_free("loose-die", "studio", outside_pose, "die"),
+		"free placement rejects poses outside zone bounds",
+	)
+	_check(table.to_dictionary() == before_invalid_pose, "rejected free move restores placement")
+	_check(
+		table.add_slot(
+			"board-home",
+			"board",
+			1,
+			{
+				"accepted_kinds": ["board"],
+				"pose": {
+					"position": {"x": 0.0, "y": 0.0, "z": 0.0},
+					"rotation": {"x": 0.0, "y": 0.0, "z": 0.0},
+				},
+			}
+		),
+		"slot declares accepted kinds and snap pose",
+	)
+	_check(not table.can_accept("board-home", "piece"), "slot rejects a non-whitelisted kind")
+	_check(table.can_accept("board-home", "board"), "slot accepts a whitelisted kind")
 
 
 func _test_logical_object_state() -> void:
