@@ -14,7 +14,7 @@ func _load_game_definition() -> void:
 	if bool(result.get("ok", false)):
 		game_definition = (result.get("data", {}) as Dictionary).duplicate(true)
 		definition_errors.clear()
-		G.bind_definition(game_definition, game_definition_path)
+		get_node("/root/G").bind_definition(game_definition, game_definition_path)
 		return
 	game_definition.clear()
 	definition_errors = result.get("errors", [])

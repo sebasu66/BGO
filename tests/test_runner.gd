@@ -5,6 +5,7 @@ const CAPABILITY_REGISTRY = preload("res://src/core/capability_registry.gd")
 const CONFORMANCE_GAME_TEST = preload("res://tests/conformance_game_test.gd")
 const GAME_DEFINITION_LOADER = preload("res://src/core/game_definition_loader.gd")
 const GAMEPLAY_STATE_TEST = preload("res://tests/gameplay_state_test.gd")
+const GAME_API = preload("res://src/core/game_api.gd")
 const LOGICAL_OBJECT_STATE = preload("res://src/core/logical_object_state.gd")
 const RUNTIME_SESSION_ADAPTER_TEST = preload("res://tests/runtime_session_adapter_test.gd")
 const SANDBOX_STATE_TEST = preload("res://tests/sandbox_state_test.gd")
@@ -156,11 +157,16 @@ func _test_debug_game_api() -> void:
 		((definition.get("table", {}) as Dictionary).get("areas", []) as Array).size() == 4,
 		"table debug scenario exposes four declarative areas",
 	)
-	G.bind_definition(definition, "res://games/table_debug/game.jsonh")
-	_check(bool(G.definition("table.debug")), "G reads loaded definition properties")
-	_check((G.games() as Array).has("table_debug"), "G lists available game definitions")
-	_check((G.components() as Dictionary).has("bgo.slot.basic"), "G exposes component contracts")
-	_check((G.help() as Dictionary).has("methods"), "G describes its console API")
+	var game_api := GAME_API.new()
+	game_api.bind_definition(definition, "res://games/table_debug/game.jsonh")
+	_check(bool(game_api.definition("table.debug")), "G reads loaded definition properties")
+	_check((game_api.games() as Array).has("table_debug"), "G lists available game definitions")
+	_check(
+		(game_api.components() as Dictionary).has("bgo.slot.basic"),
+		"G exposes component contracts",
+	)
+	_check((game_api.help() as Dictionary).has("methods"), "G describes its console API")
+	game_api.free()
 
 
 func _test_session_state() -> void:

@@ -6,8 +6,9 @@ func _ready() -> void:
 	_read_launch_options()
 	_load_game_definition()
 	if str((game_definition.get("runtime", {}) as Dictionary).get("mode", "match")) == "sandbox":
-		G.runtime_changed.connect(_sync_sandbox_state)
-		var sandbox_result := G.start_sandbox()
+		var game_api := get_node("/root/G")
+		game_api.runtime_changed.connect(_sync_sandbox_state)
+		var sandbox_result: Dictionary = game_api.start_sandbox()
 		if bool(sandbox_result.get("ok", false)):
 			_sync_sandbox_state(sandbox_result.get("state", {}))
 	var preview := get_node_or_null("EditorPreview")
