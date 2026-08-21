@@ -61,6 +61,22 @@ func is_active_participant(participant_id: String) -> bool:
 	return not participant_id.is_empty() and participant_id == active_participant_id()
 
 
+## Returns whether the loaded logical session has ended.
+func is_session_ended() -> bool:
+	return (
+		gameplay_state != null
+		and gameplay_state.session != null
+		and gameplay_state.session.is_ended()
+	)
+
+
+## Returns a safe copy of the current session result.
+func session_result() -> Dictionary:
+	if gameplay_state == null or gameplay_state.session == null:
+		return {}
+	return gameplay_state.session.result.duplicate(true)
+
+
 ## Moves a controlled object into the active participant's player area or hand.
 func move_object_to_collection(
 	participant_id: String, object_id: String, collection_type: String
@@ -97,6 +113,14 @@ func move_object_and_end_turn(
 		)
 	)
 	return _finalize_command(result, object_id)
+
+
+## Completes the active participant's turn without requiring an object move.
+func end_turn(participant_id: String, comment: String = "") -> Dictionary:
+	if gameplay_state == null:
+		return _rejected("session_not_loaded")
+	var result := gameplay_state.end_turn(participant_id, comment)
+	return _finalize_session_command(result)
 
 
 ## Returns a deterministic snapshot of the loaded logical gameplay state.
@@ -250,6 +274,19 @@ func _finalize_command(result: Dictionary, object_id: String) -> Dictionary:
 	var finalized := result.duplicate(true)
 	finalized["revision"] = state_revision
 	finalized["persistence_patch"] = _persistence_patch(object_id)
+	return finalized
+
+
+func _finalize_session_command(result: Dictionary) -> Dictionary:
+	if not bool(result.get("ok", false)):
+		return result
+	state_revision += 1
+	var finalized := result.duplicate(true)
+	finalized["revision"] = state_revision
+	finalized["persistence_patch"] = {
+		"state_revision": state_revision,
+		"session": gameplay_state.session.to_dictionary(),
+	}
 	return finalized
 
 
