@@ -15,6 +15,7 @@ static func create(participant_ids: Array[String], initial_phase: String = "main
 	return flow
 
 
+## Starts turn flow with the requested participant, or the first ordered participant.
 func start(initial_participant_id: String = "") -> bool:
 	if turn_order.is_empty() or turn_number != 0:
 		return false
@@ -26,10 +27,12 @@ func start(initial_participant_id: String = "") -> bool:
 	return true
 
 
+## Returns whether the participant may currently act in this flow.
 func is_active(participant_id: String) -> bool:
 	return active_participant_ids.has(participant_id)
 
 
+## Completes the active participant's turn and advances deterministic turn order.
 func end_turn(participant_id: String) -> bool:
 	if not is_active(participant_id) or turn_order.is_empty():
 		return false
@@ -39,6 +42,7 @@ func end_turn(participant_id: String) -> bool:
 	return true
 
 
+## Returns a serializable snapshot of phase and turn state.
 func to_dictionary() -> Dictionary:
 	return {
 		"phase_id": phase_id,

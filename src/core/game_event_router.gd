@@ -6,6 +6,7 @@ const MAX_EVENTS_PER_COMMAND := 256
 var listeners: Array[Dictionary] = []
 
 
+## Replaces listener definitions and reports every invalid contract.
 func configure(definitions: Array) -> Array[String]:
 	var errors: Array[String] = []
 	listeners.clear()
@@ -31,6 +32,7 @@ func configure(definitions: Array) -> Array[String]:
 	return errors
 
 
+## Resolves the canonical commands triggered by a committed event.
 func commands_for(event: Dictionary) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	var event_type := str(event.get("type", ""))

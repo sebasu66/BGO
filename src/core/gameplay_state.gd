@@ -28,6 +28,7 @@ static func create(
 	return state
 
 
+## Registers one canonical verb handler without replacing an existing handler.
 func register_verb(verb: String, handler: Callable) -> bool:
 	if verb.is_empty() or not handler.is_valid() or _verb_handlers.has(verb):
 		return false
@@ -35,6 +36,7 @@ func register_verb(verb: String, handler: Callable) -> bool:
 	return true
 
 
+## Adds a valid logical object to the session without assigning a table location.
 func register_object(object: LogicalObjectState) -> bool:
 	if object == null or object.object_id.is_empty() or object.component_id.is_empty():
 		return false
@@ -44,6 +46,7 @@ func register_object(object: LogicalObjectState) -> bool:
 	return true
 
 
+## Registers a logical object and places it in an available authoritative slot.
 func add_object(object: LogicalObjectState, slot_id: String) -> bool:
 	if not register_object(object):
 		return false
@@ -83,6 +86,7 @@ func execute(command: Dictionary) -> Dictionary:
 	return {"ok": true, "revision": revision, "events": committed}
 
 
+## Returns the registered verbs currently exposed to an actor and optional target.
 func available_verbs(actor_id: String, target_id: String = "") -> Array[String]:
 	var result: Array[String] = []
 	if session == null or not session.is_active():
@@ -100,6 +104,7 @@ func available_verbs(actor_id: String, target_id: String = "") -> Array[String]:
 	return result
 
 
+## Returns the complete deterministic gameplay snapshot.
 func to_dictionary() -> Dictionary:
 	var snapshots: Dictionary = {}
 	for object_id in objects:

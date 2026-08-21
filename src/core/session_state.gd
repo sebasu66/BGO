@@ -150,6 +150,7 @@ func _winner_ids_are_valid(winner_participant_ids: Array) -> bool:
 	return true
 
 
+## Returns seated players in deterministic seat order, excluding spectators.
 func ordered_players() -> Array[String]:
 	var players: Array[String] = []
 	for seat_id in seat_order:

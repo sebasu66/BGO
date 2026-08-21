@@ -72,6 +72,7 @@ func clear_location() -> void:
 	location_id = ""
 
 
+## Assigns a non-negative authoritative quantity.
 func set_quantity(value: int) -> bool:
 	if value < 0:
 		return false
@@ -79,6 +80,7 @@ func set_quantity(value: int) -> bool:
 	return true
 
 
+## Assigns a non-empty semantic state identifier.
 func set_state(value: String) -> bool:
 	if value.is_empty():
 		return false
@@ -86,6 +88,7 @@ func set_state(value: String) -> bool:
 	return true
 
 
+## Assigns one named extensible property.
 func set_property_value(property_name: String, value: Variant) -> bool:
 	if property_name.is_empty():
 		return false
