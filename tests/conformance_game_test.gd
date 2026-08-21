@@ -17,18 +17,27 @@ static func run(check: Callable) -> void:
 	if game == null:
 		return
 	var before_invalid := game.to_dictionary()
-	var invalid := game.execute({
-		"verb": "object.move", "actor_id": "player_2", "target_id": "player_2_piece",
-		"args": {"slot_id": "board:1:1"}
-	})
+	var invalid := game.execute(
+		{
+			"verb": "object.move",
+			"actor_id": "player_2",
+			"target_id": "player_2_piece",
+			"args": {"slot_id": "board:1:1"}
+		}
+	)
 	check.call(not bool(invalid.get("ok", false)), "out-of-turn command is rejected")
 	check.call(game.to_dictionary() == before_invalid, "rejected command preserves state")
 	for command in (data.get("conformance", {}) as Dictionary).get("commands", []):
 		var result := game.execute(command)
 		check.call(bool(result.get("ok", false)), "declared conformance command succeeds")
 	check.call(game.session.is_ended(), "fixture reaches explicit completion")
-	check.call(game.session.result.get("winner_participant_ids", []) == ["player_1"], "winner is explicit")
-	check.call(game.tabletop.object_slot("player_1_piece") == "board:2:0", "final position is deterministic")
+	check.call(
+		game.session.result.get("winner_participant_ids", []) == ["player_1"], "winner is explicit"
+	)
+	check.call(
+		game.tabletop.object_slot("player_1_piece") == "board:2:0",
+		"final position is deterministic"
+	)
 
 
 static func _build_game(data: Dictionary) -> GameplayState:
@@ -57,8 +66,10 @@ static func _build_game(data: Dictionary) -> GameplayState:
 	var game := GameplayState.create(session, flow, table, data.get("listeners", []))
 	for definition in (data.get("setup", {}) as Dictionary).get("objects", []):
 		var object := LogicalObjectState.create(
-			str(definition.get("id", "")), str(definition.get("component", "")),
-			str(definition.get("owner_id", "")), int(definition.get("quantity", 1))
+			str(definition.get("id", "")),
+			str(definition.get("component", "")),
+			str(definition.get("owner_id", "")),
+			int(definition.get("quantity", 1))
 		)
 		var location: Dictionary = definition.get("initial_location", {})
 		if not game.add_object(object, str(location.get("slot_id", ""))):

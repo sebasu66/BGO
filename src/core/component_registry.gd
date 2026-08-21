@@ -136,8 +136,7 @@ static func _validate_value(
 	match type_name:
 		"int":
 			valid_type = (
-				typeof(value) in [TYPE_INT, TYPE_FLOAT]
-				and float(int(value)) == float(value)
+				typeof(value) in [TYPE_INT, TYPE_FLOAT] and float(int(value)) == float(value)
 			)
 		"float":
 			valid_type = typeof(value) in [TYPE_INT, TYPE_FLOAT]

@@ -92,27 +92,38 @@ func move_object_to_collection(
 	if gameplay_state == null:
 		return _rejected("session_not_loaded")
 	var allow_neutral_acquire := _object_is_available_neutral(object_id)
-	var result := gameplay_state.execute({
-		"verb": "object.move_to_collection", "actor_id": participant_id,
-		"target_id": object_id,
-		"args": {"collection": collection_type, "acquire_neutral": allow_neutral_acquire},
-		"expected_revision": gameplay_state.revision,
-	})
+	var result := (
+		gameplay_state
+		. execute(
+			{
+				"verb": "object.move_to_collection",
+				"actor_id": participant_id,
+				"target_id": object_id,
+				"args": {"collection": collection_type, "acquire_neutral": allow_neutral_acquire},
+				"expected_revision": gameplay_state.revision,
+			}
+		)
+	)
 	return _finalize_command(result, object_id)
 
 
 ## Moves an object to a slot. Ending the turn is always a separate command.
-func move_object(
-	participant_id: String, object_id: String, target_slot_id: String
-) -> Dictionary:
+func move_object(participant_id: String, object_id: String, target_slot_id: String) -> Dictionary:
 	if gameplay_state == null:
 		return _rejected("session_not_loaded")
 	var allow_neutral_acquire := _object_is_available_neutral(object_id)
-	var result := gameplay_state.execute({
-		"verb": "object.move", "actor_id": participant_id, "target_id": object_id,
-		"args": {"slot_id": target_slot_id, "acquire_neutral": allow_neutral_acquire},
-		"expected_revision": gameplay_state.revision,
-	})
+	var result := (
+		gameplay_state
+		. execute(
+			{
+				"verb": "object.move",
+				"actor_id": participant_id,
+				"target_id": object_id,
+				"args": {"slot_id": target_slot_id, "acquire_neutral": allow_neutral_acquire},
+				"expected_revision": gameplay_state.revision,
+			}
+		)
+	)
 	return _finalize_command(result, object_id)
 
 
@@ -120,10 +131,17 @@ func move_object(
 func end_turn(participant_id: String, comment: String = "") -> Dictionary:
 	if gameplay_state == null:
 		return _rejected("session_not_loaded")
-	var result := gameplay_state.execute({
-		"verb": "turn.end", "actor_id": participant_id,
-		"args": {"comment": comment}, "expected_revision": gameplay_state.revision,
-	})
+	var result := (
+		gameplay_state
+		. execute(
+			{
+				"verb": "turn.end",
+				"actor_id": participant_id,
+				"args": {"comment": comment},
+				"expected_revision": gameplay_state.revision,
+			}
+		)
+	)
 	return _finalize_session_command(result)
 
 

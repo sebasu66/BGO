@@ -160,7 +160,10 @@ func _test_session_state() -> void:
 		"duplicate seat is rejected",
 	)
 	_check(session.start_session(), "session starts with seated players")
-	_check(session.ordered_players() == ["p1", "p2"], "session exposes seated players without owning turn flow")
+	_check(
+		session.ordered_players() == ["p1", "p2"],
+		"session exposes seated players without owning turn flow"
+	)
 
 	var before_invalid_end := session.to_dictionary()
 	_check(not session.end_session("victory", ["watcher"]), "spectator cannot be winner")

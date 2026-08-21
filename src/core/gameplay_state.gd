@@ -14,10 +14,7 @@ var _verb_handlers: Dictionary = {}
 
 
 static func create(
-	p_session: SessionState,
-	p_flow: FlowState,
-	p_tabletop: TabletopState,
-	listeners: Array = []
+	p_session: SessionState, p_flow: FlowState, p_tabletop: TabletopState, listeners: Array = []
 ) -> GameplayState:
 	var state := GameplayState.new()
 	state.session = p_session
@@ -149,16 +146,32 @@ func _move_object(command: Dictionary) -> Dictionary:
 		return _rejected("destination_unavailable")
 	var source_type := object.location_type
 	var source_id := object.location_id
-	var moved := tabletop.move_object(object_id, target_slot_id) if source_type == "slot" else tabletop.place_object(object_id, target_slot_id)
+	var moved := (
+		tabletop.move_object(object_id, target_slot_id)
+		if source_type == "slot"
+		else tabletop.place_object(object_id, target_slot_id)
+	)
 	if not moved:
 		return _rejected("table_move_rejected")
 	if object.is_neutral() and object.holder_id.is_empty():
 		object.set_holder(actor_id)
 	object.set_location("slot", target_slot_id)
-	return _events([{
-		"type": "object.moved", "source_id": object_id, "actor_id": actor_id,
-		"data": {"from_type": source_type, "from_id": source_id, "to_type": "slot", "to_id": target_slot_id}
-	}])
+	return _events(
+		[
+			{
+				"type": "object.moved",
+				"source_id": object_id,
+				"actor_id": actor_id,
+				"data":
+				{
+					"from_type": source_type,
+					"from_id": source_id,
+					"to_type": "slot",
+					"to_id": target_slot_id
+				}
+			}
+		]
+	)
 
 
 func _move_to_collection(command: Dictionary) -> Dictionary:
@@ -177,10 +190,22 @@ func _move_to_collection(command: Dictionary) -> Dictionary:
 		return _rejected("table_remove_rejected")
 	object.set_holder(actor_id)
 	object.set_location(collection, actor_id)
-	return _events([{
-		"type": "object.moved", "source_id": object_id, "actor_id": actor_id,
-		"data": {"from_type": source_type, "from_id": source_id, "to_type": collection, "to_id": actor_id}
-	}])
+	return _events(
+		[
+			{
+				"type": "object.moved",
+				"source_id": object_id,
+				"actor_id": actor_id,
+				"data":
+				{
+					"from_type": source_type,
+					"from_id": source_id,
+					"to_type": collection,
+					"to_id": actor_id
+				}
+			}
+		]
+	)
 
 
 func _set_quantity(command: Dictionary) -> Dictionary:
@@ -192,7 +217,16 @@ func _set_quantity(command: Dictionary) -> Dictionary:
 	var value := int((command.get("args", {}) as Dictionary).get("value", -1))
 	if not object.set_quantity(value):
 		return _rejected("invalid_quantity")
-	return _events([{"type": "object.quantity_changed", "source_id": object.object_id, "actor_id": actor_id, "data": {"from": previous, "to": value}}])
+	return _events(
+		[
+			{
+				"type": "object.quantity_changed",
+				"source_id": object.object_id,
+				"actor_id": actor_id,
+				"data": {"from": previous, "to": value}
+			}
+		]
+	)
 
 
 func _set_state(command: Dictionary) -> Dictionary:
@@ -204,7 +238,16 @@ func _set_state(command: Dictionary) -> Dictionary:
 	var value := str((command.get("args", {}) as Dictionary).get("state", ""))
 	if not object.set_state(value):
 		return _rejected("invalid_state")
-	return _events([{"type": "object.state_changed", "source_id": object.object_id, "actor_id": actor_id, "data": {"from": previous, "to": value}}])
+	return _events(
+		[
+			{
+				"type": "object.state_changed",
+				"source_id": object.object_id,
+				"actor_id": actor_id,
+				"data": {"from": previous, "to": value}
+			}
+		]
+	)
 
 
 func _end_turn(command: Dictionary) -> Dictionary:
@@ -214,10 +257,26 @@ func _end_turn(command: Dictionary) -> Dictionary:
 	var previous_turn := flow.turn_number
 	if not flow.end_turn(actor_id):
 		return _rejected("turn_end_rejected")
-	return _events([
-		{"type": "turn.ended", "source_id": "flow", "actor_id": actor_id, "data": {"turn_number": previous_turn}},
-		{"type": "turn.started", "source_id": "flow", "actor_id": "system", "data": {"turn_number": flow.turn_number, "active_participant_ids": flow.active_participant_ids.duplicate()}},
-	])
+	return _events(
+		[
+			{
+				"type": "turn.ended",
+				"source_id": "flow",
+				"actor_id": actor_id,
+				"data": {"turn_number": previous_turn}
+			},
+			{
+				"type": "turn.started",
+				"source_id": "flow",
+				"actor_id": "system",
+				"data":
+				{
+					"turn_number": flow.turn_number,
+					"active_participant_ids": flow.active_participant_ids.duplicate()
+				}
+			},
+		]
+	)
 
 
 func _finish_match(command: Dictionary) -> Dictionary:
@@ -225,12 +284,25 @@ func _finish_match(command: Dictionary) -> Dictionary:
 	if not session.is_host(actor_id):
 		return _rejected("host_required")
 	var args: Dictionary = command.get("args", {})
-	if not session.end_session(str(args.get("outcome", "")), args.get("winner_participant_ids", [])):
+	if not session.end_session(
+		str(args.get("outcome", "")), args.get("winner_participant_ids", [])
+	):
 		return _rejected("invalid_match_result")
-	return _events([{"type": "match.finished", "source_id": session.session_id, "actor_id": actor_id, "data": session.result.duplicate(true)}])
+	return _events(
+		[
+			{
+				"type": "match.finished",
+				"source_id": session.session_id,
+				"actor_id": actor_id,
+				"data": session.result.duplicate(true)
+			}
+		]
+	)
 
 
-func _authorized_object(actor_id: String, object_id: String, acquire_neutral: bool) -> LogicalObjectState:
+func _authorized_object(
+	actor_id: String, object_id: String, acquire_neutral: bool
+) -> LogicalObjectState:
 	if session == null or not session.is_active() or not flow.is_active(actor_id):
 		return null
 	if not objects.has(object_id):
@@ -240,7 +312,11 @@ func _authorized_object(actor_id: String, object_id: String, acquire_neutral: bo
 
 
 func _can_control(object: LogicalObjectState, actor_id: String, acquire_neutral: bool) -> bool:
-	return object.holder_id == actor_id or (object.holder_id.is_empty() and object.owner_id == actor_id) or (acquire_neutral and object.is_neutral() and object.holder_id.is_empty())
+	return (
+		object.holder_id == actor_id
+		or (object.holder_id.is_empty() and object.owner_id == actor_id)
+		or (acquire_neutral and object.is_neutral() and object.holder_id.is_empty())
+	)
 
 
 func _validate_command_shape(command: Dictionary) -> String:
@@ -274,13 +350,20 @@ func _restore_snapshot(snapshot: Dictionary) -> void:
 	session.session_id = str(session_data.get("session_id", ""))
 	session.host_participant_id = str(session_data.get("host_participant_id", ""))
 	session.seat_order.assign(session_data.get("seat_order", []))
-	session.participant_seats = (session_data.get("participant_seats", {}) as Dictionary).duplicate(true)
-	session.participant_roles = (session_data.get("participant_roles", {}) as Dictionary).duplicate(true)
+	session.participant_seats = (session_data.get("participant_seats", {}) as Dictionary).duplicate(
+		true
+	)
+	session.participant_roles = (session_data.get("participant_roles", {}) as Dictionary).duplicate(
+		true
+	)
 	session.result = (session_data.get("result", {}) as Dictionary).duplicate(true)
 	match str(session_data.get("lifecycle", "lobby")):
-		"active": session.lifecycle = SessionState.Lifecycle.ACTIVE
-		"ended": session.lifecycle = SessionState.Lifecycle.ENDED
-		_: session.lifecycle = SessionState.Lifecycle.LOBBY
+		"active":
+			session.lifecycle = SessionState.Lifecycle.ACTIVE
+		"ended":
+			session.lifecycle = SessionState.Lifecycle.ENDED
+		_:
+			session.lifecycle = SessionState.Lifecycle.LOBBY
 	var flow_data: Dictionary = snapshot.get("flow", {})
 	flow.phase_id = str(flow_data.get("phase_id", "main"))
 	flow.turn_number = int(flow_data.get("turn_number", 0))
@@ -293,13 +376,16 @@ func _restore_snapshot(snapshot: Dictionary) -> void:
 	tabletop.slots = (table_data.get("slots", {}) as Dictionary).duplicate(true)
 	tabletop.object_slots = (table_data.get("object_slots", {}) as Dictionary).duplicate(true)
 	objects.clear()
-	for object_id_variant in (snapshot.get("objects", {}) as Dictionary):
+	for object_id_variant in snapshot.get("objects", {}) as Dictionary:
 		var data: Dictionary = snapshot["objects"][object_id_variant]
-		var object := LogicalObjectState.create(
-			str(data.get("object_id", object_id_variant)),
-			str(data.get("component_id", "")),
-			str(data.get("owner_id", "")),
-			int(data.get("quantity", 1)),
+		var object := (
+			LogicalObjectState
+			. create(
+				str(data.get("object_id", object_id_variant)),
+				str(data.get("component_id", "")),
+				str(data.get("owner_id", "")),
+				int(data.get("quantity", 1)),
+			)
 		)
 		object.holder_id = str(data.get("holder_id", ""))
 		object.location_type = str(data.get("location_type", ""))

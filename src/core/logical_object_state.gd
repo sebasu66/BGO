@@ -34,10 +34,7 @@ var properties: Dictionary = {}
 
 ## Creates a logical object with stable identity and optional owner.
 static func create(
-	p_object_id: String,
-	p_component_id: String,
-	p_owner_id: String = "",
-	p_quantity: int = 1
+	p_object_id: String, p_component_id: String, p_owner_id: String = "", p_quantity: int = 1
 ) -> LogicalObjectState:
 	var state := LogicalObjectState.new()
 	state.object_id = p_object_id

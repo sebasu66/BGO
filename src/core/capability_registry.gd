@@ -3,8 +3,16 @@ extends RefCounted
 
 const CATALOG_PATH := "res://src/capabilities/capabilities.jsonh"
 const CORE_STATE_FIELDS := [
-	"object_id", "component_id", "owner_id", "holder_id", "location_type",
-	"location_id", "visibility", "quantity", "state_id", "properties",
+	"object_id",
+	"component_id",
+	"owner_id",
+	"holder_id",
+	"location_type",
+	"location_id",
+	"visibility",
+	"quantity",
+	"state_id",
+	"properties",
 ]
 
 static var _capabilities: Dictionary = {}
@@ -75,6 +83,10 @@ static func _valid_id(value: String) -> bool:
 	if value.is_empty() or value != value.to_lower():
 		return false
 	for character in value:
-		if not (character >= "a" and character <= "z") and not (character >= "0" and character <= "9") and character != "_":
+		if (
+			not (character >= "a" and character <= "z")
+			and not (character >= "0" and character <= "9")
+			and character != "_"
+		):
 			return false
 	return true
