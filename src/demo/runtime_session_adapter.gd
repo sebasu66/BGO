@@ -230,57 +230,7 @@ func _build_flow(
 
 
 func _build_tabletop(p_game_definition: Dictionary) -> TabletopState:
-	var tabletop: TabletopState = TABLETOP_STATE.new()
-	if not tabletop.add_section("main"):
-		return null
-	var table_definition: Dictionary = p_game_definition.get("table", {})
-	if not _add_defined_areas(tabletop, table_definition.get("areas", [])):
-		return null
-	if not _add_board_grid(tabletop, p_game_definition.get("board", {})):
-		return null
-	return tabletop
-
-
-func _add_defined_areas(tabletop: TabletopState, areas: Variant) -> bool:
-	if not areas is Array:
-		return false
-	for area_variant in areas:
-		if not area_variant is Dictionary or not _add_defined_area(tabletop, area_variant):
-			return false
-	return true
-
-
-func _add_defined_area(tabletop: TabletopState, area: Dictionary) -> bool:
-	var area_id := str(area.get("id", ""))
-	if not tabletop.add_zone(area_id, "main", area):
-		return false
-	var slots: Variant = area.get("slots", [])
-	if not slots is Array:
-		return false
-	for slot_variant in slots:
-		if not slot_variant is Dictionary:
-			return false
-		var slot: Dictionary = slot_variant
-		if not tabletop.add_slot(
-			str(slot.get("id", "")), area_id, int(slot.get("capacity", 1)), slot
-		):
-			return false
-	return true
-
-
-func _add_board_grid(tabletop: TabletopState, board: Variant) -> bool:
-	if not board is Dictionary or board.is_empty():
-		return true
-	var config: Dictionary = board.get("config", {})
-	var columns := int(config.get("columns", 0))
-	var rows := int(config.get("rows", 0))
-	if columns < 1 or rows < 1 or not tabletop.add_zone("board", "main"):
-		return false
-	for y in rows:
-		for x in columns:
-			if not tabletop.add_slot("board:%d:%d" % [x, y], "board", 1):
-				return false
-	return true
+	return TabletopDefinitionBuilder.build(p_game_definition)
 
 
 func _load_objects(gameplay: GameplayState, repository_state: Dictionary) -> Dictionary:

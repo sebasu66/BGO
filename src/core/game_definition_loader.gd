@@ -96,6 +96,12 @@ static func _parse_jsonh(source: String) -> Dictionary:
 
 static func validate_game(data: Dictionary) -> Array[String]:
 	var errors: Array[String] = []
+	var runtime: Dictionary = data.get("runtime", {})
+	var runtime_mode := str(runtime.get("mode", "match"))
+	if runtime_mode not in ["match", "sandbox"]:
+		errors.append("runtime.mode must be 'match' or 'sandbox'.")
+	if runtime_mode == "sandbox" and str(runtime.get("persistence", "none")) != "none":
+		errors.append("sandbox runtime.persistence must be 'none'.")
 	if str(data.get("schema", "")) != "bgo.game":
 		errors.append("schema must be 'bgo.game'.")
 
@@ -107,8 +113,9 @@ static func validate_game(data: Dictionary) -> Array[String]:
 			errors.append("game.id is required.")
 		var min_players := int(game.get("min_players", 0))
 		var max_players := int(game.get("max_players", 0))
-		if min_players < 1:
-			errors.append("game.min_players must be at least 1.")
+		var minimum_allowed := 0 if runtime_mode == "sandbox" else 1
+		if min_players < minimum_allowed:
+			errors.append("game.min_players must be at least %d." % minimum_allowed)
 		if max_players < min_players:
 			errors.append("game.max_players must be >= game.min_players.")
 
@@ -122,10 +129,10 @@ static func validate_game(data: Dictionary) -> Array[String]:
 	else:
 		_validate_table(table, errors)
 
-	var flow: Variant = data.get("flow")
-	if not flow is Dictionary:
-		errors.append("Missing object 'flow'.")
-	else:
+	var flow: Variant = data.get("flow", {})
+	if runtime_mode == "match" and not flow is Dictionary:
+		errors.append("Match definitions require object 'flow'.")
+	elif runtime_mode == "match":
 		if str(flow.get("initial_phase", "")).is_empty():
 			errors.append("flow.initial_phase is required.")
 		if str(flow.get("turn_order", "")) != "round_robin":
@@ -135,8 +142,10 @@ static func validate_game(data: Dictionary) -> Array[String]:
 
 	var player_ids: Dictionary = {}
 	var players: Variant = data.get("players")
-	if not players is Array or players.is_empty():
-		errors.append("players must be a non-empty array.")
+	if not players is Array:
+		errors.append("players must be an array.")
+	elif players.is_empty() and runtime_mode == "match":
+		errors.append("Match definitions require at least one player.")
 	else:
 		for index in players.size():
 			var player: Variant = players[index]

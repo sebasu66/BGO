@@ -44,6 +44,9 @@ func _on_end_turn_pressed() -> void:
 
 
 func _connect_session() -> void:
+	if str((game_definition.get("runtime", {}) as Dictionary).get("mode", "match")) == "sandbox":
+		_set_status("Local sandbox · persistence disabled")
+		return
 	_runtime_session = RUNTIME_SESSION_ADAPTER.new()
 	repository = LOGICAL_SESSION_REPOSITORY.new()
 	add_child(repository)
@@ -64,7 +67,7 @@ func _on_session_loaded(data: Dictionary) -> void:
 		return
 	var loaded := _runtime_session.load_session(game_id, game_definition, data)
 	if bool(loaded.get("ok", false)):
-		G.bind_gameplay(_runtime_session.gameplay_state)
+		G.bind_runtime(_runtime_session.gameplay_state)
 		_refresh_logical_turn_ui()
 		return
 	var reason := str(loaded.get("reason", "logical_session_load_failed"))

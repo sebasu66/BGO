@@ -85,6 +85,12 @@ Suggested stable projection:
 
 These are projections over the registries and command layer, not a second domain model.
 
+## Sandbox authoring runtime
+
+`runtime.mode: "sandbox"` selects a local authoring session rather than a match with disabled rules. A sandbox may have participants, table areas, scores and any registered components, but it has no turn flow, winner, terminal state, event history or remote persistence. All components remain discoverable through `G`, and sandbox commands may spawn, remove, configure and place instances without normal match authorization.
+
+Sandbox snapshots are explicit named in-memory restore points. They are not persisted match history. Exporting a sandbox produces a declarative initial-state fragment that can become part of a GamePackage; component implementation contracts remain in the core component catalog and the game package stores only component IDs and allowed configuration overrides.
+
 ## Web and agent projection
 
 The web client may expose the same safe projection as a namespaced JavaScript bridge for authorized browser automation, for example `window.BGO.game.components.list()` and `window.BGO.game.commands.execute(envelope)`. It must expose structured calls, never arbitrary code evaluation or direct state mutation. Every command carries actor/session identity, passes normal permission and revision checks, and is recorded exactly like a UI command.

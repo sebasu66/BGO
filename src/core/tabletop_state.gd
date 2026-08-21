@@ -93,8 +93,9 @@ func move_object(
 	if not object_slots.has(object_id):
 		return false
 	var source_slot_id := str(object_slots[object_id])
-	if source_slot_id == target_slot_id or not can_accept(
-		target_slot_id, component_kind, component_id
+	if (
+		source_slot_id == target_slot_id
+		or not can_accept(target_slot_id, component_kind, component_id)
 	):
 		return false
 	var source_occupants: Array = slots[source_slot_id]["occupants"]
@@ -156,7 +157,10 @@ func move_object_free(
 	if not is_placed(object_id):
 		return false
 	var snapshot := to_dictionary()
-	if not remove_object(object_id) or not place_object_free(object_id, zone_id, pose, component_kind):
+	if (
+		not remove_object(object_id)
+		or not place_object_free(object_id, zone_id, pose, component_kind)
+	):
 		_restore(snapshot)
 		return false
 	return true
@@ -193,6 +197,15 @@ func to_dictionary() -> Dictionary:
 	}
 
 
+## Replaces this tabletop with a previously validated deterministic snapshot.
+func load_dictionary(snapshot: Dictionary) -> bool:
+	for key in ["sections", "zones", "slots", "object_slots", "object_poses"]:
+		if not snapshot.get(key) is Dictionary:
+			return false
+	_restore(snapshot)
+	return true
+
+
 func _valid_bounds(bounds: Dictionary) -> bool:
 	var size: Dictionary = bounds.get("size", {})
 	return float(size.get("x", 0.0)) > 0.0 and float(size.get("z", 0.0)) > 0.0
@@ -211,10 +224,14 @@ func _pose_inside_bounds(pose: Dictionary, bounds: Dictionary) -> bool:
 	var size: Dictionary = bounds.get("size", {})
 	var position: Dictionary = pose["position"]
 	return (
-		absf(float(position.get("x", 0.0)) - float(center.get("x", 0.0)))
-		<= float(size.get("x", 0.0)) * 0.5
-		and absf(float(position.get("z", 0.0)) - float(center.get("z", 0.0)))
-		<= float(size.get("z", 0.0)) * 0.5
+		(
+			absf(float(position.get("x", 0.0)) - float(center.get("x", 0.0)))
+			<= float(size.get("x", 0.0)) * 0.5
+		)
+		and (
+			absf(float(position.get("z", 0.0)) - float(center.get("z", 0.0)))
+			<= float(size.get("z", 0.0)) * 0.5
+		)
 	)
 
 

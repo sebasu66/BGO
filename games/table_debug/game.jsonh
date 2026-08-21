@@ -7,10 +7,9 @@
     "max_players": 2,
     "turn_based": true
   },
-  "flow": {
-    "initial_phase": "main",
-    "turn_order": "round_robin",
-    "turn_end": "manual"
+  "runtime": {
+    "mode": "sandbox",
+    "persistence": "none"
   },
   "listeners": [],
   "table": {

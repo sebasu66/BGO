@@ -7,6 +7,7 @@ const GAME_DEFINITION_LOADER = preload("res://src/core/game_definition_loader.gd
 const GAMEPLAY_STATE_TEST = preload("res://tests/gameplay_state_test.gd")
 const LOGICAL_OBJECT_STATE = preload("res://src/core/logical_object_state.gd")
 const RUNTIME_SESSION_ADAPTER_TEST = preload("res://tests/runtime_session_adapter_test.gd")
+const SANDBOX_STATE_TEST = preload("res://tests/sandbox_state_test.gd")
 const SESSION_STATE = preload("res://src/core/session_state.gd")
 const TABLETOP_STATE = preload("res://src/core/tabletop_state.gd")
 
@@ -29,6 +30,7 @@ func _run() -> void:
 	_test_logical_object_state()
 	GAMEPLAY_STATE_TEST.run(_check)
 	RUNTIME_SESSION_ADAPTER_TEST.run(_check)
+	SANDBOX_STATE_TEST.run(_check)
 	CONFORMANCE_GAME_TEST.run(_check)
 
 	if failures > 0:
@@ -224,13 +226,16 @@ func _test_tabletop_state() -> void:
 	_check(table.object_slot("piece-1") == "pool", "logical object location updates")
 	_check(table.slot_occupants("a1").is_empty(), "source occupancy clears after move")
 	_check(
-		table.add_zone(
-			"studio",
-			"main",
-			{
-				"placement_mode": "free_or_slot",
-				"bounds": {"center": {"x": 0, "z": 0}, "size": {"x": 20, "z": 12}},
-			}
+		(
+			table
+			. add_zone(
+				"studio",
+				"main",
+				{
+					"placement_mode": "free_or_slot",
+					"bounds": {"center": {"x": 0, "z": 0}, "size": {"x": 20, "z": 12}},
+				}
+			)
 		),
 		"table zone supports bounded free placement",
 	)
@@ -249,17 +254,21 @@ func _test_tabletop_state() -> void:
 	)
 	_check(table.to_dictionary() == before_invalid_pose, "rejected free move restores placement")
 	_check(
-		table.add_slot(
-			"board-home",
-			"board",
-			1,
-			{
-				"accepted_kinds": ["board"],
-				"pose": {
-					"position": {"x": 0.0, "y": 0.0, "z": 0.0},
-					"rotation": {"x": 0.0, "y": 0.0, "z": 0.0},
-				},
-			}
+		(
+			table
+			. add_slot(
+				"board-home",
+				"board",
+				1,
+				{
+					"accepted_kinds": ["board"],
+					"pose":
+					{
+						"position": {"x": 0.0, "y": 0.0, "z": 0.0},
+						"rotation": {"x": 0.0, "y": 0.0, "z": 0.0},
+					},
+				}
+			)
 		),
 		"slot declares accepted kinds and snap pose",
 	)
