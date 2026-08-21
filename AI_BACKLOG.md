@@ -156,7 +156,7 @@ Implement this task according to the current `SKILL.md`.
 
 ## BGO-010 — Player turn controls
 
-**Status:** QUEUED
+**Status:** IMPLEMENTED
 
 Expose the complete turn flow through the current player client.
 
