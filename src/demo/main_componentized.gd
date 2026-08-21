@@ -3,6 +3,7 @@ extends "res://src/demo/main_componentized_base.gd"
 
 func _ready() -> void:
 	_request_landscape_orientation()
+	_read_launch_options()
 	_load_game_definition()
 	var preview := get_node_or_null("EditorPreview")
 	if preview != null:

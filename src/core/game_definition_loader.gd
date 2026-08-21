@@ -2,6 +2,25 @@ class_name BgoGameDefinitionLoader
 extends RefCounted
 
 const JSONH_GD_PATH := "res://addons/JsonhGd/JsonhGd.gd"
+const GAME_ROOT := "res://games"
+
+
+## Loads one installed game definition by its stable directory/game id.
+static func load_game_id(game_id: String) -> Dictionary:
+	var normalized := game_id.strip_edges().to_lower()
+	if normalized.is_empty() or normalized.contains("/") or normalized.contains("\\"):
+		return {"ok": false, "data": {}, "errors": ["Invalid game id '%s'." % game_id]}
+	return load_game(GAME_ROOT.path_join(normalized).path_join("game.jsonh"))
+
+
+## Lists installed game definition ids in deterministic order.
+static func list_game_ids() -> Array[String]:
+	var result: Array[String] = []
+	for directory_name in DirAccess.get_directories_at(GAME_ROOT):
+		if FileAccess.file_exists(GAME_ROOT.path_join(directory_name).path_join("game.jsonh")):
+			result.append(directory_name)
+	result.sort()
+	return result
 
 
 static func load_game(path: String) -> Dictionary:
@@ -93,10 +112,8 @@ static func validate_game(data: Dictionary) -> Array[String]:
 		if max_players < min_players:
 			errors.append("game.max_players must be >= game.min_players.")
 
-	var board: Variant = data.get("board")
-	if not board is Dictionary:
-		errors.append("Missing object 'board'.")
-	else:
+	var board: Variant = data.get("board", {})
+	if board is Dictionary and not board.is_empty():
 		_validate_component_reference(board, "board", errors)
 
 	var table: Variant = data.get("table")

@@ -162,6 +162,7 @@ func move_object_free(
 	return true
 
 
+## Returns whether an object currently occupies a slot or a stable free pose.
 func is_placed(object_id: String) -> bool:
 	return object_slots.has(object_id) or object_poses.has(object_id)
 

@@ -23,6 +23,7 @@ func _run() -> void:
 	_test_capability_contracts()
 	_test_component_validation()
 	_test_game_definition()
+	_test_debug_game_api()
 	_test_session_state()
 	_test_tabletop_state()
 	_test_logical_object_state()
@@ -138,6 +139,26 @@ func _test_game_definition() -> void:
 		not (missing.get("errors", []) as Array).is_empty(),
 		"missing game definition returns a useful error",
 	)
+
+
+func _test_debug_game_api() -> void:
+	var loaded: Dictionary = GAME_DEFINITION_LOADER.load_game_id("table_debug")
+	if not bool(loaded.get("ok", false)):
+		printerr("TABLE_DEBUG validation errors: %s" % [loaded.get("errors", [])])
+	_check(bool(loaded.get("ok", false)), "table-only debug scenario loads by game id")
+	if not bool(loaded.get("ok", false)):
+		return
+	var definition: Dictionary = loaded.get("data", {})
+	_check(not definition.has("board"), "table debug scenario does not require a board")
+	_check(
+		((definition.get("table", {}) as Dictionary).get("areas", []) as Array).size() == 4,
+		"table debug scenario exposes four declarative areas",
+	)
+	G.bind_definition(definition, "res://games/table_debug/game.jsonh")
+	_check(bool(G.definition("table.debug")), "G reads loaded definition properties")
+	_check((G.games() as Array).has("table_debug"), "G lists available game definitions")
+	_check((G.components() as Dictionary).has("bgo.slot.basic"), "G exposes component contracts")
+	_check((G.help() as Dictionary).has("methods"), "G describes its console API")
 
 
 func _test_session_state() -> void:

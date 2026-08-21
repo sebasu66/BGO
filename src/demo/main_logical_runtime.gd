@@ -64,6 +64,7 @@ func _on_session_loaded(data: Dictionary) -> void:
 		return
 	var loaded := _runtime_session.load_session(game_id, game_definition, data)
 	if bool(loaded.get("ok", false)):
+		G.bind_gameplay(_runtime_session.gameplay_state)
 		_refresh_logical_turn_ui()
 		return
 	var reason := str(loaded.get("reason", "logical_session_load_failed"))

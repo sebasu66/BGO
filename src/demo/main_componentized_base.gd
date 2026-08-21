@@ -1,8 +1,7 @@
 extends "res://src/demo/main_3d.gd"
 
-const GAME_DEFINITION_PATH := "res://games/test001/game.jsonh"
-
 var game_definition: Dictionary = {}
+var game_definition_path := ""
 var definition_errors: Array[String] = []
 var _private_hand_strip: HBoxContainer
 var _transfer_to_hand_button: Button
@@ -10,10 +9,12 @@ var _transfer_to_area_button: Button
 
 
 func _load_game_definition() -> void:
-	var result := BgoGameDefinitionLoader.load_game(GAME_DEFINITION_PATH)
+	game_definition_path = "res://games/%s/game.jsonh" % game_id.to_lower()
+	var result := BgoGameDefinitionLoader.load_game_id(game_id)
 	if bool(result.get("ok", false)):
 		game_definition = (result.get("data", {}) as Dictionary).duplicate(true)
 		definition_errors.clear()
+		G.bind_definition(game_definition, game_definition_path)
 		return
 	game_definition.clear()
 	definition_errors = result.get("errors", [])
@@ -27,21 +28,26 @@ func _show_definition_errors() -> void:
 	_set_status("Definition ignored · %s" % definition_errors[0])
 	if logger != null:
 		logger.error(
-			"GAME_DEFINITION_REJECTED", {"path": GAME_DEFINITION_PATH, "errors": definition_errors}
+			"GAME_DEFINITION_REJECTED", {"path": game_definition_path, "errors": definition_errors}
 		)
 
 
 func _create_board() -> void:
+	_configure_table_surface()
 	var board := $Board as BgoCheckeredBoard
 	if board == null:
 		push_error("Main/Board must be a BgoCheckeredBoard component instance.")
 		return
 
+	var board_definition: Dictionary = game_definition.get("board", {})
+	if board_definition.is_empty():
+		board.visible = false
+		return
+	board.visible = true
 	var columns := GRID_COLUMNS
 	var rows := GRID_ROWS
 	var cell_size := CELL_SIZE
 	if not game_definition.is_empty():
-		var board_definition: Dictionary = game_definition.get("board", {})
 		var component_id := str(board_definition.get("component", ""))
 		if BgoComponentRegistry.get_kind(component_id) == "board":
 			var config: Dictionary = board_definition.get("config", {})
@@ -51,12 +57,75 @@ func _create_board() -> void:
 	board.configure(columns, rows, cell_size)
 
 
+func _configure_table_surface() -> void:
+	var table_mesh := get_node_or_null("Table") as MeshInstance3D
+	if table_mesh == null:
+		return
+	var table: Dictionary = game_definition.get("table", {})
+	var mesh := table_mesh.mesh.duplicate() as BoxMesh
+	if mesh == null:
+		return
+	mesh.size = Vector3(
+		float(table.get("width", 15.5)), mesh.size.y, float(table.get("depth", 9.8))
+	)
+	table_mesh.mesh = mesh
+
+
 func _create_player_areas() -> void:
 	var p1 := $Player1Area as BgoPlayerArea
 	var p2 := $Player2Area as BgoPlayerArea
+	var table: Dictionary = game_definition.get("table", {})
+	if bool(table.get("debug", false)):
+		p1.visible = false
+		p2.visible = false
+		_create_debug_table_areas(table)
+		return
+	p1.visible = true
+	p2.visible = true
 	_configure_player_area(
 		p1, _player_definition("player_1"), "player_1", "PLAYER 1", Color(0.45, 0.31, 0.06)
 	)
+
+
+func _create_debug_table_areas(table: Dictionary) -> void:
+	var root := Node3D.new()
+	root.name = "DebugTableAreas"
+	add_child(root)
+	var areas: Array = table.get("areas", [])
+	for index in areas.size():
+		var area: Dictionary = areas[index]
+		var bounds: Dictionary = area.get("bounds", {})
+		var center: Dictionary = bounds.get("center", {})
+		var size: Dictionary = bounds.get("size", {})
+		var marker := MeshInstance3D.new()
+		marker.name = str(area.get("id", "area_%d" % index))
+		var mesh := BoxMesh.new()
+		mesh.size = Vector3(float(size.get("x", 1.0)), 0.035, float(size.get("z", 1.0)))
+		marker.mesh = mesh
+		marker.position = Vector3(float(center.get("x", 0.0)), 0.055, float(center.get("z", 0.0)))
+		var material := StandardMaterial3D.new()
+		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		material.albedo_color = _debug_area_color(index)
+		material.roughness = 0.9
+		marker.material_override = material
+		root.add_child(marker)
+		var label := Label3D.new()
+		label.text = "%s\n%s" % [marker.name, str(area.get("placement_mode", "free_or_slot"))]
+		label.font_size = 34
+		label.outline_size = 8
+		label.position = marker.position + Vector3(0, 0.08, 0)
+		label.rotation_degrees = Vector3(-90, 0, 0)
+		root.add_child(label)
+
+
+func _debug_area_color(index: int) -> Color:
+	var colors := [
+		Color(0.20, 0.65, 0.95, 0.28),
+		Color(0.95, 0.55, 0.18, 0.28),
+		Color(0.34, 0.82, 0.48, 0.28),
+		Color(0.78, 0.38, 0.88, 0.28),
+	]
+	return colors[index % colors.size()]
 	_configure_player_area(
 		p2, _player_definition("player_2"), "player_2", "PLAYER 2", Color(0.07, 0.27, 0.43)
 	)

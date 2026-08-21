@@ -28,6 +28,16 @@ static func get_contract(component_id: String) -> Dictionary:
 	return (_contracts[component_id] as Dictionary).duplicate(true)
 
 
+## Returns every registered stable component id in deterministic order.
+static func component_ids() -> Array[String]:
+	_ensure_loaded()
+	var result: Array[String] = []
+	for component_id in _contracts:
+		result.append(str(component_id))
+	result.sort()
+	return result
+
+
 static func get_kind(component_id: String) -> String:
 	return str(get_contract(component_id).get("kind", ""))
 
