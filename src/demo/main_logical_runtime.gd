@@ -167,7 +167,7 @@ func _place_selected_piece(destination: Vector2i) -> void:
 	var target_slot_id := board.slot_id(destination)
 	var result := (
 		_runtime_session
-		. move_object_and_end_turn(
+		. move_object(
 			player_id,
 			piece_id,
 			target_slot_id,

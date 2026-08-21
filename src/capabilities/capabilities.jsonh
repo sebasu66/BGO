@@ -1,0 +1,100 @@
+{
+  "schema": "bgo.capability_catalog",
+  "capabilities": {
+    "slot_grid": { "scope": "tabletop", "required_verbs": [] },
+    "placeable_surface": { "scope": "tabletop", "required_verbs": [] },
+    "placement_target": { "scope": "tabletop", "required_verbs": [] },
+    "player_zone": { "scope": "tabletop", "required_verbs": [] },
+    "public_storage": { "scope": "tabletop", "required_verbs": [] },
+
+    "movable": {
+      "scope": "object",
+      "required_state": ["location_type", "location_id"],
+      "required_verbs": ["object.move"],
+      "events": ["object.moved"]
+    },
+    "placeable": {
+      "scope": "object",
+      "required_state": ["location_type", "location_id"],
+      "required_verbs": ["object.move", "object.move_to_collection"],
+      "events": ["object.moved"]
+    },
+    "ownable": {
+      "scope": "object",
+      "required_state": ["owner_id"],
+      "required_verbs": []
+    },
+    "holdable": {
+      "scope": "object",
+      "required_state": ["holder_id"],
+      "required_verbs": ["object.move_to_collection"],
+      "events": ["object.moved"]
+    },
+    "quantifiable": {
+      "scope": "object",
+      "required_state": ["quantity"],
+      "required_verbs": ["object.set_quantity"],
+      "events": ["object.quantity_changed"]
+    },
+    "stateful": {
+      "scope": "object",
+      "required_state": ["state_id", "properties"],
+      "required_verbs": ["object.set_state"],
+      "events": ["object.state_changed"]
+    },
+
+    "spawnable": {
+      "scope": "object",
+      "required_verbs": ["object.spawn"],
+      "events": ["object.spawned"]
+    },
+    "despawnable": {
+      "scope": "object",
+      "required_verbs": ["object.despawn", "object.return_to_box"],
+      "events": ["object.despawned", "object.returned_to_box"]
+    },
+    "lockable": {
+      "scope": "object",
+      "required_state": ["interaction_locked"],
+      "required_verbs": ["object.set_locked"],
+      "events": ["object.lock_changed"],
+      "required_view_methods": ["set_interaction_locked"]
+    },
+    "transferable": {
+      "scope": "object",
+      "required_state": ["owner_id", "holder_id"],
+      "required_verbs": ["object.give", "object.set_owner"],
+      "events": ["object.given", "object.owner_changed"]
+    },
+
+    "rotatable": {
+      "scope": "object",
+      "required_state": ["rotation"],
+      "required_verbs": ["object.rotate"],
+      "events": ["object.rotated"]
+    },
+    "returnable": {
+      "scope": "object",
+      "required_state": ["home_location"],
+      "required_verbs": ["object.set_home", "object.return_home"],
+      "events": ["object.home_changed", "object.returned_home"]
+    },
+    "stat_bearing": {
+      "scope": "object",
+      "required_state": ["stats"],
+      "required_verbs": ["object.set_stat", "object.adjust_stat"],
+      "events": ["object.stat_changed"]
+    },
+    "auto_facing": {
+      "scope": "miniature",
+      "required_state": ["facing", "facing_override"],
+      "required_verbs": ["miniature.face_nearest", "miniature.set_facing_override"],
+      "events": ["miniature.facing_changed"]
+    },
+    "interaction_filterable": {
+      "scope": "presentation",
+      "required_view_methods": ["set_interaction_filtered"],
+      "required_verbs": []
+    }
+  }
+}

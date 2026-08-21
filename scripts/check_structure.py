@@ -44,6 +44,29 @@ if not component_manifests:
     fail("No component manifests found under src/components.")
 
 seen_ids: dict[str, Path] = {}
+capability_catalog_path = require("src/capabilities/capabilities.jsonh")
+try:
+    capability_catalog = json.loads(capability_catalog_path.read_text(encoding="utf-8"))
+except Exception as exc:
+    fail(f"src/capabilities/capabilities.jsonh must be strict JSON-compatible JSONH: {exc}")
+    capability_catalog = {}
+
+if capability_catalog.get("schema") != "bgo.capability_catalog":
+    fail("Capability catalog must declare schema 'bgo.capability_catalog'")
+capability_contracts = capability_catalog.get("capabilities", {})
+if not isinstance(capability_contracts, dict) or not capability_contracts:
+    fail("Capability catalog must contain a non-empty capabilities object")
+    capability_contracts = {}
+
+registered_verbs: set[str] = set()
+core_state_fields = {
+    "object_id", "component_id", "owner_id", "holder_id", "location_type",
+    "location_id", "visibility", "quantity", "state_id", "properties",
+}
+for gd_path in sorted((ROOT / "src").rglob("*.gd")):
+    source = gd_path.read_text(encoding="utf-8")
+    registered_verbs.update(re.findall(r'register_verb\(\s*"([a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)+)"', source))
+
 for manifest_path in component_manifests:
     rel = manifest_path.relative_to(ROOT)
     try:
@@ -55,6 +78,12 @@ for manifest_path in component_manifests:
     component_id = str(data.get("id", "")).strip()
     kind = str(data.get("kind", "")).strip()
     scene = str(data.get("scene", "")).strip()
+    description = str(data.get("description", "")).strip()
+    capabilities = data.get("capabilities")
+    verbs = data.get("verbs")
+    state = data.get("state")
+    if data.get("schema") != "bgo.component":
+        fail(f"{rel}: schema must be 'bgo.component'")
     if not component_id:
         fail(f"{rel}: missing component id")
     elif component_id in seen_ids:
@@ -66,6 +95,49 @@ for manifest_path in component_manifests:
         fail(f"{rel}: invalid stable component id '{component_id}'")
     if not kind:
         fail(f"{rel}: missing component kind")
+    if not description:
+        fail(f"{rel}: missing component description")
+    if not isinstance(data.get("config"), dict):
+        fail(f"{rel}: config must be an object")
+    if not isinstance(state, dict):
+        fail(f"{rel}: state must be an object")
+        state = {}
+    if not isinstance(capabilities, list):
+        fail(f"{rel}: capabilities must be an array")
+        capabilities = []
+    if len(capabilities) != len(set(capabilities)):
+        fail(f"{rel}: capabilities must not contain duplicates")
+    if not isinstance(verbs, dict):
+        fail(f"{rel}: verbs must be an object")
+        verbs = {}
+    for verb in verbs:
+        if not re.fullmatch(r"[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)+", verb):
+            fail(f"{rel}: invalid canonical verb '{verb}'")
+        elif verb not in registered_verbs:
+            fail(f"{rel}: declared verb '{verb}' has no registered runtime handler")
+    component_sources = "\n".join(
+        path.read_text(encoding="utf-8") for path in manifest_path.parent.glob("*.gd")
+    )
+    for capability_id in capabilities:
+        if capability_id not in capability_contracts:
+            fail(f"{rel}: unknown capability '{capability_id}'")
+            continue
+        capability = capability_contracts[capability_id]
+        for required_state in capability.get("required_state", []):
+            if required_state not in core_state_fields and required_state not in state:
+                fail(
+                    f"{rel}: capability '{capability_id}' requires state field "
+                    f"'{required_state}'"
+                )
+        for required_verb in capability.get("required_verbs", []):
+            if required_verb not in verbs:
+                fail(f"{rel}: capability '{capability_id}' requires verb '{required_verb}'")
+        for required_method in capability.get("required_view_methods", []):
+            if not re.search(rf"func\s+{re.escape(required_method)}\s*\(", component_sources):
+                fail(
+                    f"{rel}: capability '{capability_id}' requires view method "
+                    f"'{required_method}' in its component folder"
+                )
     if not scene.startswith("res://src/components/") or not scene.endswith(".tscn"):
         fail(f"{rel}: component scene must be an internal component .tscn path, got '{scene}'")
     elif not (ROOT / scene.removeprefix("res://")).exists():

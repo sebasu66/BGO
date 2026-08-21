@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema": "bgo.game",
   "game": {
     "id": "conformance_race",
     "name": "BGO Conformance Race",
@@ -7,6 +7,12 @@
     "max_players": 2,
     "turn_based": true
   },
+  "flow": {
+    "initial_phase": "main",
+    "turn_order": "round_robin",
+    "turn_end": "manual"
+  },
+  "listeners": [],
   "board": {
     "component": "bgo.board.checkered",
     "config": {
@@ -40,14 +46,13 @@
     ]
   },
   "conformance": {
-    "turns": [
-      {"participant_id": "player_1", "object_id": "player_1_piece", "to_slot_id": "board:1:0"},
-      {"participant_id": "player_2", "object_id": "player_2_piece", "to_slot_id": "board:1:1"},
-      {"participant_id": "player_1", "object_id": "player_1_piece", "to_slot_id": "board:2:0"}
-    ],
-    "completion": {
-      "outcome": "victory",
-      "winner_participant_ids": ["player_1"]
-    }
+    "commands": [
+      {"verb": "object.move", "actor_id": "player_1", "target_id": "player_1_piece", "args": {"slot_id": "board:1:0"}},
+      {"verb": "turn.end", "actor_id": "player_1"},
+      {"verb": "object.move", "actor_id": "player_2", "target_id": "player_2_piece", "args": {"slot_id": "board:1:1"}},
+      {"verb": "turn.end", "actor_id": "player_2"},
+      {"verb": "object.move", "actor_id": "player_1", "target_id": "player_1_piece", "args": {"slot_id": "board:2:0"}},
+      {"verb": "match.finish", "actor_id": "player_1", "args": {"outcome": "victory", "winner_participant_ids": ["player_1"]}}
+    ]
   }
 }

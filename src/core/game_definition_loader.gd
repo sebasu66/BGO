@@ -77,8 +77,8 @@ static func _parse_jsonh(source: String) -> Dictionary:
 
 static func validate_game(data: Dictionary) -> Array[String]:
 	var errors: Array[String] = []
-	if int(data.get("schema_version", 0)) != 1:
-		errors.append("schema_version must be 1.")
+	if str(data.get("schema", "")) != "bgo.game":
+		errors.append("schema must be 'bgo.game'.")
 
 	var game: Variant = data.get("game")
 	if not game is Dictionary:
@@ -93,17 +93,22 @@ static func validate_game(data: Dictionary) -> Array[String]:
 		if max_players < min_players:
 			errors.append("game.max_players must be >= game.min_players.")
 
-	var board_columns := 0
-	var board_rows := 0
 	var board: Variant = data.get("board")
 	if not board is Dictionary:
 		errors.append("Missing object 'board'.")
 	else:
 		_validate_component_reference(board, "board", errors)
-		var board_config: Variant = board.get("config", {})
-		if board_config is Dictionary:
-			board_columns = int(board_config.get("columns", 0))
-			board_rows = int(board_config.get("rows", 0))
+
+	var flow: Variant = data.get("flow")
+	if not flow is Dictionary:
+		errors.append("Missing object 'flow'.")
+	else:
+		if str(flow.get("initial_phase", "")).is_empty():
+			errors.append("flow.initial_phase is required.")
+		if str(flow.get("turn_order", "")) != "round_robin":
+			errors.append("flow.turn_order must currently be 'round_robin'.")
+		if str(flow.get("turn_end", "")) != "manual":
+			errors.append("flow.turn_end must be 'manual'.")
 
 	var player_ids: Dictionary = {}
 	var players: Variant = data.get("players")
@@ -126,7 +131,6 @@ static func validate_game(data: Dictionary) -> Array[String]:
 			if area is Dictionary and not area.is_empty():
 				_validate_component_reference(area, "players[%d].area" % index, errors)
 
-	var occupied_initial_slots: Dictionary = {}
 	var setup: Variant = data.get("setup", {})
 	if setup is Dictionary:
 		var objects: Variant = setup.get("objects", [])
@@ -153,48 +157,21 @@ static func validate_game(data: Dictionary) -> Array[String]:
 							% [index, owner_id]
 						)
 					)
-				_validate_initial_location(
-					object_def, index, board_columns, board_rows, occupied_initial_slots, errors
-				)
+				var quantity := int(object_def.get("quantity", 1))
+				if quantity < 0:
+					errors.append("setup.objects[%d].quantity must be >= 0." % index)
+				var location: Variant = object_def.get("initial_location")
+				if not location is Dictionary or str(location.get("type", "")).is_empty():
+					errors.append("setup.objects[%d].initial_location is required." % index)
+
+	var listeners: Variant = data.get("listeners", [])
+	if not listeners is Array:
+		errors.append("listeners must be an array.")
+	else:
+		var router := GameEventRouter.new()
+		errors.append_array(router.configure(listeners))
 
 	return errors
-
-
-static func _validate_initial_location(
-	object_def: Dictionary,
-	index: int,
-	columns: int,
-	rows: int,
-	occupied: Dictionary,
-	errors: Array[String]
-) -> void:
-	var location: Variant = object_def.get("initial_location", {})
-	if not location is Dictionary:
-		errors.append("setup.objects[%d].initial_location must be an object." % index)
-		return
-	if str(location.get("type", "")) != "slot":
-		errors.append("setup.objects[%d].initial_location.type must currently be 'slot'." % index)
-		return
-	var slot_id := str(location.get("slot_id", ""))
-	var parts := slot_id.split(":")
-	if parts.size() != 3 or parts[0] != "board":
-		errors.append(
-			"setup.objects[%d] has invalid board slot '%s'. Expected board:x:y." % [index, slot_id]
-		)
-		return
-	var x := int(parts[1])
-	var y := int(parts[2])
-	if x < 0 or y < 0 or x >= columns or y >= rows:
-		errors.append(
-			"setup.objects[%d] slot '%s' is outside the configured board." % [index, slot_id]
-		)
-		return
-	if occupied.has(slot_id):
-		errors.append(
-			"Initial slot '%s' is already occupied by '%s'." % [slot_id, str(occupied[slot_id])]
-		)
-	else:
-		occupied[slot_id] = str(object_def.get("id", "unnamed"))
 
 
 static func _validate_component_reference(

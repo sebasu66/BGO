@@ -76,8 +76,8 @@ func _create_demo_tokens() -> void:
 func _create_token(id: String, owner: String, count: int, cell: Vector2i, color: Color) -> void:
 	var token := DemoTokenView.new()
 	token.entity_id = id
-	token.owner_id = owner
-	token.quantity = count
+	token.display_quantity = count
+	token.set_meta("demo_owner_id", owner)
 	token.token_color = color
 	token.position = _cell_center(cell)
 	add_child(token)

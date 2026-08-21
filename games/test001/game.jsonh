@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema": "bgo.game",
   "game": {
     "id": "test001",
     "name": "BGO Component Test",
@@ -7,6 +7,12 @@
     "max_players": 2,
     "turn_based": true
   },
+  "flow": {
+    "initial_phase": "main",
+    "turn_order": "round_robin",
+    "turn_end": "manual"
+  },
+  "listeners": [],
   "table": {
     "width": 15.5,
     "depth": 9.8

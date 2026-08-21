@@ -1,11 +1,15 @@
 {
+  "schema": "bgo.component",
   "id": "bgo.board.checkered",
   "kind": "board",
+  "description": "Configurable checkered board that provides deterministic logical slots.",
+  "state": {},
   "scene": "res://src/components/boards/checkered_board/checkered_board.tscn",
   "config": {
     "columns": { "type": "int", "min": 2, "max": 30, "default": 8 },
     "rows": { "type": "int", "min": 2, "max": 30, "default": 6 },
     "cell_size": { "type": "float", "min": 0.5, "max": 3.0, "default": 1.2 }
   },
-  "capabilities": ["slot_grid", "placeable_surface"]
+  "capabilities": ["slot_grid", "placeable_surface"],
+  "verbs": {}
 }

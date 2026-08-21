@@ -3,6 +3,7 @@ extends BGOGameObject
 
 @export var radius: float = 28.0
 @export var token_color: Color = Color(0.95, 0.72, 0.22)
+@export_range(0, 9999, 1) var display_quantity: int = 1
 
 var selected := false
 
@@ -15,11 +16,11 @@ func _draw() -> void:
 	var outline := Color.WHITE if selected else Color(0.1, 0.11, 0.14)
 	draw_circle(Vector2.ZERO, radius + 4.0, outline)
 	draw_circle(Vector2.ZERO, radius, token_color)
-	if quantity > 1:
+	if display_quantity > 1:
 		draw_string(
 			ThemeDB.fallback_font,
 			Vector2(-8, 6),
-			str(quantity),
+			str(display_quantity),
 			HORIZONTAL_ALIGNMENT_CENTER,
 			16,
 			18,

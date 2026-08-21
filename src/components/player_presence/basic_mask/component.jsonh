@@ -1,6 +1,11 @@
 {
+  "schema": "bgo.component",
   "id": "bgo.player_presence.basic_mask",
   "kind": "player_presence",
   "scene": "res://src/components/player_presence/basic_mask/player_presence_mask.tscn",
-  "description": "Low-poly player head marker with a floating name label. The nose indicates viewing direction."
+  "description": "Low-poly player head marker with a floating name label. The nose indicates viewing direction.",
+  "state": {},
+  "config": {},
+  "capabilities": [],
+  "verbs": {}
 }

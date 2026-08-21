@@ -181,7 +181,7 @@ func _initial_session() -> Dictionary:
 		{
 			"status": "prototype",
 			"definition_id": str(game.get("id", "test001")),
-			"schema_version": int(game_definition.get("schema_version", 1))
+			"schema": str(game_definition.get("schema", "bgo.game"))
 		},
 		"pieces": {}
 	}
