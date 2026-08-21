@@ -7,6 +7,8 @@ const RUNTIME_SESSION_ADAPTER = preload("res://src/demo/runtime_session_adapter.
 ## Runs focused tests for the runtime-to-domain adapter boundary.
 static func run(check: Callable) -> void:
 	_test_load_and_command_boundary(check)
+	_test_explicit_turn_control(check)
+	_test_ended_session_controls(check)
 	_test_reconnect_and_stale_remote_state(check)
 
 
@@ -80,6 +82,67 @@ static func _test_load_and_command_boundary(check: Callable) -> void:
 			"placement persistence carries logical slot",
 		)
 	)
+
+
+static func _test_explicit_turn_control(check: Callable) -> void:
+	var adapter := RUNTIME_SESSION_ADAPTER.new()
+	adapter.load_session("runtime-test", _game_definition(), _repository_state())
+	var before := adapter.snapshot()
+	var rejected := adapter.end_turn("p2", "not allowed")
+	check.call(not bool(rejected.get("ok", false)), "non-active player cannot complete turn")
+	check.call(adapter.snapshot() == before, "rejected turn control preserves runtime state")
+	check.call(adapter.state_revision == 0, "rejected turn control preserves revision")
+
+	var accepted := adapter.end_turn("p1", " ready ")
+	check.call(bool(accepted.get("ok", false)), "active player can complete turn explicitly")
+	check.call(adapter.active_participant_id() == "p2", "explicit turn control advances player")
+	check.call(adapter.turn_number() == 2, "explicit turn control advances turn number")
+	check.call(adapter.state_revision == 1, "explicit turn control increments revision")
+	var event: Dictionary = accepted.get("event", {})
+	check.call(event.get("comment", "") == "ready", "explicit turn comment is normalized")
+	var patch: Dictionary = accepted.get("persistence_patch", {})
+	var session_patch: Dictionary = patch.get("session", {})
+	check.call(
+		str(session_patch.get("active_participant_id", "")) == "p2",
+		"explicit turn persistence carries active player"
+	)
+	check.call(
+		int(session_patch.get("turn_number", 0)) == 2,
+		"explicit turn persistence carries turn number"
+	)
+
+
+static func _test_ended_session_controls(check: Callable) -> void:
+	var repository_state := _repository_state()
+	repository_state["state_revision"] = 7
+	repository_state["session"] = {
+		"session_id": "runtime-test",
+		"lifecycle": "ended",
+		"host_participant_id": "p1",
+		"seat_order": ["seat-1", "seat-2"],
+		"participant_seats": {"p1": "seat-1", "p2": "seat-2"},
+		"participant_roles": {"p1": "player", "p2": "player"},
+		"active_participant_id": "",
+		"turn_number": 4,
+		"result":
+		{
+			"outcome": "victory",
+			"winner_participant_ids": ["p2"],
+		},
+	}
+	var adapter := RUNTIME_SESSION_ADAPTER.new()
+	var loaded := adapter.load_session("runtime-test", _game_definition(), repository_state)
+	check.call(bool(loaded.get("ok", false)), "ended session loads through runtime adapter")
+	check.call(adapter.is_session_ended(), "runtime adapter exposes ended lifecycle")
+	check.call(
+		adapter.session_result().get("winner_participant_ids", []) == ["p2"],
+		"runtime adapter exposes ended-session winner"
+	)
+	var before := adapter.snapshot()
+	var rejected := adapter.end_turn("p2")
+	check.call(not bool(rejected.get("ok", false)), "ended session rejects turn control")
+	check.call(adapter.snapshot() == before, "ended turn rejection preserves runtime state")
+	check.call(adapter.state_revision == 7, "ended turn rejection preserves revision")
 
 
 static func _test_reconnect_and_stale_remote_state(check: Callable) -> void:
