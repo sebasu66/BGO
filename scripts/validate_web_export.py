@@ -32,16 +32,28 @@ def main() -> None:
         if marker not in html:
             fail(f"index.html is missing required flight-recorder marker: {marker}")
 
-    # Godot stores resource paths in the PCK directory. This catches the
-    # regression where JSONH files were omitted from the Web package.
-    if b"games/test001/game.jsonh" not in pack.read_bytes():
-        fail("index.pck does not contain games/test001/game.jsonh")
+    # Godot stores resource paths in the PCK directory. JSONH is not a native
+    # Godot resource extension, so every runtime contract must be included by
+    # the export preset and verified here before Firebase deployment.
+    pack_bytes = pack.read_bytes()
+    required_jsonh = [
+        "games/test001/game.jsonh",
+        "src/capabilities/capabilities.jsonh",
+        "src/components/boards/checkered_board/component.jsonh",
+        "src/components/pieces/basic_cylinder/component.jsonh",
+        "src/components/player_area/component.jsonh",
+        "src/components/player_presence/basic_mask/component.jsonh",
+        "src/components/slots/basic_slot/component.jsonh",
+    ]
+    for resource_path in required_jsonh:
+        if resource_path.encode("utf-8") not in pack_bytes:
+            fail(f"index.pck does not contain {resource_path}")
 
     print("Web export validation OK")
     print(f"  html: {index.stat().st_size} bytes")
     print(f"  pack: {pack.stat().st_size} bytes")
     print("  flight recorder: present")
-    print("  TEST001 JSONH: packed")
+    print(f"  runtime JSONH contracts: {len(required_jsonh)} packed")
     print("  project-status: present")
     print("  test-launcher: present")
 
