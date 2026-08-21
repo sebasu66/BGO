@@ -5,6 +5,7 @@ const RUNTIME_SESSION_ADAPTER = preload("res://src/demo/runtime_session_adapter.
 
 var _runtime_session: RuntimeSessionAdapter
 var _turn_status_label: Label
+var _end_turn_button: Button
 
 
 func _create_hud() -> void:
@@ -18,6 +19,28 @@ func _create_hud() -> void:
 	_turn_status_label.add_theme_font_size_override("font_size", 15)
 	_turn_status_label.text = "TURN · loading logical session…"
 	$UI.add_child(_turn_status_label)
+
+
+func _add_landscape_action_controls(root: VBoxContainer) -> void:
+	super._add_landscape_action_controls(root)
+	_end_turn_button = Button.new()
+	_end_turn_button.text = "END TURN"
+	_end_turn_button.custom_minimum_size = Vector2(370, 52)
+	_end_turn_button.disabled = true
+	_end_turn_button.tooltip_text = "Complete your turn without moving another object"
+	_end_turn_button.pressed.connect(_on_end_turn_pressed)
+	root.add_child(_end_turn_button)
+
+
+func _on_end_turn_pressed() -> void:
+	if _runtime_session == null:
+		_set_status("Logical session is still loading")
+		return
+	var result := _runtime_session.end_turn(player_id)
+	if not _persist_accepted_command(result, "end_turn"):
+		return
+	_set_status("Accepted · turn completed")
+	_refresh_logical_turn_ui()
 
 
 func _connect_session() -> void:
@@ -217,7 +240,7 @@ func _refresh_logical_turn_ui() -> void:
 		return
 	var session := _runtime_session.gameplay_state.session
 	if session.is_ended():
-		_turn_status_label.text = "GAME ENDED · %s" % str(session.result.get("outcome", "complete"))
+		_turn_status_label.text = _ended_session_text(session.result)
 		_set_gameplay_buttons_enabled(false)
 		return
 	var active_id := _runtime_session.active_participant_id()
@@ -233,7 +256,20 @@ func _refresh_logical_turn_ui() -> void:
 	_set_gameplay_buttons_enabled(is_my_turn)
 
 
+func _ended_session_text(result: Dictionary) -> String:
+	var outcome := str(result.get("outcome", "complete")).replace("_", " ").to_upper()
+	var winner_ids: Array = result.get("winner_participant_ids", [])
+	if winner_ids.is_empty():
+		return "GAME ENDED · %s" % outcome
+	var winner_labels: Array[String] = []
+	for winner_id in winner_ids:
+		winner_labels.append(str(winner_id).replace("_", " ").to_upper())
+	return "GAME ENDED · %s · WINNER: %s" % [outcome, ", ".join(winner_labels)]
+
+
 func _set_gameplay_buttons_enabled(enabled: bool) -> void:
+	if _end_turn_button != null:
+		_end_turn_button.disabled = not enabled
 	if _pickup_button != null:
 		_pickup_button.disabled = not enabled
 	if _place_button != null:
