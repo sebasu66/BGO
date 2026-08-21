@@ -142,11 +142,15 @@ static func _test_explicit_end_turn(check: Callable) -> void:
 	check.call(bool(accepted.get("ok", false)), "active player can explicitly end the turn")
 	var event: Dictionary = accepted.get("event", {})
 	check.call(event.get("type", "") == "turn_advanced", "explicit end turn emits turn event")
-	check.call(event.get("previous_participant_id", "") == "p1", "turn event records previous player")
+	check.call(
+		event.get("previous_participant_id", "") == "p1", "turn event records previous player"
+	)
 	check.call(event.get("active_participant_id", "") == "p2", "turn event records next player")
 	check.call(int(event.get("turn_number", 0)) == 2, "turn event records incremented turn number")
 	check.call(event.get("comment", "") == "ready for p2", "turn event preserves optional comment")
-	check.call(game.session.active_participant_id == "p2", "explicit end turn advances active player")
+	check.call(
+		game.session.active_participant_id == "p2", "explicit end turn advances active player"
+	)
 	check.call(game.session.turn_number == 2, "explicit end turn advances turn number")
 
 
