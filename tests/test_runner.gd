@@ -9,6 +9,7 @@ const LOGICAL_OBJECT_STATE = preload("res://src/core/logical_object_state.gd")
 const RUNTIME_SESSION_ADAPTER_TEST = preload("res://tests/runtime_session_adapter_test.gd")
 const SESSION_STATE = preload("res://src/core/session_state.gd")
 const TABLETOP_STATE = preload("res://src/core/tabletop_state.gd")
+const UI_PLUGIN_STACK_TEST = preload("res://tests/ui_plugin_stack_test.gd")
 
 var failures := 0
 var assertions := 0
@@ -29,6 +30,7 @@ func _run() -> void:
 	GAMEPLAY_STATE_TEST.run(_check)
 	RUNTIME_SESSION_ADAPTER_TEST.run(_check)
 	CONFORMANCE_GAME_TEST.run(_check)
+	UI_PLUGIN_STACK_TEST.run(_check)
 
 	if failures > 0:
 		printerr("BGO TESTS FAILED: %d/%d assertions failed." % [failures, assertions])

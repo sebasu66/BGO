@@ -1,0 +1,10 @@
+## Isolated authoring smoke fixture for Reactive UI Editor.
+## It is not connected to BGO's runtime UI or authoritative game state.
+export BgoUiPluginSmoke(message: String = "Reactive UI Editor OK") -> RUIVNode {
+  return (
+    <VBoxContainer style={ {"separation": 6} }>
+      <Label text={ message } />
+      <Button text="Smoke action" disabled={ true } />
+    </VBoxContainer>
+  )
+}

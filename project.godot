@@ -14,6 +14,12 @@ config/name="BGO"
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
+[autoload]
+
+_mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
+GodotxToast="*uid://bgvixrj72u7rv"
+GdssRuntime="*uid://yu6lhnx763yp"
+
 [display]
 
 window/size/viewport_width=1280
@@ -26,7 +32,13 @@ window/handheld/orientation=4
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/lente/plugin.cfg")
+enabled=PackedStringArray("res://addons/godot_ai/plugin.cfg", "res://addons/spark/plugin.cfg", "res://addons/reactive_ui/plugin.cfg", "res://addons/reactive_ui_editor/plugin.cfg", "res://addons/gdss/plugin.cfg", "res://addons/godotx_toast/plugin.cfg")
+
+[gdss]
+
+internal/initialized=true
+editor/use_minimap=true
+editor/show_outline=true
 
 [input]
 
