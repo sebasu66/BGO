@@ -4,6 +4,8 @@ Read this file before modifying BGO. It is the short operational contract for AI
 
 For the staged implementation plan, read `docs/IMPLEMENTATION_ROADMAP.md`. For the public-facing web application, read `docs/WEB_PLATFORM.md`. For branch/deployment rules, read `docs/DEPLOYMENT_ENVIRONMENTS.md`. For the project health overview contract, read `docs/PROJECT_STATUS_DASHBOARD.md`. For deeper product rationale, read `docs/PROJECT_VISION.md` only when the task requires it.
 
+Before adding or changing a public game component, read and follow `docs/COMPONENT_STANDARD.md` and the machine-readable capability catalog at `src/capabilities/capabilities.jsonh`.
+
 ## Project goal
 
 BGO is a Godot-based virtual tabletop runtime for turn-based board games, surrounded by a separate web product surface for onboarding, catalog, session launch, account management later, and administration later. One logical session can be viewed by Web, mobile, TV, desktop, and later MCP clients. Clients may render the same logical object differently.
@@ -28,6 +30,7 @@ BGO is a Godot-based virtual tabletop runtime for turn-based board games, surrou
 16. **Web, Godot, and future native clients share contracts, not implementation details.** Do not invent incompatible session/package/identity schemas per client.
 17. **DEV and PROD are separate release channels.** `develop` may deploy DEV; only an explicit owner-approved promotion may advance the stable `main`/PROD build.
 18. **Project health must stay visible.** Material checkpoint changes, blockers, implementation-order changes, and quality risks must be reflected in the project status dashboard data/documentation.
+19. **The prototype has no backward-compatibility burden.** Keep exactly one current contract and implementation path. Delete obsolete schemas, aliases, adapters, and helpers instead of preserving them in runtime code; Git is the history. Compatibility policy begins only after an explicitly published stable contract exists.
 
 ## Layering
 
@@ -227,8 +230,8 @@ For each task:
 6. Update docs when a contract or roadmap decision changes.
 7. Update project-status data/documentation when the task changes checkpoint status, blockers, implementation order, or material health risks.
 8. Do not silently introduce a second competing abstraction for an existing concept.
-9. Do not hide migration/schema errors; fail safely with precise messages.
-10. Do not destructively reset existing session state merely to accommodate a schema addition.
+9. Do not hide schema errors; fail safely with precise messages.
+10. During the unpublished prototype, update fixtures and test data directly when the canonical schema changes. Do not add migrations or compatibility branches unless the owner explicitly declares a stable published contract.
 11. Do not promote a DEV build to PROD unless the project owner explicitly requested that promotion.
 12. Leave the repository in a state that can pass the relevant quality gate.
 

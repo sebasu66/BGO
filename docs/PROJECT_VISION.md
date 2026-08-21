@@ -296,7 +296,7 @@ draw_card
 play_card
 roll_dice
 modify_counter
-advance_turn
+turn.end
 refresh_market
 end_game
 ```

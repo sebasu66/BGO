@@ -1,9 +1,13 @@
 {
+  "schema": "bgo.component",
   "id": "bgo.slot.basic",
   "kind": "slot",
+  "description": "Logical placement target with deterministic occupancy capacity.",
+  "state": {},
   "scene": "res://src/components/slots/basic_slot/basic_slot.tscn",
   "config": {
     "capacity": { "type": "int", "min": 1, "max": 1000, "default": 1 }
   },
-  "capabilities": ["placement_target"]
+  "capabilities": ["placement_target"],
+  "verbs": {}
 }

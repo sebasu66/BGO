@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-17T22:38:00-03:00",
+  "updated_at": "2026-08-21T03:30:00-03:00",
   "overall": {
     "status": "warning",
     "label": "EN DESARROLLO"
@@ -11,8 +11,8 @@
     "status": "active",
     "status_label": "ACTIVO",
     "progress_percent": 92,
-    "description": "TEST001 ya tiene build Web reproducible, CI headless, Playwright E2E con evidencia, roles Display/P1/P2, gestos de cámara y diagnóstico de errores. El deploy DEV automático ya está preparado y aislado del canal live; falta únicamente configurar las credenciales/ID de Firebase DEV en GitHub.",
-    "next_action": "Configurar FIREBASE_DEV_SERVICE_ACCOUNT y FIREBASE_DEV_PROJECT_ID en GitHub; después validar el primer deploy automático al canal DEV y continuar con SessionState/turnos/resultado + mesa/secciones/slots para el fixture abstracto."
+    "description": "El núcleo de prototipo ya usa un único protocolo de comandos y eventos, FlowState separado, fin de turno manual, estado lógico con cantidad/estado, listeners declarativos y registro de componentes desde contratos. La suite headless cubre una partida abstracta completa.",
+    "next_action": "Validar este refactor en CI/DEV y completar el contrato de fases, puntuación manual y resultado administrado por host sobre el mismo protocolo."
   },
   "health_checks": [
     {
@@ -61,7 +61,7 @@
       "name": "Unit / domain tests",
       "status": "success",
       "label": "ACTIVO",
-      "detail": "Runner headless disponible y ejecutado por GitHub Actions; ampliar cobertura a SessionState, ocupación, permisos y fixture abstracto."
+      "detail": "105 aserciones headless verifican SessionState, FlowState, ocupación, permisos, revisiones, cantidad/estado, listeners y una partida abstracta completa."
     },
     {
       "name": "Architecture checks",
@@ -90,10 +90,10 @@
       "detail": "Slots y secciones necesitan restricciones lógicas deterministas para impedir estados imposibles como overlap no permitido."
     },
     {
-      "title": "SessionState jugable todavía incompleto",
+      "title": "Fases y puntuación todavía incompletas",
       "status": "warning",
       "label": "SIGUIENTE",
-      "detail": "Faltan lifecycle, participantes/asientos, host, turno activo, número de turno, final de partida y resultado/ganador."
+      "detail": "Lifecycle, participantes, host, flujo manual y resultado ya existen; faltan hooks de fase y contadores de puntuación manual configurables."
     },
     {
       "title": "Smoke multi-cliente debe repetirse",
@@ -122,9 +122,9 @@
     {
       "id": "2",
       "title": "Playable abstract-game core",
-      "status": "planned",
-      "label": "SIGUIENTE",
-      "description": "SessionState con lifecycle/turnos/resultado + tabletop continuo con secciones/slots + miniaturas/piezas individuales para un fixture tipo ajedrez/damas.",
+      "status": "active",
+      "label": "ACTIVO",
+      "description": "Núcleo único con SessionState, FlowState, protocolo comando/evento, tabletop/slots y objetos lógicos para un fixture abstracto completo; siguen fases y puntuación manual.",
       "checkpoint": "Una partida puede empezar, alternar turnos, mover piezas con ocupación legal y terminar con ganador/perdedor."
     },
     {

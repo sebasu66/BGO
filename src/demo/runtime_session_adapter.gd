@@ -2,6 +2,7 @@ class_name RuntimeSessionAdapter
 extends RefCounted
 
 const GAMEPLAY_STATE = preload("res://src/core/gameplay_state.gd")
+const FLOW_STATE = preload("res://src/core/flow_state.gd")
 const LOGICAL_OBJECT_STATE = preload("res://src/core/logical_object_state.gd")
 const SESSION_STATE = preload("res://src/core/session_state.gd")
 const TABLETOP_STATE = preload("res://src/core/tabletop_state.gd")
@@ -26,7 +27,12 @@ func load_session(
 	var tabletop := _build_tabletop(p_game_definition)
 	if tabletop == null:
 		return _rejected("invalid_tabletop_definition")
-	var next_gameplay := GAMEPLAY_STATE.create(session, tabletop)
+	var flow := _build_flow(p_game_definition, repository_state, session)
+	if flow == null:
+		return _rejected("invalid_flow_state")
+	var next_gameplay := GAMEPLAY_STATE.create(
+		session, flow, tabletop, p_game_definition.get("listeners", [])
+	)
 	var objects_result := _load_objects(next_gameplay, repository_state)
 	if not bool(objects_result.get("ok", false)):
 		return objects_result
@@ -46,14 +52,16 @@ func load_session(
 func active_participant_id() -> String:
 	if gameplay_state == null or gameplay_state.session == null:
 		return ""
-	return gameplay_state.session.active_participant_id
+	if gameplay_state.flow.active_participant_ids.is_empty():
+		return ""
+	return gameplay_state.flow.active_participant_ids[0]
 
 
 ## Returns the current 1-based turn number, or zero before a session is loaded.
 func turn_number() -> int:
 	if gameplay_state == null or gameplay_state.session == null:
 		return 0
-	return gameplay_state.session.turn_number
+	return gameplay_state.flow.turn_number
 
 
 ## Returns whether the supplied participant may currently perform gameplay commands.
@@ -84,34 +92,27 @@ func move_object_to_collection(
 	if gameplay_state == null:
 		return _rejected("session_not_loaded")
 	var allow_neutral_acquire := _object_is_available_neutral(object_id)
-	var result := (
-		gameplay_state
-		. move_object_to_collection(
-			participant_id,
-			object_id,
-			collection_type,
-			allow_neutral_acquire,
-		)
-	)
+	var result := gameplay_state.execute({
+		"verb": "object.move_to_collection", "actor_id": participant_id,
+		"target_id": object_id,
+		"args": {"collection": collection_type, "acquire_neutral": allow_neutral_acquire},
+		"expected_revision": gameplay_state.revision,
+	})
 	return _finalize_command(result, object_id)
 
 
-## Moves an object to a slot and completes the active participant's turn.
-func move_object_and_end_turn(
+## Moves an object to a slot. Ending the turn is always a separate command.
+func move_object(
 	participant_id: String, object_id: String, target_slot_id: String
 ) -> Dictionary:
 	if gameplay_state == null:
 		return _rejected("session_not_loaded")
 	var allow_neutral_acquire := _object_is_available_neutral(object_id)
-	var result := (
-		gameplay_state
-		. move_and_end_turn(
-			participant_id,
-			object_id,
-			target_slot_id,
-			allow_neutral_acquire,
-		)
-	)
+	var result := gameplay_state.execute({
+		"verb": "object.move", "actor_id": participant_id, "target_id": object_id,
+		"args": {"slot_id": target_slot_id, "acquire_neutral": allow_neutral_acquire},
+		"expected_revision": gameplay_state.revision,
+	})
 	return _finalize_command(result, object_id)
 
 
@@ -119,7 +120,10 @@ func move_object_and_end_turn(
 func end_turn(participant_id: String, comment: String = "") -> Dictionary:
 	if gameplay_state == null:
 		return _rejected("session_not_loaded")
-	var result := gameplay_state.end_turn(participant_id, comment)
+	var result := gameplay_state.execute({
+		"verb": "turn.end", "actor_id": participant_id,
+		"args": {"comment": comment}, "expected_revision": gameplay_state.revision,
+	})
 	return _finalize_session_command(result)
 
 
@@ -182,13 +186,29 @@ func _session_from_snapshot(p_session_id: String, persisted: Dictionary) -> Sess
 	session.participant_roles = ((persisted.get("participant_roles", {}) as Dictionary).duplicate(
 		true
 	))
-	session.active_participant_id = str(persisted.get("active_participant_id", ""))
-	session.turn_number = int(persisted.get("turn_number", 0))
 	session.result = (persisted.get("result", {}) as Dictionary).duplicate(true)
 	session.lifecycle = _lifecycle_value(str(persisted.get("lifecycle", "lobby")))
 	if session.lifecycle < 0:
 		return null
 	return session
+
+
+func _build_flow(
+	p_game_definition: Dictionary, repository_state: Dictionary, session: SessionState
+) -> FlowState:
+	var persisted: Dictionary = repository_state.get("flow", {})
+	var flow_definition: Dictionary = p_game_definition.get("flow", {})
+	var flow := FLOW_STATE.create(
+		session.ordered_players(), str(flow_definition.get("initial_phase", "main"))
+	)
+	if persisted.is_empty():
+		return flow if flow.start() else null
+	flow.phase_id = str(persisted.get("phase_id", "main"))
+	flow.turn_number = int(persisted.get("turn_number", 0))
+	flow.active_participant_ids.assign(persisted.get("active_participant_ids", []))
+	flow.turn_order.assign(persisted.get("turn_order", []))
+	flow.turn_index = int(persisted.get("turn_index", -1))
+	return flow
 
 
 func _build_tabletop(p_game_definition: Dictionary) -> TabletopState:
@@ -217,7 +237,9 @@ func _load_objects(gameplay: GameplayState, repository_state: Dictionary) -> Dic
 			LOGICAL_OBJECT_STATE
 			. create(
 				object_id,
+				str(piece_state.get("component_id", "bgo.piece.basic_cylinder")),
 				str(piece_state.get("owner_id", "")),
+				int(piece_state.get("quantity", 1)),
 			)
 		)
 		object.set_holder(str(piece_state.get("holder_id", "")))
@@ -286,6 +308,7 @@ func _finalize_session_command(result: Dictionary) -> Dictionary:
 	finalized["persistence_patch"] = {
 		"state_revision": state_revision,
 		"session": gameplay_state.session.to_dictionary(),
+		"flow": gameplay_state.flow.to_dictionary(),
 	}
 	return finalized
 
@@ -295,8 +318,12 @@ func _persistence_patch(object_id: String) -> Dictionary:
 	var patch := {
 		"state_revision": state_revision,
 		"session": gameplay_state.session.to_dictionary(),
+		"flow": gameplay_state.flow.to_dictionary(),
 		"pieces/%s/owner_id" % object_id: object.owner_id,
 		"pieces/%s/holder_id" % object_id: object.holder_id,
+		"pieces/%s/component_id" % object_id: object.component_id,
+		"pieces/%s/quantity" % object_id: object.quantity,
+		"pieces/%s/state_id" % object_id: object.state_id,
 		"pieces/%s/location" % object_id: _repository_location(object),
 		"pieces/%s/revision" % object_id: state_revision,
 	}

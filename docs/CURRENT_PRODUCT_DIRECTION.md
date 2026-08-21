@@ -2,6 +2,36 @@
 
 This document captures current product/architecture decisions that are useful to preserve even when they are not immediate implementation work.
 
+## Prototype contract policy
+
+BGO is currently an unpublished prototype. It carries no backward-compatibility obligation.
+
+- The repository contains one canonical game schema and one canonical runtime path.
+- When a better core contract replaces an earlier prototype, the earlier implementation is deleted rather than retained as an alias, migration or compatibility layer.
+- Git is the complete history of discarded approaches.
+- Version negotiation and migrations are introduced only after a contract is deliberately published as stable and external games actually depend on it.
+- Tests and fixtures are updated to the current contract instead of testing obsolete behavior.
+
+This keeps failures local and visible and prevents old prototype assumptions from becoming accidental public APIs.
+
+## Canonical core protocol
+
+All authoritative game mutations enter through one command envelope with a stable dotted verb, actor, optional target, arguments and optional expected revision. Components declare supported verbs in their own `component.jsonh` contracts. The registry discovers those contracts; adding a component must not require editing a central component switch.
+
+Commands use imperative names such as `object.move`, `object.set_quantity`, `turn.end` and `match.finish`. Resulting facts use past-tense event names such as `object.moved`, `object.quantity_changed`, `turn.ended` and `match.finished`.
+
+Session lifecycle and gameplay flow are separate domain concepts:
+
+- `SessionState`: participants, seats, host, lobby/active/ended lifecycle and result.
+- `FlowState`: phase, turn order, turn number and active participants.
+- `GameplayState`: objects, tabletop, command execution, revision and event history.
+
+`turn.end` is always explicit in the current core. Moving or otherwise manipulating an object never ends the turn implicitly.
+
+`LogicalObjectState` is the authoritative object truth and contains component identity, owner, holder, logical location, visibility, quantity, semantic state and extensible serializable properties. Godot nodes are views and interaction surfaces; they do not serialize a second competing logical state.
+
+Declarative listeners consume canonical events and issue normal commands back through the same command path. They never mutate domain state directly. Listener chains are ordered, bounded and included in the same recorded command result.
+
 ## Near-term product goal
 
 The next playable vertical slice should support a complete abstract board game in the chess/checkers family:
@@ -107,6 +137,10 @@ Examples:
 - miniature: select/move/rotate when allowed
 - deck: draw, draw N, deal, shuffle, inspect/count when allowed
 - stack: add/remove/split/manipulate as a quantity-bearing aggregate
+
+Runtime creation is explicit. A graphical scene is not automatically `spawnable`: the capability means the active session may create new authoritative instances of that component through `object.spawn`. `despawnable`, `lockable` and `transferable` similarly opt into recorded removal/return-to-box, interaction locking and owner/holder transfer commands.
+
+Locked objects are excluded from ordinary selection, ray picking and pickup. A long press may request an unlock, but the normal command validator still decides whether the actor is authorized. Physics and presentation never bypass logical locking.
 
 This both simplifies UX and helps enforce rules.
 

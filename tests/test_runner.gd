@@ -1,6 +1,7 @@
 extends SceneTree
 
 const COMPONENT_REGISTRY = preload("res://src/core/component_registry.gd")
+const CAPABILITY_REGISTRY = preload("res://src/core/capability_registry.gd")
 const CONFORMANCE_GAME_TEST = preload("res://tests/conformance_game_test.gd")
 const GAME_DEFINITION_LOADER = preload("res://src/core/game_definition_loader.gd")
 const GAMEPLAY_STATE_TEST = preload("res://tests/gameplay_state_test.gd")
@@ -19,6 +20,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	_test_component_registry()
+	_test_capability_contracts()
 	_test_component_validation()
 	_test_game_definition()
 	_test_session_state()
@@ -47,6 +49,8 @@ func _check(condition: bool, message: String) -> void:
 
 
 func _test_component_registry() -> void:
+	var registry_errors: Array[String] = COMPONENT_REGISTRY.load_components()
+	_check(registry_errors.is_empty(), "all component contracts are compliant")
 	var expected := [
 		"bgo.board.checkered",
 		"bgo.piece.basic_cylinder",
@@ -73,6 +77,28 @@ func _test_component_registry() -> void:
 	)
 
 
+func _test_capability_contracts() -> void:
+	var catalog_errors: Array[String] = CAPABILITY_REGISTRY.load_catalog()
+	_check(catalog_errors.is_empty(), "capability catalog loads without errors")
+	_check(CAPABILITY_REGISTRY.has("movable"), "movable capability is registered")
+	var incomplete := {
+		"capabilities": ["quantifiable"],
+		"verbs": {},
+	}
+	_check(
+		not CAPABILITY_REGISTRY.validate_component(incomplete).is_empty(),
+		"capability rejects a component missing its required verb",
+	)
+	var compliant := {
+		"capabilities": ["quantifiable"],
+		"verbs": {"object.set_quantity": {}},
+	}
+	_check(
+		CAPABILITY_REGISTRY.validate_component(compliant).is_empty(),
+		"capability accepts a component implementing its contract",
+	)
+
+
 func _test_component_validation() -> void:
 	var valid_board := {"columns": 8, "rows": 6, "cell_size": 1.2}
 	_check(
@@ -94,12 +120,14 @@ func _test_component_validation() -> void:
 
 func _test_game_definition() -> void:
 	var result: Dictionary = GAME_DEFINITION_LOADER.load_game("res://games/test001/game.jsonh")
+	if not bool(result.get("ok", false)):
+		printerr("TEST001 validation errors: %s" % [result.get("errors", [])])
 	_check(bool(result.get("ok", false)), "TEST001 definition loads and validates")
 	if bool(result.get("ok", false)):
 		var data: Dictionary = result.get("data", {})
 		_check(
-			int(data.get("schema_version", 0)) == 1,
-			"TEST001 schema version is supported",
+			str(data.get("schema", "")) == "bgo.game",
+			"TEST001 declares the canonical game schema",
 		)
 
 	var missing: Dictionary = GAME_DEFINITION_LOADER.load_game(
@@ -132,30 +160,20 @@ func _test_session_state() -> void:
 		"duplicate seat is rejected",
 	)
 	_check(session.start_session(), "session starts with seated players")
-	_check(session.active_participant_id == "p1", "first valid player starts")
-	_check(session.turn_number == 1, "turn number starts at one")
-
-	var before_turn := session.to_dictionary()
-	_check(not session.advance_turn("p2"), "non-active player cannot advance turn")
-	_check(session.to_dictionary() == before_turn, "rejected turn advance preserves state")
-	_check(session.advance_turn("p1"), "active player advances turn")
-	_check(session.active_participant_id == "p2", "spectator is skipped in turn order")
-	_check(session.turn_number == 2, "turn number increments deterministically")
+	_check(session.ordered_players() == ["p1", "p2"], "session exposes seated players without owning turn flow")
 
 	var before_invalid_end := session.to_dictionary()
 	_check(not session.end_session("victory", ["watcher"]), "spectator cannot be winner")
 	_check(session.to_dictionary() == before_invalid_end, "invalid completion preserves state")
 	_check(session.end_session("victory", ["p2"]), "active session ends with valid winner")
 	_check(session.is_ended(), "session reports ended lifecycle")
-	_check(session.active_participant_id.is_empty(), "ended session clears active player")
 	_check(str(session.result.get("outcome", "")) == "victory", "result outcome is explicit")
 	_check(
 		(session.result.get("winner_participant_ids", []) as Array) == ["p2"],
 		"winner is explicit",
 	)
 	var ended_snapshot := session.to_dictionary()
-	_check(not session.advance_turn("p2"), "ended session rejects turn progression")
-	_check(session.to_dictionary() == ended_snapshot, "ended rejection preserves state")
+	_check(session.to_dictionary() == ended_snapshot, "ended session snapshot is stable")
 
 
 func _test_tabletop_state() -> void:
@@ -184,7 +202,9 @@ func _test_tabletop_state() -> void:
 
 
 func _test_logical_object_state() -> void:
-	var neutral: LogicalObjectState = LOGICAL_OBJECT_STATE.create("neutral-token")
+	var neutral: LogicalObjectState = LOGICAL_OBJECT_STATE.create(
+		"neutral-token", "bgo.piece.basic_cylinder"
+	)
 	_check(neutral.object_id == "neutral-token", "logical object keeps stable identity")
 	_check(neutral.is_neutral(), "empty owner represents neutral ownership")
 	_check(neutral.holder_id.is_empty(), "neutral object starts unheld")
@@ -206,5 +226,8 @@ func _test_logical_object_state() -> void:
 	neutral.visibility = "owner_only"
 	var snapshot := neutral.to_dictionary()
 	_check(snapshot.get("visibility") == "owner_only", "visibility metadata is represented")
+	_check(neutral.set_quantity(100), "logical quantity can represent an aggregate")
+	_check(neutral.set_state("exhausted"), "logical object supports named state")
+	_check(neutral.to_dictionary().get("quantity") == 100, "quantity is serialized")
 	neutral.clear_location()
 	_check(neutral.location_id.is_empty(), "logical location can be cleared")

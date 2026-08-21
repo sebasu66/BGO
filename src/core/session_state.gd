@@ -26,12 +26,6 @@ var participant_seats: Dictionary = {}
 ## Map of participant_id -> role string (e.g. "player", "spectator").
 var participant_roles: Dictionary = {}
 
-## Participant id whose turn is currently active (empty when not applicable).
-var active_participant_id: String = ""
-
-## 1-based turn counter; 0 means turns have not started.
-var turn_number: int = 0
-
 ## Optional result payload when the session has ended.
 ## Expected shape: {"outcome": String, "winner_participant_ids": Array[String]}
 var result: Dictionary = {}
@@ -90,8 +84,6 @@ func remove_participant(participant_id: String) -> void:
 	participant_roles.erase(participant_id)
 	if participant_id == host_participant_id:
 		host_participant_id = ""
-	if participant_id == active_participant_id:
-		active_participant_id = ""
 	if not seat_id.is_empty() and not _seat_still_occupied(seat_id):
 		seat_order.erase(seat_id)
 
@@ -101,39 +93,15 @@ func set_host(participant_id: String) -> void:
 	host_participant_id = participant_id
 
 
-## Transitions a lobby session into the active lifecycle with an initial player.
-## The default starter is the first seated participant with role "player".
-func start_session(initial_participant_id: String = "") -> bool:
+## Transitions a lobby session into active gameplay.
+func start_session() -> bool:
 	if lifecycle != Lifecycle.LOBBY:
 		return false
-	var players := _ordered_players()
+	var players := ordered_players()
 	if players.is_empty():
 		return false
-	var starter := initial_participant_id
-	if starter.is_empty():
-		starter = players[0]
-	elif not players.has(starter):
-		return false
 	lifecycle = Lifecycle.ACTIVE
-	active_participant_id = starter
-	turn_number = 1
 	result = {}
-	return true
-
-
-## Advances an active session to the next seated player in deterministic seat order.
-## Only the currently active participant may advance the turn.
-func advance_turn(requesting_participant_id: String) -> bool:
-	if lifecycle != Lifecycle.ACTIVE:
-		return false
-	if requesting_participant_id != active_participant_id:
-		return false
-	var players := _ordered_players()
-	var current_index := players.find(active_participant_id)
-	if current_index < 0:
-		return false
-	active_participant_id = players[(current_index + 1) % players.size()]
-	turn_number += 1
 	return true
 
 
@@ -148,7 +116,6 @@ func end_session(outcome: String, winner_participant_ids: Array = []) -> bool:
 	for winner in winner_participant_ids:
 		winners.append(str(winner))
 	lifecycle = Lifecycle.ENDED
-	active_participant_id = ""
 	result = {
 		"outcome": outcome,
 		"winner_participant_ids": winners,
@@ -165,8 +132,6 @@ func to_dictionary() -> Dictionary:
 		"seat_order": seat_order.duplicate(),
 		"participant_seats": participant_seats.duplicate(true),
 		"participant_roles": participant_roles.duplicate(true),
-		"active_participant_id": active_participant_id,
-		"turn_number": turn_number,
 		"result": result.duplicate(true),
 	}
 
@@ -185,7 +150,7 @@ func _winner_ids_are_valid(winner_participant_ids: Array) -> bool:
 	return true
 
 
-func _ordered_players() -> Array[String]:
+func ordered_players() -> Array[String]:
 	var players: Array[String] = []
 	for seat_id in seat_order:
 		var participant_id := _participant_for_seat(seat_id)
