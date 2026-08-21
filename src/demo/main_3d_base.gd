@@ -86,9 +86,7 @@ func _create_hud() -> void:
 	$UI.add_child(_status_label)
 
 	if client_role == ROLE_DISPLAY:
-		hint_label.text = (
-			"Shared display · Firebase TEST001 · " + "player hand areas live outside the board."
-		)
+		hint_label.text = "Shared display · Firebase TEST001"
 		return
 
 	hint_label.text = (
