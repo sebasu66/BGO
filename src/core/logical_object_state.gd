@@ -13,6 +13,12 @@ var configuration: Dictionary = {}
 ## Number of physical instances represented by this logical object.
 var quantity: int = 1
 
+## Named semantic state declared by the game/component contract.
+var state_id: String = "default"
+
+## Extensible serializable state owned by the logical object.
+var properties: Dictionary = {}
+
 ## Availability policy declared by the game package: unique, finite or infinite.
 var availability_mode: String = "unique"
 
@@ -46,10 +52,22 @@ var container_id: String = ""
 
 
 ## Creates a logical object with stable identity and optional owner.
-static func create(p_object_id: String, p_owner_id: String = "") -> LogicalObjectState:
+static func create(
+	p_object_id: String,
+	p_component_or_owner: String = "",
+	p_owner_id: String = "",
+	p_quantity: int = 1
+) -> LogicalObjectState:
 	var state := LogicalObjectState.new()
 	state.object_id = p_object_id
-	state.owner_id = p_owner_id
+	# Preserve the early prototype's create(id, owner) shorthand while accepting
+	# the canonical create(id, component, owner, quantity) contract.
+	if p_owner_id.is_empty() and not p_component_or_owner.begins_with("bgo."):
+		state.owner_id = p_component_or_owner
+	else:
+		state.component_id = p_component_or_owner
+		state.owner_id = p_owner_id
+	state.quantity = p_quantity
 	return state
 
 
@@ -131,6 +149,30 @@ func clear_asset_box_placement() -> void:
 		clear_location()
 
 
+## Assigns a non-negative authoritative quantity.
+func set_quantity(value: int) -> bool:
+	if value < 0:
+		return false
+	quantity = value
+	return true
+
+
+## Assigns a non-empty semantic state identifier.
+func set_state(value: String) -> bool:
+	if value.is_empty():
+		return false
+	state_id = value
+	return true
+
+
+## Assigns one named extensible property.
+func set_property_value(property_name: String, value: Variant) -> bool:
+	if property_name.is_empty():
+		return false
+	properties[property_name] = value
+	return true
+
+
 ## Returns all points occupied by this object in deterministic row-major order.
 func grid_points() -> Array[Vector2i]:
 	if grid_origin.x < 0 or grid_origin.y < 0 or grid_footprint.x < 1 or grid_footprint.y < 1:
@@ -149,6 +191,8 @@ func to_dictionary() -> Dictionary:
 		"component_id": component_id,
 		"configuration": configuration.duplicate(true),
 		"quantity": quantity,
+		"state_id": state_id,
+		"properties": properties.duplicate(true),
 		"availability": availability_mode,
 		"available_quantity": available_quantity,
 		"owner_id": owner_id,

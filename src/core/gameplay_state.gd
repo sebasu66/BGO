@@ -2,9 +2,13 @@ class_name GameplayState
 extends RefCounted
 
 const HAND_STATE = preload("res://src/core/hand_state.gd")
+const EVENT_LIMIT := 256
 
 ## Active logical session governing permissions and turn state.
 var session: SessionState
+
+## Canonical phase/turn state used by the shared command protocol.
+var flow: FlowState
 
 ## Logical tabletop occupancy used by gameplay commands.
 var tabletop: TabletopState
@@ -18,14 +22,95 @@ var hands: Dictionary = {}
 ## Logical objects keyed by stable object id.
 var objects: Dictionary = {}
 
+## Canonical event protocol shared by the runtime, console and MCP adapters.
+var event_router := GameEventRouter.new()
+var event_history: Array[Dictionary] = []
+var revision: int = 0
+var _verb_handlers: Dictionary = {}
+
 
 ## Creates gameplay state around an existing logical session and tabletop.
-static func create(p_session: SessionState, p_tabletop: TabletopState) -> GameplayState:
+static func create(
+	p_session: SessionState,
+	p_flow_or_tabletop: Variant,
+	p_tabletop: TabletopState = null,
+	listeners: Array = []
+) -> GameplayState:
 	var state := GameplayState.new()
 	state.session = p_session
-	state.tabletop = p_tabletop
-	state.asset_box = p_tabletop.asset_box if p_tabletop != null else null
+	if p_tabletop == null:
+		state.tabletop = p_flow_or_tabletop as TabletopState
+		state.flow = FlowState.create(p_session.ordered_players())
+		state.flow.start()
+	else:
+		state.flow = p_flow_or_tabletop as FlowState
+		state.tabletop = p_tabletop
+	state.asset_box = state.tabletop.asset_box if state.tabletop != null else null
+	state.event_router.configure(listeners)
+	state._register_core_verbs()
 	return state
+
+
+## Registers one canonical verb handler without replacing an existing handler.
+func register_verb(verb: String, handler: Callable) -> bool:
+	if verb.is_empty() or not handler.is_valid() or _verb_handlers.has(verb):
+		return false
+	_verb_handlers[verb] = handler
+	return true
+
+
+## Adds a valid logical object without assigning a table location.
+func register_object(object: LogicalObjectState) -> bool:
+	if object == null or object.object_id.is_empty() or object.component_id.is_empty():
+		return false
+	if object.quantity < 0 or objects.has(object.object_id):
+		return false
+	objects[object.object_id] = object
+	return true
+
+
+## The canonical mutation entry point shared by console, adapters and MCP.
+func execute(command: Dictionary) -> Dictionary:
+	var validation := _validate_command_shape(command)
+	if not validation.is_empty():
+		return _rejected(validation)
+	var emitted := _dispatch(command)
+	if not bool(emitted.get("ok", false)):
+		return emitted
+	var pending: Array[Dictionary] = emitted.get("events", [])
+	var committed: Array[Dictionary] = []
+	while not pending.is_empty():
+		if committed.size() >= EVENT_LIMIT:
+			return _rejected("event_limit_exceeded")
+		var event: Dictionary = pending.pop_front()
+		_normalize_event(event, command, committed.size())
+		committed.append(event)
+		for generated_command in event_router.commands_for(event):
+			var generated: Dictionary = _dispatch(generated_command)
+			if not bool(generated.get("ok", false)):
+				return _rejected("listener_command_rejected")
+			pending.append_array(generated.get("events", []))
+	revision += 1
+	event_history.append_array(committed)
+	return {"ok": true, "revision": revision, "events": committed}
+
+
+## Returns canonical verbs exposed to an actor and optional object.
+func available_verbs(actor_id: String, target_id: String = "") -> Array[String]:
+	var result: Array[String] = []
+	if session == null or not session.is_active():
+		return result
+	if session.is_host(actor_id):
+		result.append("match.finish")
+	if flow != null and flow.is_active(actor_id):
+		result.append("turn.end")
+	if not target_id.is_empty() and objects.has(target_id):
+		var object: LogicalObjectState = objects[target_id]
+		if _can_control(object, actor_id, false):
+			for verb in BgoComponentRegistry.verbs(object.component_id):
+				if _verb_handlers.has(verb):
+					result.append(str(verb))
+	return result
 
 
 ## Returns or creates a participant's logical hand.
@@ -241,7 +326,7 @@ func store_object_in_box(
 ) -> Dictionary:
 	if session == null or tabletop == null or asset_box == null or not session.is_active():
 		return _rejected("session_not_active")
-	if requesting_participant_id != session.active_participant_id:
+	if not _is_active_participant(requesting_participant_id):
 		return _rejected("not_active_participant")
 	if not objects.has(object_id):
 		return _rejected("unknown_object")
@@ -363,7 +448,7 @@ func move_and_end_turn(
 	)
 	if not bool(move_result.get("ok", false)):
 		return move_result
-	if not session.advance_turn(requesting_participant_id):
+	if flow == null or not flow.end_turn(requesting_participant_id):
 		return _rejected("turn_advance_rejected")
 	return {
 		"ok": true,
@@ -371,8 +456,12 @@ func move_and_end_turn(
 			move_result.get("event", {}),
 			{
 				"type": "turn_advanced",
-				"turn_number": session.turn_number,
-				"active_participant_id": session.active_participant_id,
+				"turn_number": flow.turn_number,
+				"active_participant_id": (
+					flow.active_participant_ids[0]
+					if not flow.active_participant_ids.is_empty()
+					else ""
+				),
 			},
 		],
 	}
@@ -385,11 +474,14 @@ func to_dictionary() -> Dictionary:
 		var object: LogicalObjectState = objects[object_id]
 		object_snapshots[object_id] = object.to_dictionary()
 	return {
+		"revision": revision,
 		"session": session.to_dictionary(),
+		"flow": flow.to_dictionary() if flow != null else {},
 		"tabletop": tabletop.to_dictionary(),
 		"objects": object_snapshots,
 		"asset_box": asset_box.to_dictionary() if asset_box != null else {},
 		"hands": _hands_dictionary(),
+		"events": event_history.duplicate(true),
 	}
 
 
@@ -412,7 +504,7 @@ func _validate_box_take(
 ) -> Dictionary:
 	if session == null or tabletop == null or asset_box == null or not session.is_active():
 		return _rejected("session_not_active")
-	if requesting_participant_id != session.active_participant_id:
+	if not _is_active_participant(requesting_participant_id):
 		return _rejected("not_active_participant")
 	if not objects.has(object_id) or not asset_box.has_asset(object_id):
 		return _rejected("object_not_in_asset_box")
@@ -459,7 +551,7 @@ func _validate_move(
 ) -> Dictionary:
 	if session == null or tabletop == null or not session.is_active():
 		return _rejected("session_not_active")
-	if requesting_participant_id != session.active_participant_id:
+	if not _is_active_participant(requesting_participant_id):
 		return _rejected("not_active_participant")
 	if not objects.has(object_id):
 		return _rejected("unknown_object")
@@ -483,7 +575,7 @@ func _validate_grid_move(
 ) -> Dictionary:
 	if session == null or tabletop == null or not session.is_active():
 		return _rejected("session_not_active")
-	if requesting_participant_id != session.active_participant_id:
+	if not _is_active_participant(requesting_participant_id):
 		return _rejected("not_active_participant")
 	if not objects.has(object_id):
 		return _rejected("unknown_object")
@@ -500,6 +592,211 @@ func _validate_grid_move(
 	if not _can_control(object, requesting_participant_id, allow_neutral_acquire):
 		return _rejected("not_authorized")
 	return {"ok": true}
+
+
+func _dispatch(command: Dictionary) -> Dictionary:
+	var verb := str(command.get("verb", ""))
+	if not _verb_handlers.has(verb):
+		return _rejected("unknown_verb")
+	return (_verb_handlers[verb] as Callable).call(command)
+
+
+func _register_core_verbs() -> void:
+	register_verb("object.move", _move_object)
+	register_verb("object.move_to_collection", _move_to_collection)
+	register_verb("object.set_quantity", _set_quantity)
+	register_verb("object.set_state", _set_state)
+	register_verb("turn.end", _end_turn)
+	register_verb("match.finish", _finish_match)
+
+
+func _move_object(command: Dictionary) -> Dictionary:
+	var actor_id := str(command["actor_id"])
+	var object_id := str(command["target_id"])
+	var args: Dictionary = command.get("args", {})
+	var source_type := ""
+	var source_id := ""
+	if objects.has(object_id):
+		var object: LogicalObjectState = objects[object_id]
+		source_type = object.location_type
+		source_id = object.location_id
+	var result := move_object(
+		actor_id,
+		object_id,
+		str(args.get("slot_id", "")),
+		bool(args.get("acquire_neutral", false))
+	)
+	if not bool(result.get("ok", false)):
+		return result
+	return _events(
+		[{
+			"type": "object.moved",
+			"source_id": object_id,
+			"actor_id": actor_id,
+			"data": {
+				"from_type": source_type,
+				"from_id": source_id,
+				"to_type": "slot",
+				"to_id": str(args.get("slot_id", "")),
+			},
+		}]
+	)
+
+
+func _move_to_collection(command: Dictionary) -> Dictionary:
+	var actor_id := str(command["actor_id"])
+	var object_id := str(command["target_id"])
+	var args: Dictionary = command.get("args", {})
+	var collection := str(args.get("collection", ""))
+	if collection not in ["player_area", "hand"]:
+		return _rejected("invalid_collection")
+	if not _is_active_participant(actor_id) or not objects.has(object_id):
+		return _rejected("not_authorized")
+	var object: LogicalObjectState = objects[object_id]
+	if not _can_control(object, actor_id, bool(args.get("acquire_neutral", false))):
+		return _rejected("not_authorized")
+	var source_type := object.location_type
+	var source_id := object.location_id
+	if collection == "hand":
+		var picked := pickup_object_to_hand(
+			actor_id, object_id, bool(args.get("acquire_neutral", false))
+		)
+		if not bool(picked.get("ok", false)):
+			return picked
+	else:
+		if source_type in ["slot", "grid"] and not tabletop.remove_object(object_id):
+			return _rejected("table_remove_rejected")
+		if source_type == "hand":
+			var source_hand := hand_for(actor_id)
+			if source_hand != null:
+				source_hand.remove_object(object_id)
+		object.set_holder(actor_id)
+		object.set_location(collection, actor_id)
+	return _events(
+		[{
+			"type": "object.moved",
+			"source_id": object_id,
+			"actor_id": actor_id,
+			"data": {
+				"from_type": source_type,
+				"from_id": source_id,
+				"to_type": collection,
+				"to_id": actor_id,
+			},
+		}]
+	)
+
+
+func _set_quantity(command: Dictionary) -> Dictionary:
+	var actor_id := str(command["actor_id"])
+	var object := _authorized_object(actor_id, str(command["target_id"]), false)
+	if object == null:
+		return _rejected("not_authorized")
+	var previous := object.quantity
+	var value := int((command.get("args", {}) as Dictionary).get("value", -1))
+	if not object.set_quantity(value):
+		return _rejected("invalid_quantity")
+	return _events([{
+		"type": "object.quantity_changed",
+		"source_id": object.object_id,
+		"actor_id": actor_id,
+		"data": {"from": previous, "to": value},
+	}])
+
+
+func _set_state(command: Dictionary) -> Dictionary:
+	var actor_id := str(command["actor_id"])
+	var object := _authorized_object(actor_id, str(command["target_id"]), false)
+	if object == null:
+		return _rejected("not_authorized")
+	var previous := object.state_id
+	var value := str((command.get("args", {}) as Dictionary).get("state", ""))
+	if not object.set_state(value):
+		return _rejected("invalid_state")
+	return _events([{
+		"type": "object.state_changed",
+		"source_id": object.object_id,
+		"actor_id": actor_id,
+		"data": {"from": previous, "to": value},
+	}])
+
+
+func _end_turn(command: Dictionary) -> Dictionary:
+	var actor_id := str(command["actor_id"])
+	if flow == null or not flow.is_active(actor_id):
+		return _rejected("not_active_participant")
+	var previous_turn := flow.turn_number
+	if not flow.end_turn(actor_id):
+		return _rejected("turn_end_rejected")
+	return _events([
+		{
+			"type": "turn.ended",
+			"source_id": "flow",
+			"actor_id": actor_id,
+			"data": {"turn_number": previous_turn},
+		},
+		{
+			"type": "turn.started",
+			"source_id": "flow",
+			"actor_id": "system",
+			"data": {
+				"turn_number": flow.turn_number,
+				"active_participant_ids": flow.active_participant_ids.duplicate(),
+			},
+		},
+	])
+
+
+func _finish_match(command: Dictionary) -> Dictionary:
+	var actor_id := str(command["actor_id"])
+	if not session.is_host(actor_id):
+		return _rejected("host_required")
+	var args: Dictionary = command.get("args", {})
+	if not session.end_session(
+		str(args.get("outcome", "")), args.get("winner_participant_ids", [])
+	):
+		return _rejected("invalid_match_result")
+	return _events([{
+		"type": "match.finished",
+		"source_id": session.session_id,
+		"actor_id": actor_id,
+		"data": session.result.duplicate(true),
+	}])
+
+
+func _authorized_object(
+	actor_id: String, object_id: String, acquire_neutral: bool
+) -> LogicalObjectState:
+	if session == null or not session.is_active() or not _is_active_participant(actor_id):
+		return null
+	if not objects.has(object_id):
+		return null
+	var object: LogicalObjectState = objects[object_id]
+	return object if _can_control(object, actor_id, acquire_neutral) else null
+
+
+func _validate_command_shape(command: Dictionary) -> String:
+	if str(command.get("verb", "")).is_empty():
+		return "verb_required"
+	if str(command.get("actor_id", "")).is_empty():
+		return "actor_required"
+	if command.has("expected_revision") and int(command["expected_revision"]) != revision:
+		return "stale_revision"
+	return ""
+
+
+func _normalize_event(event: Dictionary, command: Dictionary, index: int) -> void:
+	event["id"] = "r%d:e%d" % [revision + 1, event_history.size() + index + 1]
+	event["revision"] = revision + 1
+	event["caused_by"] = command.get("id", "")
+
+
+func _events(events: Array[Dictionary]) -> Dictionary:
+	return {"ok": true, "events": events}
+
+
+func _is_active_participant(participant_id: String) -> bool:
+	return flow != null and flow.is_active(participant_id)
 
 
 func _can_control(

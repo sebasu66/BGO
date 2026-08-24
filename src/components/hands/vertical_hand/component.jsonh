@@ -1,11 +1,15 @@
 {
+  "schema": "bgo.component",
   "id": "bgo.hand.vertical",
   "kind": "hand",
+  "description": "Client-side vertical hand presentation backed by the logical Hand contract.",
+  "state": {},
   "scene": "res://src/components/hands/vertical_hand/vertical_hand.tscn",
   "config": {
     "orientation": { "type": "string", "default": "floating_vertical_stack" },
     "stack_order": { "type": "string", "default": "filo" },
     "visibility": { "type": "string", "default": "owner_face_others_hidden" }
   },
-  "capabilities": ["hand", "floating_3d_stack", "viewport_overlay", "filo_order", "selectable", "place_source"]
+  "capabilities": [],
+  "verbs": {}
 }

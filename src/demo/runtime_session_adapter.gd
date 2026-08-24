@@ -231,6 +231,15 @@ func _build_flow(
 
 func _build_tabletop(p_game_definition: Dictionary) -> TabletopState:
 	var board: Dictionary = p_game_definition.get("board", {})
+	if board.is_empty():
+		var table: Dictionary = p_game_definition.get("table", {})
+		for instance_variant in table.get("instances", []):
+			if not instance_variant is Dictionary:
+				continue
+			var instance: Dictionary = instance_variant
+			if BgoComponentRegistry.get_kind(str(instance.get("component", ""))) == "board":
+				board = instance
+				break
 	var config: Dictionary = board.get("config", {})
 	var columns := int(config.get("columns", 0))
 	var rows := int(config.get("rows", 0))
@@ -243,6 +252,16 @@ func _build_tabletop(p_game_definition: Dictionary) -> TabletopState:
 		for x in columns:
 			if not tabletop.add_slot("board:%d:%d" % [x, y], "board", 1):
 				return null
+	var setup: Dictionary = p_game_definition.get("setup", {})
+	var asset_box: Dictionary = setup.get("asset_box", {})
+	if not asset_box.is_empty() and not tabletop.configure_asset_box(
+		str(asset_box.get("id", "game_box")),
+		int(asset_box.get("point_columns", 0)),
+		int(asset_box.get("point_rows", 0)),
+		Vector2(5.0, 5.0),
+		str(asset_box.get("label", "ASSET BOX"))
+	):
+		return null
 	return tabletop
 
 
@@ -268,6 +287,13 @@ func _load_objects(gameplay: GameplayState, repository_state: Dictionary) -> Dic
 		if location_type == "slot":
 			if not gameplay.add_object(object, location_id):
 				return _rejected("invalid_object_slot")
+		elif location_type == "asset_box":
+			object.availability_mode = "finite" if object.quantity > 1 else "unique"
+			object.available_quantity = object.quantity
+			if not gameplay.add_object_to_box(
+				object, object.component_id, {}, object.quantity
+			):
+				return _rejected("invalid_asset_box_object")
 		else:
 			if not object.set_location(location_type, location_id):
 				return _rejected("invalid_object_location")

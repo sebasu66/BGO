@@ -13,6 +13,8 @@ static func run(check: Callable) -> void:
 	var state := _repository_state(definition)
 	var adapter := RuntimeSessionAdapter.new()
 	var result := adapter.load_session("adapter-test", definition, state)
+	if not bool(result.get("ok", false)):
+		printerr("Adapter session build error: %s" % [result])
 	check.call(bool(result.get("ok", false)), "adapter builds logical session")
 	check.call(adapter.active_participant_id() == "player_1", "adapter exposes flow participant")
 	var moved := adapter.move_object("player_1", "player_1_piece", "board:2:2")

@@ -20,6 +20,7 @@ const ACTION_STRIP = preload("res://src/components/ui/action_strip/action_strip.
 const UI_THEME_PROFILES = preload("res://src/components/ui/theme_profiles/ui_theme_profiles.gd")
 const VERTICAL_HAND = preload("res://src/components/hands/vertical_hand/vertical_hand.tscn")
 const FLUENT_GAME_BUILDER_TEST = preload("res://tests/fluent_game_builder_test.gd")
+const RUNTIME_SESSION_ADAPTER_TEST = preload("res://tests/runtime_session_adapter_test.gd")
 
 var failures := 0
 var assertions := 0
@@ -56,6 +57,7 @@ func _run() -> void:
 	await CONSOLE_COMMAND_BRIDGE_TEST.run(_check)
 	FLUENT_GAME_BUILDER_TEST.run(_check)
 	CONFORMANCE_GAME_TEST.run(_check)
+	RUNTIME_SESSION_ADAPTER_TEST.run(_check)
 
 	if failures > 0:
 		printerr("BGO TESTS FAILED: %d/%d assertions failed." % [failures, assertions])

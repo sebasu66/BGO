@@ -33,6 +33,10 @@ static func load_game(path: String) -> Dictionary:
 		return result
 
 	var data: Dictionary = parsed_value
+	# Migrate the early named-schema package form without mutating source files.
+	# Loaded snapshots always expose the canonical numeric version to consumers.
+	if not data.has("schema_version") and str(data.get("schema", "")) == "bgo.game":
+		data["schema_version"] = 1
 	var validation_errors := validate_game(data)
 	if not validation_errors.is_empty():
 		result["errors"] = validation_errors

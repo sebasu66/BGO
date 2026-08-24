@@ -1,6 +1,9 @@
 {
+  "schema": "bgo.component",
   "id": "bgo.table.grid",
   "kind": "table_grid",
+  "description": "Logical point grid used for deterministic free placement and occupancy queries.",
+  "state": {},
   "scene": "res://src/components/grids/table_grid/table_grid.tscn",
   "config": {
     "point_columns": { "type": "int", "min": 1, "max": 512, "default": 16 },
@@ -8,5 +11,6 @@
     "point_spacing_cm": { "type": "vector2", "min": 0.01, "default": [5.0, 5.0] },
     "world_units_per_cm": { "type": "float", "min": 0.0001, "default": 0.01 }
   },
-  "capabilities": ["grid_points", "placeable_surface", "occupancy_queries"]
+  "capabilities": ["placeable_surface"],
+  "verbs": {}
 }

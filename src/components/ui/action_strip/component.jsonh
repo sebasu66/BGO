@@ -1,7 +1,11 @@
 {
+  "schema": "bgo.component",
   "id": "bgo.ui.action_strip",
   "kind": "ui",
+  "description": "Compact action strip for intentional runtime controls.",
+  "state": {},
   "scene": "res://src/components/ui/action_strip/action_strip.tscn",
   "config": {},
-  "capabilities": ["actions", "icons", "optional_labels", "collapsible"]
+  "capabilities": [],
+  "verbs": {}
 }

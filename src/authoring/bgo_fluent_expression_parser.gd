@@ -207,7 +207,7 @@ func _start_builder(type_name: String, factory: String) -> Dictionary:
 			return _failure("Game.load only accepts res://games/ or user:// paths.", _position)
 		var loaded := BgoGameDefinitionLoader.load_game(path)
 		if not bool(loaded.get("ok", false)):
-			return _failure("Could not load game: %s" % loaded.get("errors", []), _position)
+			return _failure("Could not load game: %s" % [loaded.get("errors", [])], _position)
 		builder = _registry.from_definition(loaded.get("data", {}))
 	else:
 		return _failure("Unknown factory Game.%s.%s()." % [type_name, factory], _position)
