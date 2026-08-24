@@ -26,6 +26,7 @@ def main() -> None:
     pack = require_file("index.pck")
     require_file("project-status/index.html")
     require_file("test-launcher/index.html")
+    require_file("help/index.html")
 
     html = index.read_text(encoding="utf-8", errors="replace")
     for marker in ("__bgoFlightRecorder", "unhandledrejection", "error_generation"):
@@ -44,6 +45,7 @@ def main() -> None:
     print("  TEST001 JSONH: packed")
     print("  project-status: present")
     print("  test-launcher: present")
+    print("  help manual: present")
 
 
 if __name__ == "__main__":

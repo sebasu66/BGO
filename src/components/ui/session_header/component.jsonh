@@ -1,0 +1,7 @@
+{
+  "id": "bgo.ui.session_header",
+  "kind": "ui",
+  "scene": "res://src/components/ui/session_header/session_header.tscn",
+  "config": {},
+  "capabilities": ["session_identity", "viewer_profile", "turn_status"]
+}

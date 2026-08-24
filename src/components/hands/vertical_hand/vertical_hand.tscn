@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/components/hands/vertical_hand/vertical_hand.gd" id="1_hand"]
+
+[node name="VerticalHand" type="Control"]
+script = ExtResource("1_hand")

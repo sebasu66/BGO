@@ -202,10 +202,25 @@ Formalize:
 - `PlayerArea`
 - generic public/private zones
 - slot occupancy/capacity rules
+- point-grid origins and rectangular footprints for placeable objects
 - command validation
 - high-level events
 
 Board cells should be generated as logical slots. Player areas should expose slots. Free-form positioning can be introduced later as an explicit capability rather than the default representation.
+
+For table surfaces that need inventory-style placement, `TabletopState.grid`
+provides a second logical representation: finite points with centimetre
+spacing, one origin per placeable object, and a rectangular footprint. This is
+still domain state, not a renderer coordinate system. The installed Asset
+Placer editor plugin may snap authored 3D nodes to a `BgoTableGrid`, but it only
+adds editor metadata; occupancy and range queries remain validated by the
+logical tabletop.
+
+The tabletop also exposes an `AssetBoxState` reserve/catalog container. It has
+no physical grid or tabletop transform: Asset Placer's editor palette is its
+authoring representation, while runtime renders it as a viewport-attached
+drawer. Safe runtime commands move logical components between the catalog,
+hands, player areas and free tabletop grid points.
 
 Move toward pure/domain-oriented operations such as:
 
@@ -558,6 +573,14 @@ Generated assets should still pass the same validator as manually authored asset
 # Phase 10 — MCP logical control MVP
 
 **Purpose:** allow an MCP-capable external AI/client to inspect and manipulate the game through safe logical operations.
+
+An owner-requested DEV vertical slice started early in August 2026 without
+changing the main implementation sequence. It provides a Streamable HTTP
+Firebase Function, logical entity/property discovery, validated property writes,
+and queued registered host commands validated by the Godot domain adapter. The
+legacy create/move tools remain compatibility aliases. This is not Checkpoint 10 completion:
+authentication, revision conflicts, complete visibility filtering, the wider
+command catalog, and conformance parity remain open. See `docs/MCP_PROTOTYPE.md`.
 
 Do not expose raw Godot scene nodes.
 

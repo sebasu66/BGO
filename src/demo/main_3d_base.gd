@@ -7,6 +7,7 @@ const GAME_ID_DEFAULT := "TEST001"
 const ROLE_DISPLAY := "display"
 const ROLE_PLAYER := "player"
 const MODE_PICK_UP := "pick_up"
+const MODE_NONE := "none"
 const MODE_PLACE := "place"
 const MOVE_DURATION := 1.25
 const PLAYER_AREA_X := 6.15
@@ -17,7 +18,7 @@ var logger: BgoLogger
 var client_role := ROLE_DISPLAY
 var game_id := GAME_ID_DEFAULT
 var player_id := "player_1"
-var interaction_mode := MODE_PICK_UP
+var interaction_mode := MODE_NONE
 var client_id := ""
 
 var selected_piece: Node3D
@@ -204,7 +205,11 @@ func _on_hand_item_pressed(piece_id: String) -> void:
 
 
 func _set_mode(mode: String) -> void:
+	if mode not in [MODE_PICK_UP, MODE_NONE, MODE_PLACE]:
+		mode = MODE_NONE
 	interaction_mode = mode
+	# Concrete UI components synchronize their own visual mode in their override.
+	# The base controller stays independent from the scene-specific hand layout.
 	if _mode_label != null:
 		_mode_label.text = "Mode: %s" % mode.replace("_", " ").to_upper()
 	if _pickup_button != null:
@@ -216,6 +221,13 @@ func _set_mode(mode: String) -> void:
 	if logger != null:
 		logger.info("INTERACTION_MODE_CHANGED", {"mode": mode})
 	_set_debug("mode: %s" % mode)
+
+
+func _hand_mode_name(mode: String) -> String:
+	match mode:
+		MODE_PICK_UP: return "pickup"
+		MODE_PLACE: return "place"
+		_: return "none"
 
 
 func _apply_mode_button_style(button: Button, active: bool, accent: Color) -> void:

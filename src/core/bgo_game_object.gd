@@ -53,3 +53,29 @@ func serialize_state() -> Dictionary:
 		"position": {"x": position.x, "y": position.y},
 		"properties": properties.duplicate(true),
 	}
+
+
+## Optional developer-console help. The console bridge treats this as metadata,
+## not as a gameplay command, and allows concrete objects to override it.
+func console_help() -> Dictionary:
+	return {
+		"_summary": "Developer commands for BGO object '%s'." % entity_id,
+	}
+
+
+## Describes contextual actions for the current viewer.
+## Concrete objects may override this, but authority must be checked again
+## by the domain command when the action is executed.
+func menu_actions(viewer_role: String, viewer_id: String) -> Array[Dictionary]:
+	var is_host := viewer_role == "host"
+	var is_owner := not owner_id.is_empty() and owner_id == viewer_id
+	var actions: Array[Dictionary] = [
+		{"id": "details", "label": "DETALLES", "authority": "read"},
+		{"id": "details-2", "label": "DETALLES DEL COMPONENTE", "authority": "read"},
+	]
+	if is_host or is_owner:
+		actions.append({"id": "duplicate", "label": "DUPLICAR", "authority": "control"})
+		actions.append({"id": "change_owner", "label": "CAMBIAR PROPIETARIO", "authority": "control"})
+	if is_host:
+		actions.append({"id": "delete", "label": "BORRAR", "authority": "control"})
+	return actions

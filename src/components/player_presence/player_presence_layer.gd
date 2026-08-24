@@ -3,6 +3,7 @@ extends Node3D
 
 const DEFAULT_PRESENCE_COMPONENT := "bgo.player_presence.basic_mask"
 const POSE_PUBLISH_SECONDS := 0.5
+const PRESENCE_TIMEOUT_SECONDS := 3.0
 
 var game_id := "TEST001"
 var client_role := "display"
@@ -31,7 +32,8 @@ func _ready() -> void:
 			str(definition.get("name", _fallback_name(local_player_id))),
 			str(definition.get("color", "#D9D9D9")),
 			"player",
-			false
+			false,
+			local_player_id
 		)
 	call_deferred("_update_client_identity_hud")
 
@@ -75,11 +77,10 @@ func _on_players_received(players: Dictionary) -> void:
 		var mask := _ensure_mask(player_id, state)
 		if mask == null:
 			continue
-		mask.visible = (
-			bool(state.get("connected", true))
-			and not (client_role == "player" and player_id == local_player_id)
-		)
-		_apply_pose(mask, player_id, state)
+		var seated := _is_seated_presence(player_id, state)
+		mask.visible = seated and not (client_role == "player" and player_id == local_player_id)
+		if seated:
+			_apply_pose(mask, player_id, state)
 
 
 func _ensure_mask(player_id: String, state: Dictionary) -> BgoPlayerPresenceMask:
@@ -135,6 +136,20 @@ func _apply_fallback_pose(mask: BgoPlayerPresenceMask, player_id: String) -> voi
 		outward = Vector3.LEFT if player_id == "player_1" else Vector3.RIGHT
 	var position := area_position + outward * 1.0 + Vector3.UP * 1.25
 	mask.set_pose(position, (Vector3(0.0, position.y, 0.0) - position).normalized())
+
+
+func _is_seated_presence(player_id: String, state: Dictionary) -> bool:
+	if bool(state.get("spectator", false)) or not bool(state.get("connected", false)):
+		return false
+	# In this prototype the stable player id is also the seat id. Require the
+	# explicit value so a stale/free presence cannot render a mask at the table.
+	if str(state.get("seat_id", "")) != player_id:
+		return false
+	var last_seen := float(state.get("last_seen", 0.0))
+	if last_seen <= 0.0 or Time.get_unix_time_from_system() - last_seen > PRESENCE_TIMEOUT_SECONDS:
+		return false
+	var pose: Variant = state.get("camera_pose", {})
+	return pose is Dictionary and not pose.is_empty()
 
 
 func _update_client_identity_hud() -> void:

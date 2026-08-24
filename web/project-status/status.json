@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-17T22:38:00-03:00",
+  "updated_at": "2026-08-24T04:30:00-03:00",
   "overall": {
     "status": "warning",
     "label": "EN DESARROLLO"
@@ -61,7 +61,13 @@
       "name": "Unit / domain tests",
       "status": "success",
       "label": "ACTIVO",
-      "detail": "Runner headless disponible y ejecutado por GitHub Actions; ampliar cobertura a SessionState, ocupación, permisos y fixture abstracto."
+      "detail": "Runner headless disponible y ejecutado por GitHub Actions; incluye API MCP y procesamiento host de comandos Firebase. Ampliar cobertura a conflictos de revisión y filtrado privado."
+    },
+    {
+      "name": "MCP remoto DEV",
+      "status": "warning",
+      "label": "PROTOTIPO SIN AUTH",
+      "detail": "Streamable HTTP Function 0.2.0 desplegada en DEV; handshake, tools/list, lectura de entidades y escritura validada con host Godot fueron comprobados en vivo. Sigue sin autenticación y no es apta para PROD."
     },
     {
       "name": "Architecture checks",
@@ -77,6 +83,12 @@
     }
   ],
   "blockers": [
+    {
+      "title": "MCP DEV todavía no tiene autenticación",
+      "status": "warning",
+      "label": "SEGURIDAD",
+      "detail": "La primera versión fija TEST001/host por configuración. Antes de acceso amplio necesita pairing temporal, OAuth, revocación, filtrado privado y control de revisión."
+    },
     {
       "title": "Credenciales Firebase DEV todavía no configuradas",
       "status": "warning",
@@ -186,9 +198,9 @@
     {
       "id": "10",
       "title": "MCP logical control MVP",
-      "status": "planned",
-      "label": "PLAN",
-      "description": "Exponer sesiones, turnos, estado visible y comandos seguros; preparar soporte para asistentes y participantes AI.",
+      "status": "active",
+      "label": "SLICE DEV",
+      "description": "Slice DEV adelantado por requerimiento del owner: servidor Streamable HTTP, API compacta de entidades/propiedades, comandos registrados y cola Firebase validada por Godot. Auth, revisiones, privacidad y catálogo completo siguen pendientes.",
       "checkpoint": "MCP usa la misma validación de comandos que clientes humanos."
     }
   ],

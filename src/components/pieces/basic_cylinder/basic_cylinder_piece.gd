@@ -2,6 +2,8 @@
 class_name BgoBasicCylinderPiece
 extends StaticBody3D
 
+signal component_event(event_name: String, payload: Dictionary)
+
 @export var piece_color := Color(0.95, 0.72, 0.22):
 	set(value):
 		piece_color = value
@@ -16,7 +18,59 @@ extends StaticBody3D
 
 
 func _ready() -> void:
+	set_meta("bgo_placeable", true)
+	set_meta("bgo_placement_anchor", "base_center")
 	_apply_visuals()
+	component_event.emit(
+		"ready", {"entity_id": str(get_meta("entity_id", name)), "quantity": quantity}
+	)
+
+
+## Placeable pieces use their root origin at the centre of the supporting base.
+func placement_anchor() -> String:
+	return "base_center"
+
+
+func is_stackable() -> bool:
+	return true
+
+
+func _api_get_name() -> String:
+	return str(get_meta("entity_id", name))
+
+
+func _api_get_desc() -> String:
+	return "Stackable basic cylinder piece"
+
+
+func _api_get_owner() -> String:
+	return str(get_meta("owner_id", ""))
+
+
+func _api_get_holder() -> String:
+	return str(get_meta("holder_id", ""))
+
+
+func _api_get_quantity() -> int:
+	return quantity
+
+
+func console_api() -> Dictionary:
+	return {
+		"scope": "Match",
+		"entity": _api_get_name(),
+		"class": "BgoBasicCylinderPiece",
+		"description": "Curated logical view of a cylinder piece.",
+		"methods":
+		{
+			"getName": {"call": "_api_get_name", "returns": "String"},
+			"getDesc": {"call": "_api_get_desc", "returns": "String"},
+			"getOwner": {"call": "_api_get_owner", "returns": "String"},
+			"getHolder": {"call": "_api_get_holder", "returns": "String"},
+			"getQuantity": {"call": "_api_get_quantity", "returns": "int"},
+			"isStackable": {"call": "is_stackable", "returns": "bool"},
+		},
+	}
 
 
 ## Configures this object from the supplied project data.
@@ -32,6 +86,37 @@ func configure(
 	quantity = new_quantity
 	piece_color = color
 	_apply_visuals()
+	component_event.emit(
+		"configured",
+		{"entity_id": entity_id, "owner_id": owner_id, "holder_id": holder_id, "quantity": quantity}
+	)
+
+
+## Optional developer-console help for this component's public methods.
+func console_help() -> Dictionary:
+	return {
+		"_summary": "Developer commands for a logical cylinder piece.",
+		"configure": "Updates identity, ownership metadata, quantity, and color.",
+	}
+
+
+func menu_actions(viewer_role: String, viewer_id: String) -> Array[Dictionary]:
+	var actions: Array[Dictionary] = [
+		{"id": "details", "label": "DETALLES", "authority": "read"},
+		{"id": "details-2", "label": "DETALLES DEL COMPONENTE", "authority": "read"},
+	]
+	var is_host := viewer_role == "host"
+	var is_owner := str(get_meta("owner_id", "")) == viewer_id
+	if is_host or is_owner:
+		actions.append({"id": "take", "label": "TOMAR", "authority": "control"})
+		actions.append({"id": "move", "label": "MOVER", "authority": "control", "submenu": true})
+	if is_host:
+		actions.append({"id": "duplicate", "label": "DUPLICAR", "authority": "control"})
+		actions.append(
+			{"id": "change_owner", "label": "CAMBIAR PROPIETARIO", "authority": "control"}
+		)
+		actions.append({"id": "delete", "label": "BORRAR", "authority": "control"})
+	return actions
 
 
 func _apply_visuals() -> void:

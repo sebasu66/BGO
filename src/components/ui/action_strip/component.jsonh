@@ -1,0 +1,7 @@
+{
+  "id": "bgo.ui.action_strip",
+  "kind": "ui",
+  "scene": "res://src/components/ui/action_strip/action_strip.tscn",
+  "config": {},
+  "capabilities": ["actions", "icons", "optional_labels", "collapsible"]
+}

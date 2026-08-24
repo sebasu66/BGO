@@ -36,8 +36,32 @@ for required in (
     "tests/test_runner.gd",
     "AGENTS.md",
     "docs/IMPLEMENTATION_ROADMAP.md",
+    "docs/UI_PLUGIN_STACK.md",
 ):
     require(required)
+
+ui_plugins = {
+    "addons/spark/plugin.cfg": "1.0.2",
+    "addons/reactive_ui/plugin.cfg": "0.12.1",
+    "addons/reactive_ui_editor/plugin.cfg": "0.10.1",
+    "addons/gdss/plugin.cfg": "0.7.0",
+    "addons/godotx_toast/plugin.cfg": "2.0.0",
+}
+project_config = (ROOT / "project.godot").read_text(encoding="utf-8")
+for plugin_path, expected_version in ui_plugins.items():
+    descriptor = require(plugin_path)
+    if descriptor.exists():
+        descriptor_text = descriptor.read_text(encoding="utf-8")
+        if f'version="{expected_version}"' not in descriptor_text:
+            fail(f"{plugin_path}: expected version {expected_version}")
+    if f'res://{plugin_path}' not in project_config:
+        fail(f"{plugin_path}: plugin is not enabled in project.godot")
+
+require("addons/reactive_ui_analyzer/gdscript_analyzer.gdextension")
+export_config = (ROOT / "export_presets.cfg").read_text(encoding="utf-8")
+for excluded_path in ("addons/reactive_ui_editor/*", "addons/reactive_ui_analyzer/*"):
+    if excluded_path not in export_config:
+        fail(f"Web export must exclude {excluded_path}")
 
 component_manifests = sorted((ROOT / "src/components").rglob("component.jsonh"))
 if not component_manifests:

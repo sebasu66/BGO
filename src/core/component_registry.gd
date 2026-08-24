@@ -7,6 +7,46 @@ const COMPONENTS := {
 		"kind": "board",
 		"scene": "res://src/components/boards/checkered_board/checkered_board.tscn",
 	},
+	"bgo.table.grid":
+	{
+		"kind": "table_grid",
+		"scene": "res://src/components/grids/table_grid/table_grid.tscn",
+	},
+	"bgo.container.asset_box":
+	{
+		"kind": "container",
+		"scene": "res://src/components/containers/asset_box/asset_box.tscn",
+	},
+	"bgo.hand.vertical":
+	{
+		"kind": "hand",
+		"scene": "res://src/components/hands/vertical_hand/vertical_hand.tscn",
+	},
+	"bgo.ui.context_menu":
+	{
+		"kind": "ui",
+		"scene": "res://src/components/ui/context_menu/context_menu_component.tscn",
+	},
+	"bgo.ui.toast":
+	{
+		"kind": "ui",
+		"scene": "res://src/components/ui/toast/toast_component.tscn",
+	},
+	"bgo.ui.settings_panel":
+	{
+		"kind": "ui",
+		"scene": "res://src/components/ui/settings_panel/settings_panel.tscn",
+	},
+	"bgo.ui.action_strip":
+	{
+		"kind": "ui",
+		"scene": "res://src/components/ui/action_strip/action_strip.tscn",
+	},
+	"bgo.ui.session_header":
+	{
+		"kind": "ui",
+		"scene": "res://src/components/ui/session_header/session_header.tscn",
+	},
 	"bgo.piece.basic_cylinder":
 	{
 		"kind": "piece",
@@ -60,6 +100,22 @@ static func validate_config(component_id: String, config: Dictionary) -> Array[S
 			_validate_int_range(config, "columns", 2, 30, errors)
 			_validate_int_range(config, "rows", 2, 30, errors)
 			_validate_float_range(config, "cell_size", 0.5, 3.0, errors)
+			_validate_float_range(config, "grid_cell_size_cm", 0.1, 100.0, errors, true)
+			_validate_int_range(config, "grid_points_per_unit", 1, 100, errors, true)
+		"bgo.table.grid":
+			_validate_int_range(config, "point_columns", 1, 512, errors)
+			_validate_int_range(config, "point_rows", 1, 512, errors)
+			_validate_float_range(config, "world_units_per_cm", 0.0001, 10.0, errors, true)
+		"bgo.container.asset_box":
+			_validate_int_range(config, "point_columns", 1, 64, errors)
+			_validate_int_range(config, "point_rows", 1, 64, errors)
+			_validate_float_range(config, "world_units_per_cm", 0.0001, 10.0, errors, true)
+		"bgo.hand.vertical":
+			pass
+		"bgo.ui.context_menu", "bgo.ui.toast", "bgo.ui.settings_panel":
+			pass
+		"bgo.ui.action_strip", "bgo.ui.session_header":
+			pass
 		"bgo.piece.basic_cylinder":
 			_validate_float_range(config, "radius", 0.1, 2.0, errors, true)
 			_validate_float_range(config, "height", 0.05, 2.0, errors, true)

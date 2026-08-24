@@ -1,6 +1,12 @@
 extends "res://src/demo/main_componentized_base.gd"
 
 
+func _set_mode(mode: String) -> void:
+	super._set_mode(mode)
+	if _vertical_hand != null:
+		_vertical_hand.set_mode(_hand_mode_name(mode))
+
+
 func _ready() -> void:
 	_request_landscape_orientation()
 	_load_game_definition()
@@ -31,15 +37,24 @@ func _on_piece_tapped(piece: Node3D) -> void:
 			"mode": interaction_mode
 		}
 	)
+	if location_type == "asset_box":
+		_set_status("Asset Box entries are catalog data, not physical table objects")
+		_set_debug("asset box object ignored in 3D")
+		return
 
-	if not holder_id.is_empty() and holder_id != player_id:
+	if not _is_host_viewer() and not holder_id.is_empty() and holder_id != player_id:
 		_set_status("That object is currently held by %s" % holder_id)
 		logger.warning(
 			"PIECE_CONTROL_DENIED",
 			{"piece_id": piece.name, "holder_id": holder_id, "player_id": player_id}
 		)
 		return
-	if not owner_id.is_empty() and owner_id != player_id and holder_id != player_id:
+	if (
+		not _is_host_viewer()
+		and not owner_id.is_empty()
+		and owner_id != player_id
+		and holder_id != player_id
+	):
 		_set_status("That object belongs to %s" % owner_id)
 		logger.warning(
 			"PIECE_CONTROL_DENIED",
@@ -58,40 +73,94 @@ func _on_piece_tapped(piece: Node3D) -> void:
 		_set_status("Selected %s" % piece.name)
 
 
+## Extension point for trusted local host tooling. Normal clients never bypass ownership.
+func _is_host_viewer() -> bool:
+	return false
+
+
 func _pick_up_piece(piece: Node3D) -> void:
 	var piece_id := str(piece.get_meta("entity_id"))
-	var target := _player_area_world_position(player_id, piece_id)
-	repository.move_to_player_area(piece_id, player_id)
+	var target := piece.position
+	var hand_order := float(Time.get_ticks_msec())
+	var quantity := int(piece.get_meta("quantity", 1))
+	var stackable := piece.has_method("is_stackable") and bool(piece.call("is_stackable"))
+	var whole_stack := _hand_pickup_whole_stack() or not stackable or quantity <= 1
+	var picked_id := repository.pickup_piece(piece_id, player_id, whole_stack)
 	logger.info(
 		"PICKUP_REQUESTED",
 		{
 			"piece_id": piece_id,
-			"destination": "player_area",
+			"picked_id": picked_id,
+			"pickup_mode": "whole_stack" if whole_stack else "one_at_a_time",
+			"destination": "hand",
 			"duration": MOVE_DURATION,
 			"target": _vec3_payload(target)
 		}
 	)
+	if not whole_stack:
+		piece.set_meta("quantity", quantity - 1)
+		if piece is BgoBasicCylinderPiece:
+			(piece as BgoBasicCylinderPiece).quantity = quantity - 1
+		selected_piece = null
+		_refresh_hand_strip()
+		_set_status("Picked up 1 from %s · added to HAND" % piece.name)
+		_set_debug("pickup one → hand: %s" % picked_id)
+		return
 	piece.set_meta("holder_id", player_id)
-	piece.set_meta("location_type", "player_area")
+	piece.set_meta("location_type", "hand")
+	piece.set_meta("hand_order", hand_order)
 	_select_piece(piece)
-	_animate_piece(piece, target, "pickup")
-	_reflow_collection(player_id, "player_area")
+	_set_piece_render_state(piece, false)
 	_refresh_hand_strip()
-	_set_status("Picked up %s · moving to your PLAYER AREA" % piece.name)
-	_set_debug("pickup → player area: %s" % piece.name)
+	_set_status("Picked up %s · added to HAND" % piece.name)
+	_set_debug("pickup → hand: %s" % piece.name)
+
+
+func _hand_pickup_whole_stack() -> bool:
+	var controller: Node = get("_settings_controller")
+	if controller == null:
+		return false
+	var settings: Dictionary = controller.get("values")
+	return int(settings.get("hand_pickup_mode", 0)) == 1
+
+
+func _place_selected_at_pointer(
+	_collider: Node, hit_position: Vector3, origin: Vector3, direction: Vector3
+) -> bool:
+	var board := _primary_board
+	if board == null or absf(direction.y) < 0.0001:
+		return false
+	var world_position := hit_position
+	if world_position == Vector3.ZERO:
+		var distance := (board.global_position.y - origin.y) / direction.y
+		if distance <= 0.0:
+			return false
+		world_position = origin + direction * distance
+	var destination := board.resolve_magnetic_placement(world_position)
+	match str(destination.get("type", "")):
+		"slot":
+			_place_selected_piece(destination.get("cell", Vector2i(-1, -1)))
+			return true
+		"grid":
+			_place_selected_piece_on_grid(destination.get("grid_point", Vector2i(-1, -1)))
+			return true
+	return false
 
 
 func _place_selected_piece(destination: Vector2i) -> void:
 	if selected_piece == null:
 		return
-	var board := $Board as BgoCheckeredBoard
+	if str(selected_piece.get_meta("location_type", "")) != "hand":
+		_set_status("Select an object from HAND before placing")
+		return
+	var board := _primary_board
 	if board != null and not board.is_valid_cell(destination):
 		_set_status("That destination is not a valid board slot")
 		return
 
 	var piece := selected_piece
 	var piece_id := str(piece.get_meta("entity_id"))
-	var target := _cell_world(destination) + Vector3(0, 0.35, 0)
+	var target := _board_support_position(destination)
 	repository.place_piece(piece_id, player_id, destination)
 	logger.info(
 		"PLACE_REQUESTED",
@@ -105,13 +174,53 @@ func _place_selected_piece(destination: Vector2i) -> void:
 	piece.set_meta("holder_id", "")
 	piece.set_meta("location_type", "slot")
 	piece.set_meta("cell", destination)
+	_set_piece_render_state(piece, true)
 	_animate_piece(piece, target, "place")
 	selected_piece = null
+	_select_top_hand_piece()
 	_reflow_collection(player_id, "player_area")
 	_reflow_collection(player_id, "hand")
 	_refresh_hand_strip()
 	_set_status("Placed %s" % piece.name)
 	_set_debug("place slot: %s" % destination)
+
+
+func _place_selected_piece_on_grid(destination: Vector2i) -> void:
+	if selected_piece == null or _primary_board == null:
+		return
+	if str(selected_piece.get_meta("location_type", "")) != "hand":
+		_set_status("Select an object from HAND before placing")
+		return
+	var grid := _primary_board.get_node_or_null("TableGrid") as BgoTableGrid
+	if grid == null or not grid.is_valid_point(destination):
+		_set_status("That destination is outside the table grid")
+		return
+	var piece := selected_piece
+	var piece_id := str(piece.get_meta("entity_id"))
+	var target := _grid_support_position(destination)
+	repository.place_piece_at_grid(piece_id, player_id, destination)
+	(
+		logger
+		. info(
+			"PLACE_REQUESTED",
+			{
+				"piece_id": piece_id,
+				"grid_point": {"x": destination.x, "y": destination.y},
+				"duration": MOVE_DURATION,
+				"target": _vec3_payload(target),
+			}
+		)
+	)
+	piece.set_meta("holder_id", "")
+	piece.set_meta("location_type", "grid")
+	piece.set_meta("grid_origin", destination)
+	_set_piece_render_state(piece, true)
+	_animate_piece(piece, target, "place_grid")
+	selected_piece = null
+	_select_top_hand_piece()
+	_refresh_hand_strip()
+	_set_status("Placed %s on grid %s" % [piece.name, destination])
+	_set_debug("place grid: %s" % destination)
 
 
 func _reflow_collection(holder: String, location_type: String) -> void:
@@ -144,6 +253,7 @@ func _connect_session() -> void:
 	repository.set_logger(logger)
 	if not game_definition.is_empty():
 		repository.set_game_definition(game_definition)
+	repository.set_mcp_command_authority(player_id, _is_host_viewer())
 	repository.session_missing.connect(_on_session_missing)
 	repository.session_loaded.connect(_on_session_loaded)
 	repository.session_error.connect(_on_session_error)
@@ -154,6 +264,17 @@ func _connect_session() -> void:
 
 func _on_piece_changed(piece_id: String, piece_data: Dictionary) -> void:
 	super._on_piece_changed(piece_id, piece_data)
+	if pieces.has(piece_id):
+		var piece := pieces[piece_id] as Node3D
+		var location: Dictionary = piece_data.get("location", {})
+		if piece != null:
+			_set_asset_box_piece_visibility(
+				piece, str(location.get("type", "slot")) not in ["asset_box", "hand"]
+			)
+			if str(location.get("type", "")) == "hand":
+				piece.set_meta(
+					"hand_order", float(piece_data.get("hand_order", Time.get_ticks_msec()))
+				)
 	_reflow_collection("player_1", "player_area")
 	_reflow_collection("player_2", "player_area")
 	_reflow_collection("player_1", "hand")
@@ -168,11 +289,118 @@ func _create_hud() -> void:
 
 
 func _refresh_hand_strip() -> void:
-	if _hand_strip != null:
-		_fill_collection_strip(_hand_strip, "player_area", "Area empty")
-	if _private_hand_strip != null:
-		_fill_collection_strip(_private_hand_strip, "hand", "Hand empty")
+	if _vertical_hand != null:
+		var raw_items: Array = []
+		for key in pieces.keys():
+			var piece := pieces[key] as Node3D
+			if (
+				piece != null
+				and str(piece.get_meta("location_type", "slot")) == "hand"
+				and str(piece.get_meta("holder_id", "")) == player_id
+			):
+				(
+					raw_items
+					. append(
+						{
+							"id": str(key),
+							"label": str(key).to_upper().replace("_", " "),
+							"quantity": int(piece.get_meta("quantity", 1)),
+							"component_id": str(piece.get_meta("component_id", "")),
+							"owner_id": str(piece.get_meta("owner_id", "")),
+							"color": _player_color(str(piece.get_meta("owner_id", player_id))),
+							"hand_order": float(piece.get_meta("hand_order", 0.0)),
+							"stack_key": str(piece.get_meta("hand_stack_key", str(key))),
+						}
+					)
+				)
+		raw_items.sort_custom(_sort_hand_items)
+		_ensure_selected_hand_item(raw_items)
+		var items := _stack_hand_items(raw_items)
+		_vertical_hand.set_items(
+			items, str(selected_piece.get_meta("entity_id", "")) if selected_piece != null else ""
+		)
 	_update_transfer_buttons()
+
+
+func _ensure_selected_hand_item(raw_items: Array) -> void:
+	if raw_items.is_empty():
+		if selected_piece != null and str(selected_piece.get_meta("location_type", "")) == "hand":
+			selected_piece = null
+		return
+	var selection_is_in_hand := (
+		selected_piece != null
+		and str(selected_piece.get_meta("location_type", "")) == "hand"
+		and str(selected_piece.get_meta("holder_id", "")) == player_id
+	)
+	if selection_is_in_hand:
+		return
+	var top_item: Dictionary = raw_items[0]
+	var top_id := str(top_item.get("id", ""))
+	if pieces.has(top_id):
+		selected_piece = pieces[top_id] as Node3D
+
+
+func _stack_hand_items(raw_items: Array) -> Array:
+	var grouped: Dictionary = {}
+	var order: Array[String] = []
+	for value in raw_items:
+		if not value is Dictionary:
+			continue
+		var item: Dictionary = value
+		var stack_key := str(item.get("stack_key", item.get("id", "")))
+		if not grouped.has(stack_key):
+			var group := item.duplicate(true)
+			group["member_ids"] = [str(item.get("id", ""))]
+			grouped[stack_key] = group
+			order.append(stack_key)
+			continue
+		var group: Dictionary = grouped[stack_key]
+		group["quantity"] = int(group.get("quantity", 1)) + int(item.get("quantity", 1))
+		var member_ids: Array = group.get("member_ids", [])
+		member_ids.append(str(item.get("id", "")))
+		group["member_ids"] = member_ids
+		if selected_piece != null and member_ids.has(str(selected_piece.get_meta("entity_id", ""))):
+			group["id"] = str(selected_piece.get_meta("entity_id", ""))
+		grouped[stack_key] = group
+	var result: Array = []
+	for stack_key in order:
+		result.append(grouped[stack_key])
+	return result
+
+
+func _select_top_hand_piece() -> void:
+	var candidates: Array[Dictionary] = []
+	for key in pieces.keys():
+		var piece := pieces[key] as Node3D
+		if (
+			piece != null
+			and str(piece.get_meta("location_type", "")) == "hand"
+			and str(piece.get_meta("holder_id", "")) == player_id
+		):
+			(
+				candidates
+				. append(
+					{
+						"id": str(key),
+						"hand_order": float(piece.get_meta("hand_order", 0.0)),
+					}
+				)
+			)
+	if candidates.is_empty():
+		selected_piece = null
+		return
+	candidates.sort_custom(_sort_hand_items)
+	var next_id := str(candidates[0].get("id", ""))
+	if pieces.has(next_id):
+		_select_piece(pieces[next_id])
+
+
+func _sort_hand_items(left: Dictionary, right: Dictionary) -> bool:
+	var left_order := float(left.get("hand_order", 0.0))
+	var right_order := float(right.get("hand_order", 0.0))
+	if is_equal_approx(left_order, right_order):
+		return str(left.get("id", "")) < str(right.get("id", ""))
+	return left_order > right_order
 
 
 func _fill_collection_strip(
@@ -269,34 +497,43 @@ func _update_transfer_buttons() -> void:
 		_transfer_to_area_button.disabled = holder != player_id or location_type != "hand"
 
 
+func _toggle_asset_box() -> void:
+	_asset_box_open = not _asset_box_open
+	for piece in pieces.values():
+		var object := piece as Node3D
+		if object != null and str(object.get_meta("location_type", "")) == "asset_box":
+			_set_asset_box_piece_visibility(object, false)
+	if _asset_box_button != null:
+		_asset_box_button.text = "CLOSE BOX" if _asset_box_open else "ASSET BOX"
+	_set_status("Asset catalog opened" if _asset_box_open else "Asset catalog closed")
+	_set_debug("asset catalog: %s" % ("open" if _asset_box_open else "closed"))
+
+
 func _apply_landscape_player_layout() -> void:
 	if _player_controls == null:
 		return
 	_player_controls.visible = false
 	var root := _create_landscape_player_root()
-	_add_landscape_player_identity(root)
 	_add_landscape_collection_controls(root)
-	_add_landscape_action_controls(root)
 	if _mode_label != null:
 		_mode_label.visible = false
 	if _debug_label != null:
 		_debug_label.visible = false
-	_set_mode(MODE_PICK_UP)
+	_set_mode(MODE_NONE)
 	_refresh_hand_strip()
 
 
 func _create_landscape_player_root() -> VBoxContainer:
-	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
-	panel.offset_left = -410.0
-	panel.offset_right = -12.0
-	panel.offset_top = 14.0
-	panel.offset_bottom = -14.0
-	$UI.add_child(panel)
-	_player_controls = panel
 	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 8)
-	panel.add_child(root)
+	root.name = "FloatingHandLayer"
+	root.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
+	root.offset_left = -154.0
+	root.offset_right = -10.0
+	root.offset_top = 92.0
+	root.offset_bottom = -22.0
+	root.mouse_filter = Control.MOUSE_FILTER_PASS
+	$UI.add_child(root)
+	_player_controls = root
 	return root
 
 
@@ -317,46 +554,14 @@ func _add_landscape_player_identity(root: VBoxContainer) -> void:
 
 
 func _add_landscape_collection_controls(root: VBoxContainer) -> void:
-	var area_title := Label.new()
-	area_title.text = "PLAYER AREA"
-	area_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	root.add_child(area_title)
-	var area_scroll := ScrollContainer.new()
-	area_scroll.custom_minimum_size = Vector2(370, 74)
-	area_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	area_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	root.add_child(area_scroll)
-	_hand_strip = HBoxContainer.new()
-	_hand_strip.add_theme_constant_override("separation", 6)
-	area_scroll.add_child(_hand_strip)
-
-	var transfer_row := HBoxContainer.new()
-	transfer_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	transfer_row.add_theme_constant_override("separation", 8)
-	root.add_child(transfer_row)
-	_transfer_to_hand_button = Button.new()
-	_transfer_to_hand_button.text = "TO HAND ↓"
-	_transfer_to_hand_button.custom_minimum_size = Vector2(150, 38)
-	_transfer_to_hand_button.pressed.connect(_move_selected_to_hand)
-	transfer_row.add_child(_transfer_to_hand_button)
-	_transfer_to_area_button = Button.new()
-	_transfer_to_area_button.text = "↑ TO AREA"
-	_transfer_to_area_button.custom_minimum_size = Vector2(150, 38)
-	_transfer_to_area_button.pressed.connect(_move_selected_to_area)
-	transfer_row.add_child(_transfer_to_area_button)
-
-	var hand_title := Label.new()
-	hand_title.text = "HAND"
-	hand_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	root.add_child(hand_title)
-	var hand_scroll := ScrollContainer.new()
-	hand_scroll.custom_minimum_size = Vector2(370, 74)
-	hand_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	hand_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	root.add_child(hand_scroll)
-	_private_hand_strip = HBoxContainer.new()
-	_private_hand_strip.add_theme_constant_override("separation", 6)
-	hand_scroll.add_child(_private_hand_strip)
+	_vertical_hand = VERTICAL_HAND_SCENE.instantiate() as BgoVerticalHand
+	_vertical_hand.name = "PlayerHand"
+	_vertical_hand.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_vertical_hand.custom_minimum_size = Vector2(136, 0)
+	_vertical_hand.set_preview_factory(Callable(self, "_build_hand_preview"))
+	_vertical_hand.item_selected.connect(_on_hand_item_pressed)
+	_vertical_hand.mode_selected.connect(_on_hand_mode_selected)
+	root.add_child(_vertical_hand)
 
 
 func _add_landscape_action_controls(root: VBoxContainer) -> void:
@@ -364,23 +569,42 @@ func _add_landscape_action_controls(root: VBoxContainer) -> void:
 	action_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	action_row.add_theme_constant_override("separation", 8)
 	root.add_child(action_row)
-	_pickup_button = Button.new()
-	_pickup_button.text = "PICK UP"
-	_pickup_button.toggle_mode = true
-	_pickup_button.custom_minimum_size = Vector2(110, 54)
-	_pickup_button.pressed.connect(func(): _set_mode(MODE_PICK_UP))
-	action_row.add_child(_pickup_button)
-	_place_button = Button.new()
-	_place_button.text = "PLACE"
-	_place_button.toggle_mode = true
-	_place_button.custom_minimum_size = Vector2(110, 54)
-	_place_button.pressed.connect(func(): _set_mode(MODE_PLACE))
-	action_row.add_child(_place_button)
 	var fullscreen_button := Button.new()
 	fullscreen_button.text = "FULL SCREEN"
 	fullscreen_button.custom_minimum_size = Vector2(120, 54)
 	fullscreen_button.pressed.connect(_enter_web_fullscreen)
 	action_row.add_child(fullscreen_button)
+	_asset_box_button = Button.new()
+	_asset_box_button.text = "ASSET BOX"
+	_asset_box_button.custom_minimum_size = Vector2(120, 54)
+	_asset_box_button.pressed.connect(_toggle_asset_box)
+	action_row.add_child(_asset_box_button)
+
+
+func _on_hand_mode_selected(mode: String) -> void:
+	match mode:
+		"pickup":
+			_set_mode(MODE_PICK_UP)
+		"place":
+			_set_mode(MODE_PLACE)
+		_:
+			_set_mode(MODE_NONE)
+
+
+func _build_hand_preview(item: Dictionary) -> Node3D:
+	var packed_scene := BgoComponentRegistry.load_scene(str(item.get("component_id", "")))
+	if packed_scene == null:
+		return null
+	var preview := packed_scene.instantiate() as Node3D
+	if preview == null:
+		return null
+	var owner_id := str(item.get("owner_id", ""))
+	var color: Color = item.get("color", _player_color(owner_id))
+	if preview is BgoBasicCylinderPiece:
+		(preview as BgoBasicCylinderPiece).configure(
+			str(item.get("id", "preview")), owner_id, player_id, int(item.get("quantity", 1)), color
+		)
+	return preview
 
 
 func _request_landscape_orientation() -> void:

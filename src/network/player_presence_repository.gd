@@ -46,7 +46,8 @@ func publish_player(
 	player_name: String,
 	color: String,
 	role: String = "player",
-	spectator := false
+	spectator := false,
+	seat_id: String = ""
 ) -> void:
 	var path := "%s/%s" % [_players_path(), _sanitize_key(player_id)]
 	(
@@ -59,6 +60,7 @@ func publish_player(
 				"color": color,
 				"role": role,
 				"spectator": spectator,
+				"seat_id": seat_id,
 				"connected": true,
 				"last_seen": Time.get_unix_time_from_system(),
 			}

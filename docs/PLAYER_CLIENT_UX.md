@@ -35,6 +35,16 @@ Baseline gesture profile:
 - Two-finger drag: rotate around the fixed vertical axis.
 - Reset Camera: restore the original seat camera preset.
 - Section shortcuts: move smoothly to a declared section camera preset.
+
+Desktop controls mirror those gestures without taking selection away from the
+left mouse button:
+
+- left drag or middle drag: pan over the table; left click remains selection
+- right drag: orbit with a clamped tabletop pitch
+- mouse wheel: zoom toward the table point under the cursor
+- WASD or arrows: continuous camera-relative pan; Shift accelerates
+- Q/E: continuous orbit; Page Up/Page Down or +/-: zoom
+- R or Home: restore the player/seat camera preset
 - Tap without drag remains object/slot interaction.
 
 Display clients do not inherit these player gestures by default.
@@ -96,17 +106,21 @@ Hand remains semantically distinct from PlayerArea/table sections.
 
 Hand has no physical footprint on the tabletop. It is a viewport-attached overlay representing what the player is holding privately.
 
+Compatible stackable objects are grouped into one visual hand stack while
+retaining their individual logical IDs. In Place mode, after the selected
+object leaves Hand, the next FILO object is selected automatically so several
+objects can be placed without returning to the hand between placements.
+
 Default presentation direction:
 
-- collapsed: bottom hand icon plus item count;
-- expanded: horizontal ordered strip;
-- centered item is the implicit focused item;
-- neighboring items progressively scale down away from the center;
-- horizontal drag scrolls through the hand;
-- explicit tap toggles selection;
-- multiple selection may be supported;
-- if nothing is explicitly selected, PLACE may act on the centered item;
-- after placing the centered item, remaining items close the gap so repeated board taps can place successive items efficiently.
+- borderless viewport-attached stack of the objects' 3D representations;
+- no inventory panel, row labels, title, or visible hand-zone background;
+- FILO order, with the newest item visually in front;
+- overlap and slight alternating rotation preserve the sense of a physical pile;
+- every object remains manually selectable and the active one receives a frame;
+- `PICKUP`, `NONE` and `PLACE` remain logical modes exposed by the global action rail;
+- dense hands reduce their overlap step to stay inside the usable viewport;
+- after placing the selected object, remaining representations close the gap.
 
 The visual carousel is client presentation. Hand ownership, visibility, order, selection commands and placement remain logical concepts.
 
@@ -163,7 +177,7 @@ Conceptual examples:
 
 - `bgo.player.standard`: tap select, one-finger pan, contextual actions.
 - `bgo.player.direct_interact`: taps invoke direct component actions; pickup controls may be hidden.
-- `bgo.player.card_heavy`: hand drawer emphasized and rapid placement enabled.
+- `bgo.player.card_heavy`: floating hand stack emphasized and rapid placement enabled.
 
 A profile may configure mappings such as:
 
@@ -176,7 +190,7 @@ A profile may configure mappings such as:
     drag_two_fingers: "camera_rotate",
     pinch: "camera_zoom",
     show_pickup: true,
-    show_hand_drawer: true,
+    show_hand_stack: true,
     inspect_mode: true
   }
 }
@@ -191,7 +205,9 @@ GamePackages must not provide arbitrary GDScript for gesture handling. Profiles 
 3. Introduce continuous tabletop sections + section camera presets + logical child slots/zones.
 4. Build the first complete abstract-game fixture (chess/checkers class) using individual miniature/piece components and capacity-1 board slots.
 5. Refactor right controls to expose only relevant capabilities and add END TURN from SessionState.
-6. Replace current flat hand controls with the collapsible viewport-attached hand drawer when a supported game actually needs Hand.
+6. Generalize the implemented viewport-attached floating 3D hand across supported
+   game profiles and connect catalog instantiation when Asset Box commands are
+   exposed to the client.
 7. Add contextual action presentation and INSPECT mode.
 8. Formalize safe interaction profiles in the GamePackage contract and conformance tests.
 

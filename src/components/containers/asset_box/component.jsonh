@@ -1,0 +1,12 @@
+{
+  "id": "bgo.container.asset_box",
+  "kind": "container",
+  "scene": "res://src/components/containers/asset_box/asset_box.tscn",
+  "config": {
+    "point_columns": { "type": "int", "min": 1, "max": 64, "default": 6 },
+    "point_rows": { "type": "int", "min": 1, "max": 64, "default": 4 },
+    "point_spacing_cm": { "type": "vector2", "min": 0.01, "default": [5.0, 5.0] },
+    "world_units_per_cm": { "type": "float", "min": 0.0001, "default": 0.01 }
+  },
+  "capabilities": ["asset_storage", "grid_points", "asset_placer_surface", "runtime_toggle"]
+}

@@ -28,15 +28,17 @@ metadata/quantity = 1
 metadata/location_type = "board"
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.16, 0)
 mesh = SubResource("CylinderMesh_piece")
 material_override = SubResource("PreviewMaterial")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.19, 0)
 shape = SubResource("CylinderShape_piece")
 
 [node name="QuantityLabel" type="Label3D" parent="."]
 visible = false
-position = Vector3(0, 0.28, 0)
+position = Vector3(0, 0.44, 0)
 font_size = 72
 billboard = 1
 text = "1"
