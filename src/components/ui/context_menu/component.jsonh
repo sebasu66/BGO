@@ -1,0 +1,10 @@
+{
+  "id": "bgo.ui.context_menu",
+  "kind": "ui",
+  "scene": "res://src/components/ui/context_menu/context_menu_component.tscn",
+  "config": {
+    "render_mode": { "type": "enum", "values": ["screen", "world_billboard"], "default": "world_billboard" },
+    "touch_target": { "type": "float", "min": 44.0, "default": 56.0 }
+  },
+  "capabilities": ["reactive", "nested_actions", "world_billboard", "animated"]
+}

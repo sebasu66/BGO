@@ -8,8 +8,14 @@ func _ready() -> void:
 	_create_player_areas()
 	_create_hud()
 	_configure_camera()
-	_connect_session()
+	if not _begin_initial_load_presentation(Callable(self, "_connect_session")):
+		_connect_session()
 	logger.info("CLIENT_READY", {"role": client_role, "player_id": player_id})
+
+
+## Extension point for componentized clients that stage a visual load sequence.
+func _begin_initial_load_presentation(_on_finished: Callable) -> bool:
+	return false
 
 
 func _process(delta: float) -> void:
@@ -135,19 +141,29 @@ func _pick_at(screen_position: Vector2) -> void:
 		return
 
 	if interaction_mode == MODE_PLACE and selected_piece != null:
-		var destination := Vector2i(-1, -1)
-		if collider != null and collider.has_meta("board_cell"):
-			destination = collider.get_meta("board_cell")
-		else:
-			destination = _screen_to_board_cell(origin, direction)
-		if destination.x >= 0:
-			_place_selected_piece(destination)
+		var hit_position: Vector3 = hit.get("position", Vector3.ZERO)
+		if _place_selected_at_pointer(collider, hit_position, origin, direction):
 			return
 
 	logger.info(
 		"TAP_NO_TARGET", {"x": screen_position.x, "y": screen_position.y, "mode": interaction_mode}
 	)
 	_set_debug("tap: no piece/cell hit")
+
+
+## Extension point for renderers that support slots plus a finer fallback grid.
+func _place_selected_at_pointer(
+	collider: Node, _hit_position: Vector3, origin: Vector3, direction: Vector3
+) -> bool:
+	var destination := Vector2i(-1, -1)
+	if collider != null and collider.has_meta("board_cell"):
+		destination = collider.get_meta("board_cell")
+	else:
+		destination = _screen_to_board_cell(origin, direction)
+	if destination.x < 0:
+		return false
+	_place_selected_piece(destination)
+	return true
 
 
 func _projected_piece_at(screen_position: Vector2) -> Node3D:
@@ -157,7 +173,12 @@ func _projected_piece_at(screen_position: Vector2) -> Node3D:
 	var threshold := maxf(54.0, minf(viewport_size.x, viewport_size.y) * 0.055)
 	for value in pieces.values():
 		var piece := value as Node3D
-		if piece == null or camera.is_position_behind(piece.global_position):
+		if (
+			piece == null
+			or not piece.visible
+			or str(piece.get_meta("location_type", "slot")) in ["hand", "asset_box"]
+			or camera.is_position_behind(piece.global_position)
+		):
 			continue
 		var projected := camera.unproject_position(piece.global_position)
 		var distance := projected.distance_to(screen_position)

@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23171a1d'/%3E%3Ctext x='32' y='45' text-anchor='middle' font-size='40' font-family='Arial' font-weight='700' fill='%23f4f0e7'%3E?%3C/text%3E%3C/svg%3E">
+  <title>Manual de uso · BGO</title>
+  <style>
+    :root {
+      --paper: #f4f0e7;
+      --paper-raised: #fbf8f1;
+      --ink: #171a1d;
+      --muted: #62665f;
+      --rule: #c9c2b4;
+      --accent: #e15b38;
+      --accent-dark: #87321f;
+      --blue: #214f63;
+      --measure: 72rem;
+      --gutter: clamp(1.1rem, 4vw, 4rem);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, transparent 49.85%, rgba(23, 26, 29, .035) 50%, transparent 50.15%),
+        var(--paper);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    a { color: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+
+    .progress {
+      position: fixed;
+      z-index: 20;
+      inset: 0 auto auto 0;
+      width: 0;
+      height: 4px;
+      background: var(--accent);
+    }
+
+    header {
+      min-height: 82vh;
+      padding: clamp(5rem, 12vh, 9rem) var(--gutter) 4rem;
+      display: grid;
+      align-content: end;
+      border-bottom: 1px solid var(--ink);
+    }
+
+    .hero { width: min(100%, var(--measure)); margin: 0 auto; }
+    .eyebrow, .section-number, .status, nav a {
+      font-size: .74rem;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    h1, h2, h3 {
+      margin: 0;
+      font-weight: 900;
+      letter-spacing: -.045em;
+      line-height: .94;
+      text-transform: uppercase;
+    }
+    h1 { max-width: 12ch; font-size: clamp(4.3rem, 15vw, 11rem); }
+    h1 span { color: var(--accent); }
+    .lede {
+      width: min(43rem, 100%);
+      margin: 2rem 0 0 auto;
+      font-size: clamp(1.12rem, 2vw, 1.5rem);
+      color: var(--muted);
+    }
+    .version { margin-top: 2.5rem; color: var(--muted); }
+
+    nav {
+      position: sticky;
+      z-index: 10;
+      top: 0;
+      overflow-x: auto;
+      display: flex;
+      gap: .3rem;
+      padding: .65rem var(--gutter);
+      background: rgba(244, 240, 231, .94);
+      border-bottom: 1px solid var(--rule);
+      backdrop-filter: blur(12px);
+    }
+    nav a {
+      flex: 0 0 auto;
+      padding: .6rem .75rem;
+      text-decoration: none;
+      border-radius: 999px;
+    }
+    nav a:hover, nav a.active { color: #fff; background: var(--ink); }
+
+    main { width: min(100%, var(--measure)); margin: 0 auto; padding: 0 var(--gutter) 8rem; }
+    section { padding: clamp(4.5rem, 10vw, 8rem) 0; border-bottom: 1px solid var(--rule); }
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(5rem, .35fr) 1fr;
+      gap: 2rem;
+      margin-bottom: clamp(3rem, 7vw, 5rem);
+    }
+    .section-number { color: var(--accent-dark); }
+    h2 { max-width: 12ch; font-size: clamp(2.7rem, 7vw, 5.5rem); }
+    h3 { font-size: clamp(1.25rem, 2.5vw, 2rem); line-height: 1.05; }
+    p { margin: .7rem 0 0; }
+    .muted { color: var(--muted); }
+
+    .steps, .feature-list { border-top: 2px solid var(--ink); }
+    .step, .feature {
+      display: grid;
+      grid-template-columns: 4rem minmax(9rem, .42fr) 1fr;
+      gap: clamp(1rem, 3vw, 2.5rem);
+      padding: 1.6rem 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    .step strong {
+      display: grid;
+      place-items: center;
+      width: 2.6rem;
+      height: 2.6rem;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--accent);
+    }
+
+    .mode-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      margin: 3rem 0;
+      border: 2px solid var(--ink);
+    }
+    .mode { min-height: 10rem; padding: 1.4rem; border-right: 1px solid var(--ink); }
+    .mode:last-child { border-right: 0; }
+    .mode b { display: block; margin-bottom: .7rem; font-size: clamp(1.25rem, 3vw, 2.1rem); }
+    .mode.active { color: #fff; background: var(--blue); }
+
+    .keys { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: 1rem; }
+    kbd, .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 2.2rem;
+      padding: .35rem .65rem;
+      color: #fff;
+      background: var(--ink);
+      border-radius: .3rem;
+      font: 800 .78rem/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+      letter-spacing: .04em;
+    }
+
+    .callout {
+      margin: 3rem 0 0;
+      padding: 1.5rem 1.7rem;
+      border-left: .55rem solid var(--accent);
+      background: var(--paper-raised);
+    }
+    .callout strong { text-transform: uppercase; }
+
+    .roles { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--ink); border: 1px solid var(--ink); }
+    .role { padding: clamp(1.5rem, 4vw, 3rem); background: var(--paper-raised); }
+    .role .status { display: inline-block; margin-bottom: 2rem; color: var(--accent-dark); }
+
+    pre {
+      overflow-x: auto;
+      margin: 1.5rem 0 0;
+      padding: 1.25rem;
+      color: #f5f2e9;
+      background: #15191c;
+      border-radius: .35rem;
+      font-size: .9rem;
+    }
+    code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+
+    .limits li { margin: .85rem 0; padding-left: .4rem; }
+    footer { padding: 3rem var(--gutter); color: #fff; background: var(--ink); }
+    footer div { width: min(100%, var(--measure)); margin: 0 auto; }
+
+    .reveal { opacity: 0; transform: translateY(18px); transition: opacity .5s ease, transform .5s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    @media (max-width: 700px) {
+      header { min-height: 72vh; }
+      .section-head { grid-template-columns: 1fr; gap: .7rem; }
+      .step, .feature { grid-template-columns: 3rem 1fr; }
+      .step p, .feature p { grid-column: 2; }
+      .mode-strip, .roles { grid-template-columns: 1fr; }
+      .mode { min-height: 0; border-right: 0; border-bottom: 1px solid var(--ink); }
+      .mode:last-child { border-bottom: 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .reveal { opacity: 1; transform: none; transition: none; }
+    }
+
+    @media print {
+      nav, .progress { display: none; }
+      header { min-height: 0; padding-top: 2rem; }
+      section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="progress" aria-hidden="true"></div>
+  <header>
+    <div class="hero">
+      <div class="eyebrow">Board Game Online · Guía inicial</div>
+      <h1>Manual de <span>mesa</span></h1>
+      <p class="lede">Cómo entrar a una partida, mover la cámara, tomar componentes con la mano y colocarlos en el tablero. Este documento describe el prototipo actual y se irá ampliando con cada iteración.</p>
+      <p class="version eyebrow">Versión 0.1 · TEST001</p>
+    </div>
+  </header>
+
+  <nav aria-label="Secciones del manual">
+    <a href="#inicio">Inicio</a>
+    <a href="#camara">Cámara</a>
+    <a href="#mano">Mano</a>
+    <a href="#utilidades">Utilidades</a>
+    <a href="#roles">Roles</a>
+    <a href="#sistema">Sistema</a>
+    <a href="#dev">DEV</a>
+    <a href="#limites">Estado actual</a>
+  </nav>
+
+  <main>
+    <section id="inicio" class="reveal">
+      <div class="section-head"><span class="section-number">01 / Inicio</span><h2>Tu primer movimiento</h2></div>
+      <div class="steps">
+        <article class="step"><strong>1</strong><h3>Entrá como jugador</h3><p>Desde el lobby de prueba abrí una vista <b>PLAYER</b>. La vista <b>DISPLAY</b> sirve como mesa compartida y no ofrece controles de jugador.</p></article>
+        <article class="step"><strong>2</strong><h3>Elegí PICKUP</h3><p>Activá el modo <b>PICKUP</b> en la mano. Tocá o hacé clic en un componente permitido para llevarlo a tu mano.</p></article>
+        <article class="step"><strong>3</strong><h3>Seleccioná la pieza</h3><p>En la barra vertical de la mano, tocá el elemento que querés usar. El marco indica cuál está seleccionado.</p></article>
+        <article class="step"><strong>4</strong><h3>Colocá en el tablero</h3><p>Cambiá a <b>PLACE</b> y tocá una celda válida. El sistema alinea la pieza con la grilla y evita ocupar un espacio ya bloqueado.</p></article>
+      </div>
+    </section>
+
+    <section id="camara" class="reveal">
+      <div class="section-head"><span class="section-number">02 / Cámara</span><h2>Mirar la mesa</h2></div>
+      <div class="feature-list">
+        <article class="feature"><span class="chip">PAN</span><h3>Desplazar</h3><p>Arrastrá con un dedo o con el botón izquierdo del mouse para recorrer la mesa.</p></article>
+        <article class="feature"><span class="chip">ZOOM</span><h3>Acercar</h3><p>Usá el gesto de pinza en pantalla táctil o la rueda del mouse.</p></article>
+        <article class="feature"><span class="chip">ROTATE</span><h3>Rotar</h3><p>Mové dos dedos a la vez para cambiar el ángulo de observación.</p></article>
+      </div>
+      <aside class="callout"><strong>¿Te perdiste?</strong> Usá <b>RESET CAM</b> para volver a la vista inicial del jugador.</aside>
+    </section>
+
+    <section id="mano" class="reveal">
+      <div class="section-head"><span class="section-number">03 / Mano</span><h2>Tres modos claros</h2></div>
+      <div class="mode-strip" aria-label="Modos de la mano">
+        <div class="mode active"><b>PICKUP</b><span>El próximo componente válido que toques va a tu mano.</span></div>
+        <div class="mode"><b>NONE</b><span>Ninguna acción de tomar o colocar queda armada.</span></div>
+        <div class="mode"><b>PLACE</b><span>El elemento enmarcado baja a la celda válida que elijas.</span></div>
+      </div>
+      <p>La mano es una barra vertical anclada a la pantalla. Sus componentes no tienen física ni chocan con la mesa. Funciona como una pila <b>FILO</b>: lo último que tomaste aparece primero, aunque podés seleccionar cualquier elemento manualmente.</p>
+    </section>
+
+    <section id="utilidades" class="reveal">
+      <div class="section-head"><span class="section-number">04 / Utilidades</span><h2>Controles laterales</h2></div>
+      <div class="feature-list">
+        <article class="feature"><span class="chip">RESET</span><h3>RESET CAM</h3><p>Restaura posición, distancia y ángulo de cámara.</p></article>
+        <article class="feature"><span class="chip">FILTER</span><h3>Filtro de cámara</h3><p>Elegí qué propietarios y tipos de componente resultan interactivos.</p></article>
+        <article class="feature"><span class="chip">FULL</span><h3>FULL SCREEN</h3><p>En Web, solicita el modo de pantalla completa para jugar en apaisado.</p></article>
+        <article class="feature"><span class="chip">LOBBY</span><h3>Volver</h3><p>Regresa al selector de pruebas. El botón <b>‹</b> contrae toda la barra.</p></article>
+        <article class="feature"><span class="chip">?</span><h3>Ayuda</h3><p>Abre este manual en otra pestaña para conservar la partida abierta.</p></article>
+      </div>
+    </section>
+
+    <section id="roles" class="reveal">
+      <div class="section-head"><span class="section-number">05 / Roles</span><h2>Una partida, varias vistas</h2></div>
+      <div class="roles">
+        <article class="role"><span class="status">Interactiva</span><h3>PLAYER</h3><p>Cámara personal, mano, modos de interacción, filtros y controles de sesión. Las reglas de propiedad determinan qué puede controlar cada jugador.</p></article>
+        <article class="role"><span class="status">Compartida</span><h3>DISPLAY</h3><p>Vista común de la mesa, pensada para una pantalla central o TV. Representa el estado sincronizado sin convertirse en una mano de jugador.</p></article>
+      </div>
+    </section>
+
+    <section id="sistema" class="reveal">
+      <div class="section-head"><span class="section-number">06 / Sistema</span><h2>Caja, grilla y propiedad</h2></div>
+      <div class="feature-list">
+        <article class="feature"><span class="chip">5 CM</span><h3>Grilla lógica</h3><p>La mesa usa puntos separados por una medida base de 5 × 5 cm. Los componentes colocables se alinean con esa estructura y pueden ocupar más de un punto.</p></article>
+        <article class="feature"><span class="chip">OWNER</span><h3>Propiedad</h3><p>Propietario, controlador, ubicación y visibilidad son datos distintos. Un objeto puede ser neutral y luego quedar en posesión de un jugador.</p></article>
+        <article class="feature"><span class="chip">BOX</span><h3>Caja del juego</h3><p>Es el catálogo conceptual de componentes que aún no entraron o que ya salieron de la partida. En esta versión su integración interactiva todavía es provisional.</p></article>
+      </div>
+    </section>
+
+    <section id="dev" class="reveal">
+      <div class="section-head"><span class="section-number">07 / Desarrollo</span><h2>Consola DEV</h2></div>
+      <p>Las compilaciones de desarrollo incluyen una consola para inspeccionar objetos y comandos lógicos. No forma parte de la interacción normal del jugador.</p>
+      <pre><code>game.objects
+game.commands
+game.refresh
+game.call &lt;objeto&gt; &lt;método&gt; [argumentos]
+consoleHelp</code></pre>
+      <p class="muted">Los métodos públicos compatibles de nuevos objetos pueden registrarse como comandos de consola. La ayuda muestra parámetros y sugerencias cuando un nombre no coincide.</p>
+    </section>
+
+    <section id="limites" class="reveal">
+      <div class="section-head"><span class="section-number">08 / Estado</span><h2>Qué sigue en construcción</h2></div>
+      <ul class="limits">
+        <li>El modo <b>sandbox</b> todavía no existe como modo de juego terminado.</li>
+        <li>La caja visual basada en el catálogo de assets está en integración y aún no constituye el flujo final.</li>
+        <li>El menú contextual jerárquico y los toast existen como componentes de UI, pero no están conectados a todas las acciones del juego principal.</li>
+        <li>Las reglas y comandos definitivos pertenecen a cada paquete de juego; TEST001 es una escena de conformidad y prueba.</li>
+      </ul>
+      <aside class="callout"><strong>Manual vivo.</strong> Esta es la primera edición. Se actualizará a medida que las funciones pasen de prototipo a flujo estable.</aside>
+    </section>
+  </main>
+
+  <footer><div><b>BGO / BOARD GAME ONLINE</b><p>Cerrá esta pestaña para volver a la partida.</p></div></footer>
+
+  <script>
+    const sections = [...document.querySelectorAll("main section")];
+    const links = [...document.querySelectorAll("nav a")];
+    const progress = document.querySelector(".progress");
+    const reveal = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => entry.isIntersecting && entry.target.classList.add("visible"));
+    }, { threshold: 0.08 });
+    sections.forEach((section) => reveal.observe(section));
+
+    const activeSection = new IntersectionObserver((entries) => {
+      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (!visible) return;
+      links.forEach((link) => link.classList.toggle("active", link.hash === `#${visible.target.id}`));
+    }, { rootMargin: "-20% 0px -65% 0px", threshold: [0, .2, .6] });
+    sections.forEach((section) => activeSection.observe(section));
+
+    addEventListener("scroll", () => {
+      const distance = document.documentElement.scrollHeight - innerHeight;
+      progress.style.width = `${distance > 0 ? (scrollY / distance) * 100 : 0}%`;
+    }, { passive: true });
+  </script>
+</body>
+</html>

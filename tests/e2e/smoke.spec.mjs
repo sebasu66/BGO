@@ -52,5 +52,7 @@ test('Godot Web shell exposes diagnostics, build badge, and creates a canvas', a
 test('error viewer surface is reachable', async ({ page }) => {
   await page.goto('/error-viewer/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('body')).toContainText(/error|diagnostic|BGO/i);
-  await page.screenshot({ path: 'artifacts/screenshots/error-viewer.png', fullPage: true });
+  // The error viewer can contain an arbitrarily tall remote log. A viewport
+  // capture is stable in Chromium while still preserving smoke-test evidence.
+  await page.screenshot({ path: 'artifacts/screenshots/error-viewer.png' });
 });

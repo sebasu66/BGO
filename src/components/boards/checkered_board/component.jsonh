@@ -8,7 +8,11 @@
   "config": {
     "columns": { "type": "int", "min": 2, "max": 30, "default": 8 },
     "rows": { "type": "int", "min": 2, "max": 30, "default": 6 },
-    "cell_size": { "type": "float", "min": 0.5, "max": 3.0, "default": 1.2 }
+    "cell_size": { "type": "float", "min": 0.5, "max": 3.0, "default": 1.2 },
+    "grid_cell_size_cm": { "type": "float", "min": 0.1, "max": 100.0, "default": 5.0 },
+    "grid_points_per_unit": { "type": "int", "min": 1, "max": 100, "default": 5 },
+    "grid_virtual_infinite": { "type": "bool", "default": true },
+    "slots_enabled": { "type": "bool", "default": true }
   },
   "capabilities": ["slot_grid", "placeable_surface"],
   "verbs": {}

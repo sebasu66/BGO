@@ -77,8 +77,8 @@ static func _parse_jsonh(source: String) -> Dictionary:
 
 static func validate_game(data: Dictionary) -> Array[String]:
 	var errors: Array[String] = []
-	if str(data.get("schema", "")) != "bgo.game":
-		errors.append("schema must be 'bgo.game'.")
+	if int(data.get("schema_version", 0)) != 1:
+		errors.append("schema_version must be 1.")
 
 	var game: Variant = data.get("game")
 	if not game is Dictionary:
@@ -93,22 +93,20 @@ static func validate_game(data: Dictionary) -> Array[String]:
 		if max_players < min_players:
 			errors.append("game.max_players must be >= game.min_players.")
 
-	var board: Variant = data.get("board")
+	var board_columns := 0
+	var board_rows := 0
+	var board: Variant = _validate_table_instances(data.get("table", {}), errors)
+	if not board is Dictionary or board.is_empty():
+		board = data.get("board")
 	if not board is Dictionary:
-		errors.append("Missing object 'board'.")
+		errors.append("A board component is required in table.instances.")
 	else:
-		_validate_component_reference(board, "board", errors)
-
-	var flow: Variant = data.get("flow")
-	if not flow is Dictionary:
-		errors.append("Missing object 'flow'.")
-	else:
-		if str(flow.get("initial_phase", "")).is_empty():
-			errors.append("flow.initial_phase is required.")
-		if str(flow.get("turn_order", "")) != "round_robin":
-			errors.append("flow.turn_order must currently be 'round_robin'.")
-		if str(flow.get("turn_end", "")) != "manual":
-			errors.append("flow.turn_end must be 'manual'.")
+		if data.has("board"):
+			_validate_component_reference(board, "board", errors)
+		var board_config: Variant = board.get("config", {})
+		if board_config is Dictionary:
+			board_columns = int(board_config.get("columns", 0))
+			board_rows = int(board_config.get("rows", 0))
 
 	var player_ids: Dictionary = {}
 	var players: Variant = data.get("players")
@@ -131,8 +129,19 @@ static func validate_game(data: Dictionary) -> Array[String]:
 			if area is Dictionary and not area.is_empty():
 				_validate_component_reference(area, "players[%d].area" % index, errors)
 
+	var occupied_initial_slots: Dictionary = {}
+	var occupied_asset_box_points: Dictionary = {}
+	var asset_box_id := ""
+	var asset_box_columns := 0
+	var asset_box_rows := 0
 	var setup: Variant = data.get("setup", {})
 	if setup is Dictionary:
+		var asset_box: Variant = setup.get("asset_box", {})
+		if asset_box is Dictionary and not asset_box.is_empty():
+			asset_box_id = str(asset_box.get("id", "box"))
+			asset_box_columns = int(asset_box.get("point_columns", 0))
+			asset_box_rows = int(asset_box.get("point_rows", 0))
+			_validate_asset_box(asset_box, "setup.asset_box", errors)
 		var objects: Variant = setup.get("objects", [])
 		if objects is Array:
 			var object_ids: Dictionary = {}
@@ -157,21 +166,189 @@ static func validate_game(data: Dictionary) -> Array[String]:
 							% [index, owner_id]
 						)
 					)
-				var quantity := int(object_def.get("quantity", 1))
-				if quantity < 0:
-					errors.append("setup.objects[%d].quantity must be >= 0." % index)
-				var location: Variant = object_def.get("initial_location")
-				if not location is Dictionary or str(location.get("type", "")).is_empty():
-					errors.append("setup.objects[%d].initial_location is required." % index)
-
-	var listeners: Variant = data.get("listeners", [])
-	if not listeners is Array:
-		errors.append("listeners must be an array.")
-	else:
-		var router := GameEventRouter.new()
-		errors.append_array(router.configure(listeners))
+				_validate_quantity_policy(object_def, index, errors)
+				_validate_initial_location(
+					object_def,
+					index,
+					board_columns,
+					board_rows,
+					occupied_initial_slots,
+					asset_box_id,
+					asset_box_columns,
+					asset_box_rows,
+					occupied_asset_box_points,
+					errors
+				)
 
 	return errors
+
+
+static func _validate_table_instances(table_value: Variant, errors: Array[String]) -> Dictionary:
+	if not table_value is Dictionary:
+		errors.append("table must be an object.")
+		return {}
+	var instances_value: Variant = table_value.get("instances", [])
+	if not instances_value is Array or instances_value.is_empty():
+		return {}
+	var instance_ids: Dictionary = {}
+	var board: Dictionary = {}
+	for index in instances_value.size():
+		var instance_value: Variant = instances_value[index]
+		if not instance_value is Dictionary:
+			errors.append("table.instances[%d] must be an object." % index)
+			continue
+		var instance: Dictionary = instance_value
+		var instance_id := str(instance.get("id", ""))
+		if instance_id.is_empty():
+			errors.append("table.instances[%d].id is required." % index)
+		elif instance_ids.has(instance_id):
+			errors.append("Duplicate table instance id '%s'." % instance_id)
+		else:
+			instance_ids[instance_id] = true
+		_validate_component_reference(instance, "table.instances[%d]" % index, errors)
+		_validate_placement(instance.get("placement", {}), index, errors)
+		var component_id := str(instance.get("component", ""))
+		if BgoComponentRegistry.get_kind(component_id) == "board":
+			if not board.is_empty():
+				errors.append("table.instances currently supports one primary board.")
+			else:
+				board = instance
+	return board
+
+
+static func _validate_placement(value: Variant, index: int, errors: Array[String]) -> void:
+	if not value is Dictionary:
+		errors.append("table.instances[%d].placement must be an object." % index)
+		return
+	for key in ["position", "rotation_degrees", "scale"]:
+		if value.has(key) and not _is_vector3(value[key]):
+			errors.append("table.instances[%d].placement.%s must be a 3D vector." % [index, key])
+
+
+static func _is_vector3(value: Variant) -> bool:
+	if value is Array:
+		return value.size() == 3
+	if value is Dictionary:
+		return value.has("x") and value.has("y") and value.has("z")
+	return false
+
+
+static func _validate_initial_location(
+	object_def: Dictionary,
+	index: int,
+	columns: int,
+	rows: int,
+	occupied: Dictionary,
+	asset_box_id: String,
+	asset_box_columns: int,
+	asset_box_rows: int,
+	occupied_asset_box_points: Dictionary,
+	errors: Array[String]
+) -> void:
+	var location: Variant = object_def.get("initial_location", {})
+	if not location is Dictionary:
+		errors.append("setup.objects[%d].initial_location must be an object." % index)
+		return
+	var location_type := str(location.get("type", ""))
+	if location_type == "asset_box":
+		_validate_asset_box_location(
+			location,
+			index,
+			asset_box_id,
+			asset_box_columns,
+			asset_box_rows,
+			occupied_asset_box_points,
+			errors
+		)
+		return
+	if location_type != "slot":
+		errors.append("setup.objects[%d].initial_location.type must currently be 'slot'." % index)
+		return
+	var slot_id := str(location.get("slot_id", ""))
+	var parts := slot_id.split(":")
+	if parts.size() != 3 or parts[0] != "board":
+		errors.append(
+			"setup.objects[%d] has invalid board slot '%s'. Expected board:x:y." % [index, slot_id]
+		)
+		return
+	var x := int(parts[1])
+	var y := int(parts[2])
+	if x < 0 or y < 0 or x >= columns or y >= rows:
+		errors.append(
+			"setup.objects[%d] slot '%s' is outside the configured board." % [index, slot_id]
+		)
+		return
+	if occupied.has(slot_id):
+		errors.append(
+			"Initial slot '%s' is already occupied by '%s'." % [slot_id, str(occupied[slot_id])]
+		)
+	else:
+		occupied[slot_id] = str(object_def.get("id", "unnamed"))
+
+
+static func _validate_asset_box(
+	asset_box: Dictionary, label: String, errors: Array[String]
+) -> void:
+	var box_id := str(asset_box.get("id", ""))
+	if box_id.is_empty():
+		errors.append("%s.id is required." % label)
+
+
+static func _validate_asset_box_location(
+	location: Dictionary,
+	index: int,
+	asset_box_id: String,
+	columns: int,
+	rows: int,
+	occupied: Dictionary,
+	errors: Array[String]
+) -> void:
+	if asset_box_id.is_empty():
+		errors.append(
+			"setup.objects[%d] uses asset_box but setup.asset_box is missing or invalid." % index
+		)
+		return
+	var location_box_id := str(location.get("box_id", asset_box_id))
+	if location_box_id != asset_box_id:
+		errors.append(
+			"setup.objects[%d] references unknown asset box '%s'." % [index, location_box_id]
+		)
+		return
+	# Legacy origin/footprint values are accepted for schema compatibility but
+	# do not define runtime box state. Asset Placer owns catalog layout.
+
+
+static func _validate_quantity_policy(
+	object_def: Dictionary, index: int, errors: Array[String]
+) -> void:
+	var raw_value: Variant = object_def.get(
+		"qty_available", object_def.get("QtyAvailable", object_def.get("availability", "unique"))
+	)
+	var policy := str(raw_value).to_lower()
+	if policy in ["unico", "one", "1"]:
+		policy = "unique"
+	elif policy in ["1-n", "finite", "limited"]:
+		policy = "finite"
+	elif policy in ["infinito", "unlimited"]:
+		policy = "infinite"
+	if policy not in ["unique", "finite", "infinite"]:
+		errors.append(
+			"setup.objects[%d].qty_available must be unique, finite or infinite." % index
+		)
+		return
+	var quantity := int(object_def.get("quantity", 1))
+	if quantity < 1:
+		errors.append("setup.objects[%d].quantity must be at least 1." % index)
+	if policy == "unique" and quantity != 1:
+		errors.append("setup.objects[%d] with qty_available=unique must have quantity 1." % index)
+
+
+static func _read_point(value: Variant) -> Vector2i:
+	if value is Dictionary:
+		return Vector2i(int(value.get("x", -1)), int(value.get("y", -1)))
+	if value is Array and value.size() == 2:
+		return Vector2i(int(value[0]), int(value[1]))
+	return Vector2i(-1, -1)
 
 
 static func _validate_component_reference(

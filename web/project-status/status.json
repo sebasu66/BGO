@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-21T03:30:00-03:00",
+  "updated_at": "2026-08-24T04:30:00-03:00",
   "overall": {
     "status": "warning",
     "label": "EN DESARROLLO"
@@ -11,8 +11,8 @@
     "status": "active",
     "status_label": "ACTIVO",
     "progress_percent": 92,
-    "description": "El núcleo de prototipo ya usa un único protocolo de comandos y eventos, FlowState separado, fin de turno manual, estado lógico con cantidad/estado, listeners declarativos y registro de componentes desde contratos. La suite headless cubre una partida abstracta completa.",
-    "next_action": "Validar este refactor en CI/DEV y completar el contrato de fases, puntuación manual y resultado administrado por host sobre el mismo protocolo."
+    "description": "TEST001 ya tiene build Web reproducible, CI headless, Playwright E2E con evidencia, roles Display/P1/P2, gestos de cámara y diagnóstico de errores. El deploy DEV automático ya está preparado y aislado del canal live; falta únicamente configurar las credenciales/ID de Firebase DEV en GitHub.",
+    "next_action": "Configurar FIREBASE_DEV_SERVICE_ACCOUNT y FIREBASE_DEV_PROJECT_ID en GitHub; después validar el primer deploy automático al canal DEV y continuar con SessionState/turnos/resultado + mesa/secciones/slots para el fixture abstracto."
   },
   "health_checks": [
     {
@@ -61,7 +61,13 @@
       "name": "Unit / domain tests",
       "status": "success",
       "label": "ACTIVO",
-      "detail": "105 aserciones headless verifican SessionState, FlowState, ocupación, permisos, revisiones, cantidad/estado, listeners y una partida abstracta completa."
+      "detail": "Runner headless disponible y ejecutado por GitHub Actions; incluye API MCP y procesamiento host de comandos Firebase. Ampliar cobertura a conflictos de revisión y filtrado privado."
+    },
+    {
+      "name": "MCP remoto DEV",
+      "status": "warning",
+      "label": "PROTOTIPO SIN AUTH",
+      "detail": "Streamable HTTP Function 0.2.0 desplegada en DEV; handshake, tools/list, lectura de entidades y escritura validada con host Godot fueron comprobados en vivo. Sigue sin autenticación y no es apta para PROD."
     },
     {
       "name": "Architecture checks",
@@ -78,6 +84,12 @@
   ],
   "blockers": [
     {
+      "title": "MCP DEV todavía no tiene autenticación",
+      "status": "warning",
+      "label": "SEGURIDAD",
+      "detail": "La primera versión fija TEST001/host por configuración. Antes de acceso amplio necesita pairing temporal, OAuth, revocación, filtrado privado y control de revisión."
+    },
+    {
       "title": "Credenciales Firebase DEV todavía no configuradas",
       "status": "warning",
       "label": "INFRA",
@@ -90,10 +102,10 @@
       "detail": "Slots y secciones necesitan restricciones lógicas deterministas para impedir estados imposibles como overlap no permitido."
     },
     {
-      "title": "Fases y puntuación todavía incompletas",
+      "title": "SessionState jugable todavía incompleto",
       "status": "warning",
       "label": "SIGUIENTE",
-      "detail": "Lifecycle, participantes, host, flujo manual y resultado ya existen; faltan hooks de fase y contadores de puntuación manual configurables."
+      "detail": "Faltan lifecycle, participantes/asientos, host, turno activo, número de turno, final de partida y resultado/ganador."
     },
     {
       "title": "Smoke multi-cliente debe repetirse",
@@ -122,9 +134,9 @@
     {
       "id": "2",
       "title": "Playable abstract-game core",
-      "status": "active",
-      "label": "ACTIVO",
-      "description": "Núcleo único con SessionState, FlowState, protocolo comando/evento, tabletop/slots y objetos lógicos para un fixture abstracto completo; siguen fases y puntuación manual.",
+      "status": "planned",
+      "label": "SIGUIENTE",
+      "description": "SessionState con lifecycle/turnos/resultado + tabletop continuo con secciones/slots + miniaturas/piezas individuales para un fixture tipo ajedrez/damas.",
       "checkpoint": "Una partida puede empezar, alternar turnos, mover piezas con ocupación legal y terminar con ganador/perdedor."
     },
     {
@@ -186,9 +198,9 @@
     {
       "id": "10",
       "title": "MCP logical control MVP",
-      "status": "planned",
-      "label": "PLAN",
-      "description": "Exponer sesiones, turnos, estado visible y comandos seguros; preparar soporte para asistentes y participantes AI.",
+      "status": "active",
+      "label": "SLICE DEV",
+      "description": "Slice DEV adelantado por requerimiento del owner: servidor Streamable HTTP, API compacta de entidades/propiedades, comandos registrados y cola Firebase validada por Godot. Auth, revisiones, privacidad y catálogo completo siguen pendientes.",
       "checkpoint": "MCP usa la misma validación de comandos que clientes humanos."
     }
   ],

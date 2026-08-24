@@ -1,0 +1,10 @@
+{
+  "id": "bgo.ui.toast",
+  "kind": "ui",
+  "scene": "res://src/components/ui/toast/toast_component.tscn",
+  "config": {
+    "default_style": { "type": "string", "default": "info" },
+    "default_time_seconds": { "type": "float", "min": 0.0, "default": 4.0 }
+  },
+  "capabilities": ["notifications", "loading_progress", "dismissible", "animated"]
+}

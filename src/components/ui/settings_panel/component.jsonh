@@ -1,0 +1,7 @@
+{
+  "id": "bgo.ui.settings_panel",
+  "kind": "ui",
+  "scene": "res://src/components/ui/settings_panel/settings_panel.tscn",
+  "config": {},
+  "capabilities": ["client_settings", "graphics_quality", "dynamic_resolution"]
+}

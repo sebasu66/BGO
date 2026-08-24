@@ -5,12 +5,15 @@ const LOG_ROOT := "debug"
 const PUBLIC_LOG_ROOT := "debug_public"
 const MAX_BUFFER_ENTRIES := 250
 const WEB_POLL_SECONDS := 0.25
+const LEVEL_PRIORITY := {"debug": 10, "info": 20, "warning": 30, "error": 40}
 
 var game_id := "TEST001"
 var client_id := "unknown"
 var firebase_enabled := true
 var console_enabled := true
 var file_enabled := true
+var game_console_enabled := OS.is_debug_build()
+var minimum_level := "debug" if OS.is_debug_build() else "info"
 
 var _adapter: FirebaseRestAdapter
 var _file_path := ""
@@ -46,6 +49,8 @@ func configure(target_game_id: String, target_client_id: String) -> void:
 
 ## Records a structured BGO event using the configured logging sinks.
 func log_event(event_name: String, payload: Dictionary = {}, level: String = "info") -> void:
+	if not _should_log(level):
+		return
 	var entry := {
 		"ts": Time.get_unix_time_from_system(),
 		"ticks_ms": Time.get_ticks_msec(),
@@ -63,6 +68,7 @@ func log_event(event_name: String, payload: Dictionary = {}, level: String = "in
 	var line := JSON.stringify(entry)
 	if console_enabled:
 		print("[BGO] %s" % line)
+	_write_game_console(event_name, payload, level)
 
 	if not OS.has_feature("web") and file_enabled:
 		_append_file(line)
@@ -75,6 +81,39 @@ func log_event(event_name: String, payload: Dictionary = {}, level: String = "in
 			_poll_web_flight_recorder.call_deferred()
 		else:
 			_flush_structured_error_run("bgo_logger")
+
+
+## Changes the minimum structured-event level accepted by every BGO sink.
+func set_minimum_level(level: String) -> bool:
+	var normalized := level.to_lower()
+	if not LEVEL_PRIORITY.has(normalized):
+		return false
+	minimum_level = normalized
+	info("LOGGER_LEVEL_CHANGED", {"minimum_level": minimum_level})
+	return true
+
+
+func _should_log(level: String) -> bool:
+	var normalized := level.to_lower()
+	return int(LEVEL_PRIORITY.get(normalized, 20)) >= int(LEVEL_PRIORITY.get(minimum_level, 10))
+
+
+func _write_game_console(event_name: String, payload: Dictionary, level: String) -> void:
+	if not game_console_enabled or not is_inside_tree():
+		return
+	var game_console := get_node_or_null("/root/Console")
+	if game_console == null:
+		return
+	var message := "[BGO] %s %s" % [event_name, JSON.stringify(payload)]
+	match level:
+		"error":
+			game_console.call("print_error", message, false)
+		"warning":
+			game_console.call("print_warning", message, false)
+		"info":
+			game_console.call("print_info", message, false)
+		_:
+			game_console.call("print_line", "[DEBUG] %s" % message, false)
 
 
 ## Records a debug-level BGO log entry.
