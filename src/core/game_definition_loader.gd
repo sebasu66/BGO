@@ -98,10 +98,20 @@ static func _parse_jsonh(source: String) -> Dictionary:
 	}
 
 
+static func _apply_canonical_defaults(data: Dictionary, runtime_mode: String) -> void:
+	if runtime_mode == "match" and not data.has("flow"):
+		data["flow"] = {
+			"initial_phase": "main",
+			"turn_order": "round_robin",
+			"turn_end": "manual",
+		}
+
+
 static func validate_game(data: Dictionary) -> Array[String]:
 	var errors: Array[String] = []
 	var runtime: Dictionary = data.get("runtime", {})
 	var runtime_mode := str(runtime.get("mode", "match"))
+	_apply_canonical_defaults(data, runtime_mode)
 	if runtime_mode not in ["match", "sandbox"]:
 		errors.append("runtime.mode must be 'match' or 'sandbox'.")
 	if runtime_mode == "sandbox" and str(runtime.get("persistence", "none")) != "none":

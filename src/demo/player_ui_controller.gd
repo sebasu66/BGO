@@ -4,6 +4,7 @@ extends RefCounted
 const VERTICAL_HAND_SCENE = preload("res://src/components/hands/vertical_hand/vertical_hand.tscn")
 
 
+## Creates the floating player-hand UI root.
 func create_landscape_root(ui_root: Node) -> VBoxContainer:
 	var root := VBoxContainer.new()
 	root.name = "FloatingHandLayer"
@@ -17,6 +18,7 @@ func create_landscape_root(ui_root: Node) -> VBoxContainer:
 	return root
 
 
+## Adds the current player identity header to the hand layer.
 func add_identity(
 	root: VBoxContainer, player_id: String, definition: Dictionary, color: Color
 ) -> void:
@@ -34,6 +36,7 @@ func add_identity(
 	root.add_child(player_title)
 
 
+## Adds and wires the vertical hand component.
 func add_vertical_hand(
 	root: VBoxContainer,
 	preview_factory: Callable,
@@ -51,6 +54,7 @@ func add_vertical_hand(
 	return hand
 
 
+## Adds fullscreen and asset-box actions to the player UI.
 func add_action_controls(
 	root: VBoxContainer, fullscreen_callback: Callable, asset_box_callback: Callable
 ) -> Button:
@@ -71,6 +75,7 @@ func add_action_controls(
 	return asset_box_button
 
 
+## Builds a non-authoritative visual preview for one hand item.
 func build_hand_preview(
 	item: Dictionary, player_id: String, color_for_owner: Callable
 ) -> Node3D:
@@ -93,6 +98,7 @@ func build_hand_preview(
 	return preview
 
 
+## Requests landscape presentation and browser page constraints for player UI.
 func request_landscape_orientation() -> void:
 	if DisplayServer.has_feature(DisplayServer.FEATURE_ORIENTATION):
 		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_SENSOR_LANDSCAPE)
@@ -105,6 +111,7 @@ func request_landscape_orientation() -> void:
 		JavaScriptBridge.eval(page_style, true)
 
 
+## Enters fullscreen using the native or browser-specific path.
 func enter_fullscreen() -> void:
 	if not OS.has_feature("web"):
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)

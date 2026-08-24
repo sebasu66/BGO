@@ -27,21 +27,7 @@ func getWarnings() -> Array[String]:
 
 
 func getDefinition() -> Dictionary:
-	var definition := _registry.build(self)
-	if type_name == "Game":
-		_ensure_canonical_flow(definition)
-	return definition
-
-
-func _ensure_canonical_flow(definition: Dictionary) -> void:
-	var game: Dictionary = definition.get("game", {})
-	if not bool(game.get("turn_based", true)) or definition.has("flow"):
-		return
-	definition["flow"] = {
-		"initial_phase": "main",
-		"turn_order": "round_robin",
-		"turn_end": "manual",
-	}
+	return _registry.build(self)
 
 
 func getJson() -> String:

@@ -2,6 +2,7 @@ class_name BgoPlayerHandController
 extends RefCounted
 
 
+## Builds the visible hand-item model for one player from runtime pieces.
 func build_raw_items(
 	pieces: Dictionary, player_id: String, color_for_owner: Callable
 ) -> Array:
@@ -30,6 +31,7 @@ func build_raw_items(
 	return raw_items
 
 
+## Resolves the stable selected hand item after a hand refresh.
 func resolve_selected_id(raw_items: Array, selected_piece: Node3D, player_id: String) -> String:
 	if raw_items.is_empty():
 		return ""
@@ -42,6 +44,7 @@ func resolve_selected_id(raw_items: Array, selected_piece: Node3D, player_id: St
 	return str((raw_items[0] as Dictionary).get("id", ""))
 
 
+## Groups compatible hand items while preserving deterministic order and selection.
 func stack_items(raw_items: Array, selected_id: String) -> Array:
 	var grouped: Dictionary = {}
 	var order: Array[String] = []
@@ -70,6 +73,7 @@ func stack_items(raw_items: Array, selected_id: String) -> Array:
 	return result
 
 
+## Returns the FILO hand item id for the requested player.
 func top_piece_id(pieces: Dictionary, player_id: String) -> String:
 	var candidates: Array[Dictionary] = []
 	for key in pieces.keys():

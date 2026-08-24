@@ -10,6 +10,7 @@ func _init(pieces: Dictionary, pieces_root: Node3D) -> void:
 	_pieces_root = pieces_root
 
 
+## Synchronizes rendered sandbox objects from authoritative sandbox state.
 func sync_state(state: Dictionary) -> void:
 	var sandbox_objects: Dictionary = state.get("objects", {})
 	for object_id in _pieces.keys().duplicate():
