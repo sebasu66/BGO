@@ -54,15 +54,52 @@
         "placement_mode": "free_or_slot",
         "owner_id": "player_2"
       }
+    ],
+    "instances": [
+      {
+        "id": "main_board",
+        "component": "bgo.board.checkered",
+        "config": {
+          "columns": 8,
+          "rows": 6,
+          "cell_size": 1.2,
+          "grid_cell_size_cm": 5.0,
+          "grid_points_per_unit": 5,
+          "grid_virtual_infinite": true
+        },
+        "placement": {
+          "position": { "x": 0.0, "y": 0.0, "z": 0.0 }
+        }
+      },
+      {
+        "id": "player_1_area",
+        "component": "bgo.player_area.basic",
+        "config": {
+          "player_id": "player_1",
+          "label_text": "PLAYER 1",
+          "area_color": "#735012",
+          "area_size": { "x": 1.55, "y": 0.06, "z": 7.2 },
+          "public_objects": true
+        },
+        "placement": {
+          "position": { "x": -6.15, "y": 0.02, "z": 0.0 }
+        }
+      },
+      {
+        "id": "player_2_area",
+        "component": "bgo.player_area.basic",
+        "config": {
+          "player_id": "player_2",
+          "label_text": "PLAYER 2",
+          "area_color": "#12456E",
+          "area_size": { "x": 1.55, "y": 0.06, "z": 7.2 },
+          "public_objects": true
+        },
+        "placement": {
+          "position": { "x": 6.15, "y": 0.02, "z": 0.0 }
+        }
+      }
     ]
-  },
-  "board": {
-    "component": "bgo.board.checkered",
-    "config": {
-      "columns": 8,
-      "rows": 6,
-      "cell_size": 1.2
-    }
   },
   "players": [
     {
@@ -72,10 +109,6 @@
       "presence": {
         "component": "bgo.player_presence.basic_mask",
         "config": {}
-      },
-      "area": {
-        "component": "bgo.player_area.basic",
-        "config": { "visible": true, "public_objects": true }
       },
       "hand": {
         "visibility": "owner_face_others_hidden"
@@ -89,16 +122,29 @@
         "component": "bgo.player_presence.basic_mask",
         "config": {}
       },
-      "area": {
-        "component": "bgo.player_area.basic",
-        "config": { "visible": true, "public_objects": true }
-      },
       "hand": {
         "visibility": "owner_face_others_hidden"
       }
     }
   ],
+  "sandbox": {
+    "enabled": true,
+    "component_catalog": [
+      {
+        "id": "basic-miniature",
+        "component": "bgo.piece.basic_cylinder",
+        "default_config": {
+          "radius": 0.38,
+          "height": 0.32
+        }
+      }
+    ]
+  },
   "setup": {
+    "asset_box": {
+      "id": "game_box",
+      "label": "ASSET BOX"
+    },
     "objects": [
       {
         "id": "player_1_piece",
@@ -112,6 +158,7 @@
         "id": "player_2_stack",
         "component": "bgo.piece.basic_cylinder",
         "owner_id": "player_2",
+        "qty_available": "finite",
         "quantity": 3,
         "config": { "color_source": "player" },
         "initial_location": { "type": "slot", "slot_id": "board:6:3" }
@@ -120,9 +167,38 @@
         "id": "neutral_stack",
         "component": "bgo.piece.basic_cylinder",
         "owner_id": "",
+        "qty_available": "finite",
         "quantity": 5,
         "config": { "color_source": "fixed", "color": "#E7E0CF" },
         "initial_location": { "type": "slot", "slot_id": "board:3:2" }
+      },
+      {
+        "id": "reserve_neutral_tokens",
+        "component": "bgo.piece.basic_cylinder",
+        "owner_id": "",
+        "qty_available": "finite",
+        "quantity": 12,
+        "config": { "color_source": "fixed", "color": "#E7E0CF" },
+        "initial_location": {
+          "type": "asset_box",
+          "box_id": "game_box",
+          "origin": { "x": 1, "y": 1 },
+          "footprint": { "x": 1, "y": 1 }
+        }
+      },
+      {
+        "id": "reserve_player_tokens",
+        "component": "bgo.piece.basic_cylinder",
+        "owner_id": "player_1",
+        "qty_available": "finite",
+        "quantity": 8,
+        "config": { "color_source": "player" },
+        "initial_location": {
+          "type": "asset_box",
+          "box_id": "game_box",
+          "origin": { "x": 3, "y": 1 },
+          "footprint": { "x": 1, "y": 1 }
+        }
       }
     ]
   }

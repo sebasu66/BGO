@@ -2,7 +2,10 @@
 class_name BgoPlayerArea
 extends Node3D
 
+signal component_event(event_name: String, payload: Dictionary)
+
 @export var player_id := "player_1"
+@export var public_objects := true
 @export var label_text := "PLAYER 1":
 	set(value):
 		label_text = value
@@ -21,12 +24,16 @@ extends Node3D
 
 
 func _ready() -> void:
+	set_meta("bgo_placeable_surface", true)
 	_apply_visuals()
+	component_event.emit(
+		"ready", {"player_id": player_id, "label": label_text, "area_size": _size_payload()}
+	)
 
 
 ## Returns the world-space position of a player-area slot.
 func area_slot_world(slot: int) -> Vector3:
-	return global_position + Vector3(0.0, 0.38, -2.3 + float(slot) * 0.85)
+	return global_position + Vector3(0.0, area_size.y * 0.5, -2.3 + float(slot) * 0.85)
 
 
 func _apply_visuals() -> void:
@@ -47,3 +54,7 @@ func _apply_visuals() -> void:
 	if label != null:
 		label.text = label_text
 		label.position = Vector3(0, 0.12, -area_size.z * 0.42)
+
+
+func _size_payload() -> Dictionary:
+	return {"x": area_size.x, "y": area_size.y, "z": area_size.z}

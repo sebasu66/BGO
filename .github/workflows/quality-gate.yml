@@ -73,6 +73,14 @@ jobs:
         timeout-minutes: 5
         run: npm install
 
+      - name: Install MCP Firebase Function dependencies
+        timeout-minutes: 5
+        run: npm ci --prefix functions
+
+      - name: MCP server build and tests
+        id: mcp_tests
+        run: npm run check --prefix functions
+
       - name: Install Chromium system dependencies
         timeout-minutes: 10
         run: npx playwright install-deps chromium
@@ -143,6 +151,18 @@ jobs:
         id: e2e_local
         run: npm run test:e2e
 
+      - name: Authenticate Firebase DEV function deployment
+        id: firebase_auth
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop' && vars.BGO_MCP_DEPLOY_ENABLED == 'true'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_BOARD_GAME_ONLINE_68C3F }}
+
+      - name: Deploy validated MCP function to Firebase DEV
+        id: deploy_mcp_dev
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop' && vars.BGO_MCP_DEPLOY_ENABLED == 'true'
+        run: npx --yes firebase-tools@15.27.0 deploy --only functions:bgo-mcp-dev:bgoMcpDev --project board-game-online-68c3f --non-interactive
+
       - name: Deploy validated build to Firebase DEV channel
         id: deploy_dev
         if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
@@ -182,9 +202,11 @@ jobs:
             "structure": "${{ steps.structure.outcome }}",
             "godot_import": "${{ steps.import.outcome }}",
             "core_tests": "${{ steps.tests.outcome }}",
+            "mcp_tests": "${{ steps.mcp_tests.outcome }}",
             "web_export": "${{ steps.web_export.outcome }}",
             "e2e_local": "${{ steps.e2e_local.outcome }}",
             "deploy_dev": "${{ steps.deploy_dev.outcome }}",
+            "deploy_mcp_dev": "${{ steps.deploy_mcp_dev.outcome }}",
             "e2e_dev": "${{ steps.e2e_dev.outcome }}",
             "dev_url": "${{ steps.deploy_dev.outputs.details_url }}"
           }

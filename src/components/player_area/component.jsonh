@@ -6,6 +6,10 @@
   "state": {},
   "scene": "res://src/components/player_area/player_area.tscn",
   "config": {
+    "player_id": { "type": "string", "default": "" },
+    "label_text": { "type": "string", "default": "PLAYER" },
+    "area_color": { "type": "string", "default": "#735012" },
+    "area_size": { "type": "vector3", "default": { "x": 1.55, "y": 0.06, "z": 7.2 } },
     "visible": { "type": "bool", "default": true },
     "public_objects": { "type": "bool", "default": true }
   },

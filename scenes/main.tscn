@@ -1,11 +1,8 @@
 [gd_scene format=3 uid="uid://cv02cvbpac4ct"]
 
-[ext_resource type="Script" path="res://src/demo/main_logical_runtime.gd" id="1_main"]
-[ext_resource type="PackedScene" path="res://src/components/boards/checkered_board/checkered_board.tscn" id="2_board"]
-[ext_resource type="PackedScene" path="res://src/components/player_area/player_area.tscn" id="3_area"]
-[ext_resource type="PackedScene" path="res://src/components/pieces/basic_cylinder/basic_cylinder_piece.tscn" id="4_piece"]
-[ext_resource type="Script" path="res://src/components/player_presence/player_presence_layer.gd" id="5_presence"]
-[ext_resource type="Script" path="res://src/ui/camera_filter_controller.gd" id="6_filter"]
+[ext_resource type="Script" uid="uid://c7xaws7uvkg52" path="res://src/demo/main_filtered.gd" id="1_main"]
+[ext_resource type="Script" uid="uid://c1m0u5bv5tgo1" path="res://src/components/player_presence/player_presence_layer.gd" id="5_presence"]
+[ext_resource type="Script" uid="uid://yf7lcgvk4eru" path="res://src/ui/camera_filter_controller.gd" id="6_filter"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -14,19 +11,12 @@ ambient_light_source = 3
 ambient_light_color = Color(1, 0.94, 0.84, 1)
 ambient_light_energy = 0.72
 
-[sub_resource type="StandardMaterial3D" id="StudioMaterial"]
-albedo_color = Color(0.78, 0.75, 0.68, 1)
-roughness = 0.96
+[sub_resource type="StandardMaterial3D" id="SurfaceMaterial"]
+albedo_color = Color(0.68, 0.66, 0.61, 1)
+roughness = 0.86
 
-[sub_resource type="BoxMesh" id="StudioMesh"]
-size = Vector3(80, 0.18, 80)
-
-[sub_resource type="StandardMaterial3D" id="TableMaterial"]
-albedo_color = Color(0.16, 0.075, 0.035, 1)
-roughness = 0.72
-
-[sub_resource type="BoxMesh" id="TableMesh"]
-size = Vector3(15.5, 0.35, 9.8)
+[sub_resource type="PlaneMesh" id="SurfaceMesh"]
+size = Vector2(160, 160)
 
 [node name="Main" type="Node3D" unique_id=1900994057]
 script = ExtResource("1_main")
@@ -42,13 +32,13 @@ mesh = SubResource("StudioMesh")
 [node name="KeyLight" type="DirectionalLight3D" parent="." unique_id=1139649120]
 transform = Transform3D(0.88294756, 0.36994863, -0.2890356, 0, 0.6156615, 0.7880107, 0.46947157, -0.6957722, 0.5435968, 0, 0, 0)
 light_color = Color(1, 0.91, 0.78, 1)
-light_energy = 1.25
+light_energy = 0.85
 shadow_enabled = true
 
 [node name="FillLight" type="OmniLight3D" parent="." unique_id=924605994]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 4.5, 2.5)
 light_color = Color(0.52, 0.67, 1, 1)
-light_energy = 2.2
+light_energy = 0.65
 omni_range = 15.0
 shadow_enabled = true
 
@@ -80,39 +70,18 @@ light_energy = 1.25
 omni_range = 18.0
 shadow_enabled = true
 
-[node name="Table" type="MeshInstance3D" parent="." unique_id=1440442709]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.27, 0)
-material_override = SubResource("TableMaterial")
-mesh = SubResource("TableMesh")
+[node name="InfiniteLightSurface" type="MeshInstance3D" parent="." unique_id=1440442709]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.24, 0)
+material_override = SubResource("SurfaceMaterial")
+mesh = SubResource("SurfaceMesh")
 
-[node name="Board" parent="." unique_id=1309770363 instance=ExtResource("2_board")]
+[node name="Components" type="Node3D" parent="." unique_id=870549109]
 
-[node name="Player1Area" parent="." unique_id=70614072 instance=ExtResource("3_area")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.15, 0.02, 0)
-
-[node name="Player2Area" parent="." unique_id=1709813326 instance=ExtResource("3_area")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.15, 0.02, 0)
-player_id = "player_2"
-label_text = "PLAYER 2"
-area_color = Color(0.07, 0.27, 0.43, 1)
-
-[node name="PlayerPresence" type="Node3D" parent="."]
+[node name="PlayerPresence" type="Node3D" parent="." unique_id=215760472]
 script = ExtResource("5_presence")
 
-[node name="CameraFilters" type="Node" parent="."]
+[node name="CameraFilters" type="Node" parent="." unique_id=977287094]
 script = ExtResource("6_filter")
-
-[node name="EditorPreview" type="Node3D" parent="." unique_id=1086920998]
-
-[node name="Player1Piece" parent="EditorPreview" unique_id=1192341311 instance=ExtResource("4_piece")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.35, -0.6)
-metadata/editor_preview = true
-
-[node name="Player2Piece" parent="EditorPreview" unique_id=428775779 instance=ExtResource("4_piece")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.35, 0.6)
-piece_color = Color(0.3, 0.72, 0.95, 1)
-quantity = 3
-metadata/editor_preview = true
 
 [node name="Pieces" type="Node3D" parent="." unique_id=1611822845]
 

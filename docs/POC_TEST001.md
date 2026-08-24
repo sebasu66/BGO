@@ -2,6 +2,22 @@
 
 TEST001 now validates a shared Firebase-backed board whose static setup comes from `games/test001/game.jsonh` and whose runtime state lives in Firebase RTDB.
 
+The Godot scene is only a generic renderer shell. Physical tabletop components are declared in
+`table.instances`: each entry supplies a stable instance ID, public component ID, component
+configuration and placement. The runtime resolves each component through the registry, instantiates
+it under `Main/Components`, applies its declared properties and records structured load events.
+
+Current TEST001 table instances are:
+
+- `main_board` → `bgo.board.checkered`;
+- `player_1_area` → `bgo.player_area.basic`;
+- `player_2_area` → `bgo.player_area.basic`.
+
+`main.tscn` must not contain game-specific board or player-area instances. Runtime objects from
+`setup.objects` are likewise resolved by component ID and created under `Main/Pieces` from session
+state. Components emit their own `component_event` lifecycle events; the composition layer enriches
+them with instance/component identity and sends them through `BgoLogger`.
+
 ## Game definition
 
 The game file references reusable component IDs rather than redefining component behavior:
@@ -43,7 +59,11 @@ hand         true private/semi-private hand state (cards later)
 
 Every checkered-board cell exposes a logical slot id in the form `board:x:y`. `bgo.slot.basic` is available for future markets, resource banks, discard areas, etc.
 
-`PlayerArea` and `Hand` are intentionally different concepts. Generic PICK UP of the current cylinder piece sends it to `player_area`, not to `hand`.
+The TEST001 board defines `grid_points_per_unit: 5`: each logical cell interval
+contains five one-centimetre placement intervals. Placement snaps to board
+slots first; a slotless surface falls back to this fine grid.
+
+`PlayerArea` and `Hand` are intentionally different concepts. Generic PICKUP sends an eligible object to the viewport-attached hand, not to the physical PlayerArea.
 
 ## Current setup
 
@@ -60,12 +80,12 @@ If TEST001 already exists in Firebase, missing objects from the definition are a
 ## Player controls
 
 - drag: orbit camera;
-- PICK UP + tap an allowed object: move it to the player's area;
-- tap an object in the player's area to make it active;
-- PLACE + tap a valid board cell: move the active object to that board slot;
+- PICKUP + tap an allowed object: move it to the player's viewport-attached hand;
+- tap any hand item: frame it as the manual selection;
+- PLACE + tap a valid board cell: move the framed hand object to that board slot;
 - FULL SCREEN: request browser fullscreen and landscape orientation.
 
-The right-side mobile panel now separates `PLAYER AREA` from `HAND`. The hand remains empty until a hand-capable component such as cards is introduced.
+The player client renders a vertical FILO hand drawer. Hand objects are not physical 3D bodies and do not participate in tabletop collisions.
 
 ## Firebase state
 

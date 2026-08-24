@@ -17,6 +17,12 @@ $staticRoutes = @(
         Source = Join-Path $repoRoot "web/test-launcher"
         Destination = Join-Path $buildRoot "test-launcher"
         Route = "/test-launcher/"
+    },
+    @{
+        Name = "BGO user manual"
+        Source = Join-Path $repoRoot "web/help"
+        Destination = Join-Path $buildRoot "help"
+        Route = "/help/"
     }
 )
 

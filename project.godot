@@ -17,11 +17,23 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 [autoload]
 
 G="*res://src/core/game_api.gd"
+_mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
+GodotxToast="*uid://bgvixrj72u7rv"
+GdssRuntime="*uid://yu6lhnx763yp"
+Console="*uid://ouiu5xh1cs8n"
+BgoGameCommandConsole="*res://src/debug/bgo_game_command_console.gd"
+
+[debug]
+
+file_logging/enable_file_logging=true
+file_logging/log_path="user://logs/bgo.log"
+file_logging/max_log_files=10
 
 [display]
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
+window/size/mode=2
 window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="canvas_items"
@@ -30,7 +42,13 @@ window/handheld/orientation=4
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/lente/plugin.cfg")
+enabled=PackedStringArray("res://addons/asset_placer/plugin.cfg", "res://addons/console/plugin.cfg", "res://addons/gdss/plugin.cfg", "res://addons/godot_ai/plugin.cfg", "res://addons/godotx_toast/plugin.cfg", "res://addons/lente/plugin.cfg", "res://addons/lucide/plugin.cfg", "res://addons/reactive_ui/plugin.cfg", "res://addons/reactive_ui_editor/plugin.cfg", "res://addons/spark/plugin.cfg")
+
+[gdss]
+
+internal/initialized=true
+editor/use_minimap=true
+editor/show_outline=true
 
 [input]
 
@@ -173,4 +191,4 @@ lente_zoom_out={
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
-environment/defaults/default_clear_color=Color(0.025, 0.03, 0.04, 1)
+environment/defaults/default_clear_color=Color(0.86, 0.84, 0.79, 1)

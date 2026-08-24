@@ -31,6 +31,12 @@ const staticRoutes = [
     destination: path.join(buildRoot, "error-viewer"),
     route: "/error-viewer/",
   },
+  {
+    name: "BGO user manual",
+    source: path.join(repoRoot, "web", "help"),
+    destination: path.join(buildRoot, "help"),
+    route: "/help/",
+  },
 ];
 
 await mkdir(buildRoot, { recursive: true });

@@ -255,6 +255,13 @@ func _load_objects(gameplay: GameplayState, repository_state: Dictionary) -> Dic
 		if location_type == "slot":
 			if not gameplay.add_object(object, location_id):
 				return _rejected("invalid_object_slot")
+		elif location_type == "asset_box":
+			object.availability_mode = "finite" if object.quantity > 1 else "unique"
+			object.available_quantity = object.quantity
+			if not gameplay.add_object_to_box(
+				object, object.component_id, {}, object.quantity
+			):
+				return _rejected("invalid_asset_box_object")
 		else:
 			if not object.set_location(location_type, location_id):
 				return _rejected("invalid_object_location")

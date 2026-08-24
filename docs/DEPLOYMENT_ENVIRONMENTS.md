@@ -192,6 +192,16 @@ Current repository safety rule remains:
 firebase deploy --only hosting
 ```
 
+The DEV MCP prototype adds one equally scoped exception:
+
+```text
+firebase deploy --only functions:bgo-mcp-dev:bgoMcpDev --project board-game-online-68c3f
+```
+
+It deploys neither Hosting nor RTDB rules. The `develop` workflow may execute
+this named function deployment after its quality gate; it must never substitute
+an unrestricted `firebase deploy`.
+
 Do not use unrestricted `firebase deploy` while RTDB rules and other Firebase resources are intentionally in prototype state.
 
 When multiple projects/targets are introduced, deployment scripts must make the destination environment explicit. A command should make it difficult to accidentally deploy DEV output to PROD.

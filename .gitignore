@@ -8,3 +8,8 @@
 Thumbs.db
 .vscode/
 .idea/
+
+# Firebase Functions build/dependencies
+/functions/lib/
+/functions/node_modules/
+/functions/.env.local

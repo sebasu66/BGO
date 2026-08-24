@@ -1,11 +1,24 @@
 extends "res://src/demo/main_3d.gd"
 
+const GAME_COMPONENT_COMPOSER = preload("res://src/demo/game_component_composer.gd")
+const ASSET_BOX_SCENE = preload("res://src/components/containers/asset_box/asset_box.tscn")
+const VERTICAL_HAND_SCENE = preload("res://src/components/hands/vertical_hand/vertical_hand.tscn")
+const SEQUENTIAL_DROP_ANIMATOR = preload("res://src/demo/sequential_drop_animator.gd")
+
 var game_definition: Dictionary = {}
 var game_definition_path := ""
 var definition_errors: Array[String] = []
 var _private_hand_strip: HBoxContainer
 var _transfer_to_hand_button: Button
 var _transfer_to_area_button: Button
+var _asset_box_button: Button
+var _asset_box: BgoAssetBox
+var _asset_box_open := false
+var _vertical_hand: BgoVerticalHand
+var _table_components: Dictionary = {}
+var _player_areas: Dictionary = {}
+var _primary_board: BgoCheckeredBoard
+var _load_drop_animator: BgoSequentialDropAnimator
 
 
 func _load_game_definition() -> void:
@@ -33,28 +46,54 @@ func _show_definition_errors() -> void:
 
 
 func _create_board() -> void:
-	_configure_table_surface()
-	var board := $Board as BgoCheckeredBoard
-	if board == null:
-		push_error("Main/Board must be a BgoCheckeredBoard component instance.")
+	var components_root := get_node_or_null("Components") as Node3D
+	if components_root == null:
+		push_error("Main/Components is required for declarative composition.")
 		return
+	var table_definition: Dictionary = game_definition.get("table", {})
+	var definitions: Array = table_definition.get("instances", [])
+	var composer := GAME_COMPONENT_COMPOSER.new() as BgoGameComponentComposer
+	composer.logger = logger
+	_table_components = composer.compose(definitions, components_root)
+	_index_table_components()
+	_prepare_table_component_intro(definitions)
+	_create_asset_box()
 
-	var board_definition: Dictionary = game_definition.get("board", {})
-	if board_definition.is_empty():
-		board.visible = false
-		return
-	board.visible = true
-	var columns := GRID_COLUMNS
-	var rows := GRID_ROWS
-	var cell_size := CELL_SIZE
-	if not game_definition.is_empty():
-		var component_id := str(board_definition.get("component", ""))
-		if BgoComponentRegistry.get_kind(component_id) == "board":
-			var config: Dictionary = board_definition.get("config", {})
-			columns = int(config.get("columns", columns))
-			rows = int(config.get("rows", rows))
-			cell_size = float(config.get("cell_size", cell_size))
-	board.configure(columns, rows, cell_size)
+
+func _begin_initial_load_presentation(on_finished: Callable) -> bool:
+	if _load_drop_animator == null or not _load_drop_animator.has_pending():
+		return false
+	_load_drop_animator.sequence_finished.connect(on_finished, CONNECT_ONE_SHOT)
+	_load_drop_animator.play(true)
+	return true
+
+
+func _prepare_table_component_intro(definitions: Array) -> void:
+	var animator := _ensure_load_drop_animator()
+	for definition_variant in definitions:
+		if not definition_variant is Dictionary:
+			continue
+		var instance_id := str((definition_variant as Dictionary).get("id", ""))
+		var instance := _table_components.get(instance_id) as Node3D
+		if instance != null:
+			animator.enqueue(instance, instance.position)
+
+
+func _ensure_load_drop_animator() -> BgoSequentialDropAnimator:
+	if _load_drop_animator != null:
+		return _load_drop_animator
+	_load_drop_animator = SEQUENTIAL_DROP_ANIMATOR.new() as BgoSequentialDropAnimator
+	_load_drop_animator.name = "SequentialDropAnimator"
+	add_child(_load_drop_animator)
+	return _load_drop_animator
+
+
+func _create_asset_box() -> void:
+	if _asset_box != null:
+		_asset_box.queue_free()
+	# The box is conceptual. Asset Placer represents it as an editor/catalog
+	# surface; runtime never spawns a physical box or places its contents in 3D.
+	_asset_box = null
 
 
 func _configure_table_surface() -> void:
@@ -72,19 +111,8 @@ func _configure_table_surface() -> void:
 
 
 func _create_player_areas() -> void:
-	var p1 := $Player1Area as BgoPlayerArea
-	var p2 := $Player2Area as BgoPlayerArea
-	var table: Dictionary = game_definition.get("table", {})
-	if bool(table.get("debug", false)):
-		p1.visible = false
-		p2.visible = false
-		_create_debug_table_areas(table)
-		return
-	p1.visible = true
-	p2.visible = true
-	_configure_player_area(
-		p1, _player_definition("player_1"), "player_1", "PLAYER 1", Color(0.45, 0.31, 0.06)
-	)
+	# Player areas are regular table.instances and were composed with the board.
+	pass
 
 
 func _create_debug_table_areas(table: Dictionary) -> void:
@@ -195,8 +223,30 @@ func _apply_sandbox_pose(instance: Node3D, pose: Variant) -> void:
 		float(rotation.get("y", 0.0)),
 		float(rotation.get("z", 0.0)),
 	)
-	_configure_player_area(
-		p2, _player_definition("player_2"), "player_2", "PLAYER 2", Color(0.07, 0.27, 0.43)
+
+
+func _index_table_components() -> void:
+	_primary_board = null
+	_player_areas.clear()
+	for instance_value in _table_components.values():
+		var instance := instance_value as Node3D
+		if instance is BgoCheckeredBoard and _primary_board == null:
+			_primary_board = instance as BgoCheckeredBoard
+		elif instance is BgoPlayerArea:
+			var area := instance as BgoPlayerArea
+			_player_areas[area.player_id] = area
+	if _primary_board == null:
+		logger.error("PRIMARY_BOARD_MISSING", {})
+	(
+		logger
+		. info(
+			"TABLE_COMPOSITION_READY",
+			{
+				"instance_count": _table_components.size(),
+				"player_area_count": _player_areas.size(),
+				"board_instance_id": _primary_board.name if _primary_board != null else "",
+			}
+		)
 	)
 
 
@@ -278,24 +328,41 @@ func _create_piece_from_state(id: String, state: Dictionary, cell: Vector2i) -> 
 	if body == null:
 		logger.error("PIECE_COMPONENT_INVALID", {"piece_id": id, "component_id": component_id})
 		return
+	_connect_runtime_component_events(body, id, component_id)
 	if body is BgoBasicCylinderPiece:
 		(body as BgoBasicCylinderPiece).configure(id, owner, holder, quantity, color)
 	else:
 		body.name = id
 		body.set_meta("bgo_piece", true)
 		body.set_meta("entity_id", id)
-		body.set_meta("owner_id", owner)
-		body.set_meta("holder_id", holder)
-		body.set_meta("quantity", quantity)
+	body.set_meta("owner_id", owner)
+	body.set_meta("holder_id", holder)
+	body.set_meta("quantity", quantity)
+	body.set_meta("availability", str(state.get("availability", "unique")))
+	body.set_meta("available_quantity", int(state.get("available_quantity", quantity)))
+	body.set_meta(
+		"hand_stack_key", "%s|%s|%s" % [component_id, owner, JSON.stringify(object_config)]
+	)
 
 	var location: Dictionary = state.get("location", {})
 	var location_type := _normalize_location_type(str(location.get("type", "slot")))
 	body.set_meta("component_id", component_id)
 	body.set_meta("cell", cell)
 	body.set_meta("location_type", location_type)
+	body.set_meta("hand_order", float(state.get("hand_order", 0.0)))
 	body.position = _target_world_position(id, state, cell)
-	$Pieces.add_child(body)
+	_set_piece_render_state(body, location_type != "asset_box" and location_type != "hand")
+	var pieces_root := get_node_or_null("Pieces") as Node3D
+	if pieces_root == null:
+		logger.error("PIECES_ROOT_MISSING", {"piece_id": id})
+		body.queue_free()
+		return
+	pieces_root.add_child(body)
 	pieces[id] = body
+	if body.visible:
+		var animator := _ensure_load_drop_animator()
+		animator.enqueue(body, body.position)
+		animator.play()
 	logger.info(
 		"PIECE_CREATED",
 		{
@@ -322,17 +389,77 @@ func _target_world_position(piece_id: String, state: Dictionary, cell: Vector2i)
 		"hand":
 			var hand_player := str(location.get("player_id", state.get("holder_id", "player_1")))
 			return _private_hand_proxy_world_position(hand_player, piece_id)
+		"asset_box":
+			return _board_support_position(cell)
+		"grid":
+			var origin := _point_from_payload(location.get("origin", {}), cell)
+			if _primary_board != null:
+				return _grid_support_position(origin)
 		"slot":
-			var board := $Board as BgoCheckeredBoard
+			var board := _primary_board
 			var slot_id := str(location.get("slot_id", ""))
 			if board != null and not slot_id.is_empty() and board.is_valid_slot(slot_id):
-				return board.slot_world(slot_id) + Vector3(0, 0.35, 0)
-	return _cell_world(cell) + Vector3(0, 0.35, 0)
+				return board.slot_world(slot_id)
+	return _board_support_position(cell)
+
+
+func _point_from_payload(value: Variant, fallback: Vector2i = Vector2i.ZERO) -> Vector2i:
+	if value is Vector2i:
+		return value
+	if value is Dictionary:
+		return Vector2i(int(value.get("x", fallback.x)), int(value.get("y", fallback.y)))
+	if value is Array and value.size() >= 2:
+		return Vector2i(int(value[0]), int(value[1]))
+	return fallback
+
+
+func _grid_support_position(point: Vector2i) -> Vector3:
+	if _primary_board == null:
+		return Vector3.ZERO
+	var result := _primary_board.grid_point_world(point)
+	var board_cell := _primary_board.grid_point_to_cell(point)
+	if not _primary_board.is_valid_cell(board_cell):
+		var table_surface := get_node_or_null("InfiniteLightSurface") as Node3D
+		if table_surface != null:
+			result.y = table_surface.global_position.y
+	return result
+
+
+func _board_support_position(cell: Vector2i) -> Vector3:
+	var board := _primary_board
+	if board != null:
+		return (
+			board.global_position
+			+ board.cell_world(cell)
+			+ Vector3(0.0, board.surface_height(), 0.0)
+		)
+	return _cell_world(cell)
+
+
+func _set_asset_box_piece_visibility(piece: Node3D, enabled: bool) -> void:
+	_set_piece_render_state(piece, enabled)
+
+
+## Hand and asset-box objects are logical/UI content, not physical tabletop
+## bodies. This prevents invisible hand objects from intercepting placement taps.
+func _set_piece_render_state(piece: Node3D, enabled: bool) -> void:
+	if piece == null:
+		return
+	piece.visible = enabled
+	_set_collision_state_recursive(piece, enabled)
+
+
+func _set_collision_state_recursive(node: Node, enabled: bool) -> void:
+	if node is CollisionObject3D:
+		(node as CollisionObject3D).collision_layer = 1 if enabled else 0
+		(node as CollisionObject3D).collision_mask = 1 if enabled else 0
+	for child in node.get_children():
+		_set_collision_state_recursive(child, enabled)
 
 
 func _player_area_world_position(holder: String, piece_id: String) -> Vector3:
 	var slot := _collection_slot_index(holder, piece_id, "player_area")
-	var area := ($Player2Area if holder == "player_2" else $Player1Area) as BgoPlayerArea
+	var area := _player_areas.get(holder) as BgoPlayerArea
 	if area != null:
 		return area.area_slot_world(slot)
 	return super._hand_world_position(holder, piece_id)
@@ -340,7 +467,7 @@ func _player_area_world_position(holder: String, piece_id: String) -> Vector3:
 
 func _private_hand_proxy_world_position(holder: String, piece_id: String) -> Vector3:
 	var slot := _collection_slot_index(holder, piece_id, "hand")
-	var area := ($Player2Area if holder == "player_2" else $Player1Area) as BgoPlayerArea
+	var area := _player_areas.get(holder) as BgoPlayerArea
 	if area != null:
 		var side := -1.0 if holder == "player_1" else 1.0
 		return area.global_position + Vector3(side * 0.95, 0.55, -2.3 + float(slot) * 0.85)
@@ -364,7 +491,42 @@ func _collection_slot_index(holder: String, piece_id: String, location_type: Str
 
 
 func _cell_world(cell: Vector2i) -> Vector3:
-	var board := $Board as BgoCheckeredBoard
+	var board := _primary_board
 	if board != null:
 		return board.cell_world(cell)
 	return super._cell_world(cell)
+
+
+func _screen_to_board_cell(origin: Vector3, direction: Vector3) -> Vector2i:
+	if _primary_board == null or absf(direction.y) < 0.0001:
+		return Vector2i(-1, -1)
+	var board_y := _primary_board.global_position.y
+	var distance := (board_y - origin.y) / direction.y
+	if distance <= 0.0:
+		return Vector2i(-1, -1)
+	var local_point := _primary_board.to_local(origin + direction * distance)
+	var width := float(_primary_board.columns - 1) * _primary_board.cell_size
+	var depth := float(_primary_board.rows - 1) * _primary_board.cell_size
+	var cell := Vector2i(
+		int(round((local_point.x + width * 0.5) / _primary_board.cell_size)),
+		int(round((local_point.z + depth * 0.5) / _primary_board.cell_size))
+	)
+	return cell if _primary_board.is_valid_cell(cell) else Vector2i(-1, -1)
+
+
+func _connect_runtime_component_events(
+	component: Node, instance_id: String, component_id: String
+) -> void:
+	if component.has_signal("component_event"):
+		component.connect(
+			"component_event", _on_runtime_component_event.bind(instance_id, component_id)
+		)
+
+
+func _on_runtime_component_event(
+	event_name: String, payload: Dictionary, instance_id: String, component_id: String
+) -> void:
+	var enriched := payload.duplicate(true)
+	enriched["instance_id"] = instance_id
+	enriched["component_id"] = component_id
+	logger.info("COMPONENT_%s" % event_name.to_upper(), enriched)
