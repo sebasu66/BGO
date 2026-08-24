@@ -4,6 +4,7 @@ const GAME_COMPONENT_COMPOSER = preload("res://src/demo/game_component_composer.
 const ASSET_BOX_SCENE = preload("res://src/components/containers/asset_box/asset_box.tscn")
 const VERTICAL_HAND_SCENE = preload("res://src/components/hands/vertical_hand/vertical_hand.tscn")
 const SEQUENTIAL_DROP_ANIMATOR = preload("res://src/demo/sequential_drop_animator.gd")
+const SANDBOX_RUNTIME_CONTROLLER = preload("res://src/demo/sandbox_runtime_controller.gd")
 
 var game_definition: Dictionary = {}
 var game_definition_path := ""
@@ -19,6 +20,7 @@ var _table_components: Dictionary = {}
 var _player_areas: Dictionary = {}
 var _primary_board: BgoCheckeredBoard
 var _load_drop_animator: BgoSequentialDropAnimator
+var _sandbox_runtime_controller
 
 
 func _load_game_definition() -> void:
@@ -157,72 +159,17 @@ func _debug_area_color(index: int) -> Color:
 
 
 func _sync_sandbox_state(state: Dictionary) -> void:
-	var sandbox_objects: Dictionary = state.get("objects", {})
-	for object_id in pieces.keys().duplicate():
-		if not sandbox_objects.has(object_id):
-			(pieces[object_id] as Node).queue_free()
-			pieces.erase(object_id)
-	for object_id in sandbox_objects:
-		var object_state: Dictionary = sandbox_objects[object_id]
-		if not pieces.has(object_id):
-			_create_sandbox_object(str(object_id), object_state, state.get("tabletop", {}))
-		else:
-			_place_sandbox_object(pieces[object_id], object_state, state.get("tabletop", {}))
+	_sandbox_controller().sync_state(state)
 
 
-func _create_sandbox_object(
-	object_id: String, object_state: Dictionary, tabletop_state: Dictionary
-) -> void:
-	var component_id := str(object_state.get("component_id", ""))
-	var packed_scene := BgoComponentRegistry.load_scene(component_id)
-	if packed_scene == null:
-		push_warning("Sandbox cannot render component '%s'." % component_id)
-		return
-	var instance := packed_scene.instantiate() as Node3D
-	if instance == null:
-		return
-	instance.name = object_id
-	instance.set_meta("entity_id", object_id)
-	instance.set_meta("component_id", component_id)
-	instance.set_meta("owner_id", str(object_state.get("owner_id", "")))
-	instance.set_meta("quantity", int(object_state.get("quantity", 1)))
-	$Pieces.add_child(instance)
-	pieces[object_id] = instance
-	_place_sandbox_object(instance, object_state, tabletop_state)
-
-
-func _place_sandbox_object(
-	instance: Node3D, object_state: Dictionary, tabletop_state: Dictionary
-) -> void:
-	var object_id := str(object_state.get("object_id", instance.name))
-	var location_type := str(object_state.get("location_type", ""))
-	var location_id := str(object_state.get("location_id", ""))
-	instance.set_meta("location_type", location_type)
-	if location_type == "zone":
-		var placements: Dictionary = tabletop_state.get("object_poses", {})
-		var placement: Dictionary = placements.get(object_id, {})
-		_apply_sandbox_pose(instance, placement.get("pose", {}))
-	elif location_type == "slot":
-		var slots: Dictionary = tabletop_state.get("slots", {})
-		var slot: Dictionary = slots.get(location_id, {})
-		_apply_sandbox_pose(instance, slot.get("pose", {}))
-
-
-func _apply_sandbox_pose(instance: Node3D, pose: Variant) -> void:
-	if not pose is Dictionary or pose.is_empty():
-		return
-	var position: Dictionary = pose.get("position", {})
-	var rotation: Dictionary = pose.get("rotation", {})
-	instance.position = Vector3(
-		float(position.get("x", 0.0)),
-		float(position.get("y", 0.35)),
-		float(position.get("z", 0.0)),
-	)
-	instance.rotation = Vector3(
-		float(rotation.get("x", 0.0)),
-		float(rotation.get("y", 0.0)),
-		float(rotation.get("z", 0.0)),
-	)
+func _sandbox_controller():
+	if _sandbox_runtime_controller == null:
+		var pieces_root := get_node_or_null("Pieces") as Node3D
+		if pieces_root == null:
+			push_error("Main/Pieces is required for sandbox rendering.")
+			return null
+		_sandbox_runtime_controller = SANDBOX_RUNTIME_CONTROLLER.new(pieces, pieces_root)
+	return _sandbox_runtime_controller
 
 
 func _index_table_components() -> void:

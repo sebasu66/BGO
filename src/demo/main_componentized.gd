@@ -1,5 +1,11 @@
 extends "res://src/demo/main_componentized_base.gd"
 
+const PLAYER_HAND_CONTROLLER = preload("res://src/demo/player_hand_controller.gd")
+const PLAYER_UI_CONTROLLER = preload("res://src/demo/player_ui_controller.gd")
+
+var _player_hand_controller := PLAYER_HAND_CONTROLLER.new()
+var _player_ui_controller := PLAYER_UI_CONTROLLER.new()
+
 
 func _set_mode(mode: String) -> void:
 	super._set_mode(mode)
@@ -297,117 +303,25 @@ func _create_hud() -> void:
 
 func _refresh_hand_strip() -> void:
 	if _vertical_hand != null:
-		var raw_items: Array = []
-		for key in pieces.keys():
-			var piece := pieces[key] as Node3D
-			if (
-				piece != null
-				and str(piece.get_meta("location_type", "slot")) == "hand"
-				and str(piece.get_meta("holder_id", "")) == player_id
-			):
-				(
-					raw_items
-					. append(
-						{
-							"id": str(key),
-							"label": str(key).to_upper().replace("_", " "),
-							"quantity": int(piece.get_meta("quantity", 1)),
-							"component_id": str(piece.get_meta("component_id", "")),
-							"owner_id": str(piece.get_meta("owner_id", "")),
-							"color": _player_color(str(piece.get_meta("owner_id", player_id))),
-							"hand_order": float(piece.get_meta("hand_order", 0.0)),
-							"stack_key": str(piece.get_meta("hand_stack_key", str(key))),
-						}
-					)
-				)
-		raw_items.sort_custom(_sort_hand_items)
-		_ensure_selected_hand_item(raw_items)
-		var items := _stack_hand_items(raw_items)
+		var raw_items := _player_hand_controller.build_raw_items(
+			pieces, player_id, Callable(self, "_player_color")
+		)
+		var selected_id := _player_hand_controller.resolve_selected_id(
+			raw_items, selected_piece, player_id
+		)
+		selected_piece = pieces.get(selected_id) as Node3D if pieces.has(selected_id) else null
 		_vertical_hand.set_items(
-			items, str(selected_piece.get_meta("entity_id", "")) if selected_piece != null else ""
+			_player_hand_controller.stack_items(raw_items, selected_id), selected_id
 		)
 	_update_transfer_buttons()
 
 
-func _ensure_selected_hand_item(raw_items: Array) -> void:
-	if raw_items.is_empty():
-		if selected_piece != null and str(selected_piece.get_meta("location_type", "")) == "hand":
-			selected_piece = null
-		return
-	var selection_is_in_hand := (
-		selected_piece != null
-		and str(selected_piece.get_meta("location_type", "")) == "hand"
-		and str(selected_piece.get_meta("holder_id", "")) == player_id
-	)
-	if selection_is_in_hand:
-		return
-	var top_item: Dictionary = raw_items[0]
-	var top_id := str(top_item.get("id", ""))
-	if pieces.has(top_id):
-		selected_piece = pieces[top_id] as Node3D
-
-
-func _stack_hand_items(raw_items: Array) -> Array:
-	var grouped: Dictionary = {}
-	var order: Array[String] = []
-	for value in raw_items:
-		if not value is Dictionary:
-			continue
-		var item: Dictionary = value
-		var stack_key := str(item.get("stack_key", item.get("id", "")))
-		if not grouped.has(stack_key):
-			var group := item.duplicate(true)
-			group["member_ids"] = [str(item.get("id", ""))]
-			grouped[stack_key] = group
-			order.append(stack_key)
-			continue
-		var group: Dictionary = grouped[stack_key]
-		group["quantity"] = int(group.get("quantity", 1)) + int(item.get("quantity", 1))
-		var member_ids: Array = group.get("member_ids", [])
-		member_ids.append(str(item.get("id", "")))
-		group["member_ids"] = member_ids
-		if selected_piece != null and member_ids.has(str(selected_piece.get_meta("entity_id", ""))):
-			group["id"] = str(selected_piece.get_meta("entity_id", ""))
-		grouped[stack_key] = group
-	var result: Array = []
-	for stack_key in order:
-		result.append(grouped[stack_key])
-	return result
-
-
 func _select_top_hand_piece() -> void:
-	var candidates: Array[Dictionary] = []
-	for key in pieces.keys():
-		var piece := pieces[key] as Node3D
-		if (
-			piece != null
-			and str(piece.get_meta("location_type", "")) == "hand"
-			and str(piece.get_meta("holder_id", "")) == player_id
-		):
-			(
-				candidates
-				. append(
-					{
-						"id": str(key),
-						"hand_order": float(piece.get_meta("hand_order", 0.0)),
-					}
-				)
-			)
-	if candidates.is_empty():
+	var next_id := _player_hand_controller.top_piece_id(pieces, player_id)
+	if next_id.is_empty():
 		selected_piece = null
-		return
-	candidates.sort_custom(_sort_hand_items)
-	var next_id := str(candidates[0].get("id", ""))
-	if pieces.has(next_id):
+	elif pieces.has(next_id):
 		_select_piece(pieces[next_id])
-
-
-func _sort_hand_items(left: Dictionary, right: Dictionary) -> bool:
-	var left_order := float(left.get("hand_order", 0.0))
-	var right_order := float(right.get("hand_order", 0.0))
-	if is_equal_approx(left_order, right_order):
-		return str(left.get("id", "")) < str(right.get("id", ""))
-	return left_order > right_order
 
 
 func _fill_collection_strip(
@@ -531,61 +445,28 @@ func _apply_landscape_player_layout() -> void:
 
 
 func _create_landscape_player_root() -> VBoxContainer:
-	var root := VBoxContainer.new()
-	root.name = "FloatingHandLayer"
-	root.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
-	root.offset_left = -154.0
-	root.offset_right = -10.0
-	root.offset_top = 92.0
-	root.offset_bottom = -22.0
-	root.mouse_filter = Control.MOUSE_FILTER_PASS
-	$UI.add_child(root)
-	_player_controls = root
-	return root
+	return _player_ui_controller.create_landscape_root($UI)
 
 
 func _add_landscape_player_identity(root: VBoxContainer) -> void:
-	var player_title := Label.new()
-	var definition := _player_definition(player_id)
-	player_title.text = (
-		"%s · %s"
-		% [
-			str(definition.get("name", player_id.replace("_", " ").capitalize())),
-			player_id.to_upper().replace("_", " ")
-		]
+	_player_ui_controller.add_identity(
+		root, player_id, _player_definition(player_id), _player_color(player_id)
 	)
-	player_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	player_title.add_theme_font_size_override("font_size", 18)
-	player_title.add_theme_color_override("font_color", _player_color(player_id))
-	root.add_child(player_title)
 
 
 func _add_landscape_collection_controls(root: VBoxContainer) -> void:
-	_vertical_hand = VERTICAL_HAND_SCENE.instantiate() as BgoVerticalHand
-	_vertical_hand.name = "PlayerHand"
-	_vertical_hand.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_vertical_hand.custom_minimum_size = Vector2(136, 0)
-	_vertical_hand.set_preview_factory(Callable(self, "_build_hand_preview"))
-	_vertical_hand.item_selected.connect(_on_hand_item_pressed)
-	_vertical_hand.mode_selected.connect(_on_hand_mode_selected)
-	root.add_child(_vertical_hand)
+	_vertical_hand = _player_ui_controller.add_vertical_hand(
+		root,
+		Callable(self, "_build_hand_preview"),
+		Callable(self, "_on_hand_item_pressed"),
+		Callable(self, "_on_hand_mode_selected"),
+	)
 
 
 func _add_landscape_action_controls(root: VBoxContainer) -> void:
-	var action_row := HBoxContainer.new()
-	action_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	action_row.add_theme_constant_override("separation", 8)
-	root.add_child(action_row)
-	var fullscreen_button := Button.new()
-	fullscreen_button.text = "FULL SCREEN"
-	fullscreen_button.custom_minimum_size = Vector2(120, 54)
-	fullscreen_button.pressed.connect(_enter_web_fullscreen)
-	action_row.add_child(fullscreen_button)
-	_asset_box_button = Button.new()
-	_asset_box_button.text = "ASSET BOX"
-	_asset_box_button.custom_minimum_size = Vector2(120, 54)
-	_asset_box_button.pressed.connect(_toggle_asset_box)
-	action_row.add_child(_asset_box_button)
+	_asset_box_button = _player_ui_controller.add_action_controls(
+		root, Callable(self, "_enter_web_fullscreen"), Callable(self, "_toggle_asset_box")
+	)
 
 
 func _on_hand_mode_selected(mode: String) -> void:
@@ -599,42 +480,14 @@ func _on_hand_mode_selected(mode: String) -> void:
 
 
 func _build_hand_preview(item: Dictionary) -> Node3D:
-	var packed_scene := BgoComponentRegistry.load_scene(str(item.get("component_id", "")))
-	if packed_scene == null:
-		return null
-	var preview := packed_scene.instantiate() as Node3D
-	if preview == null:
-		return null
-	var owner_id := str(item.get("owner_id", ""))
-	var color: Color = item.get("color", _player_color(owner_id))
-	if preview is BgoBasicCylinderPiece:
-		(preview as BgoBasicCylinderPiece).configure(
-			str(item.get("id", "preview")), owner_id, player_id, int(item.get("quantity", 1)), color
-		)
-	return preview
+	return _player_ui_controller.build_hand_preview(
+		item, player_id, Callable(self, "_player_color")
+	)
 
 
 func _request_landscape_orientation() -> void:
-	if DisplayServer.has_feature(DisplayServer.FEATURE_ORIENTATION):
-		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_SENSOR_LANDSCAPE)
-	if OS.has_feature("web"):
-		var page_style := (
-			"document.documentElement.style.background='#05070a';"
-			+ "document.body.style.margin='0';"
-			+ "document.body.style.overflow='hidden';"
-		)
-		JavaScriptBridge.eval(page_style, true)
+	_player_ui_controller.request_landscape_orientation()
 
 
 func _enter_web_fullscreen() -> void:
-	if not OS.has_feature("web"):
-		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
-		return
-	var fullscreen_script := (
-		"(async()=>{try{const e=document.documentElement;"
-		+ "if(e.requestFullscreen)await e.requestFullscreen();"
-		+ "if(screen.orientation&&screen.orientation.lock)"
-		+ "await screen.orientation.lock('landscape');"
-		+ "}catch(e){console.warn('BGO fullscreen/orientation:',e);}})();"
-	)
-	JavaScriptBridge.eval(fullscreen_script, true)
+	_player_ui_controller.enter_fullscreen()

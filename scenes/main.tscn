@@ -26,8 +26,8 @@ environment = SubResource("Environment_main")
 
 [node name="StudioFloor" type="MeshInstance3D" parent="."]
 position = Vector3(0, -0.55, 0)
-material_override = SubResource("StudioMaterial")
-mesh = SubResource("StudioMesh")
+material_override = SubResource("SurfaceMaterial")
+mesh = SubResource("SurfaceMesh")
 
 [node name="KeyLight" type="DirectionalLight3D" parent="." unique_id=1139649120]
 transform = Transform3D(0.88294756, 0.36994863, -0.2890356, 0, 0.6156615, 0.7880107, 0.46947157, -0.6957722, 0.5435968, 0, 0, 0)
