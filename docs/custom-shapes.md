@@ -10,7 +10,7 @@ for more information about formulas and dimensions.
 - Consider grouping all files related to a shape in a separate folder
 - Exception: blender files.
     - They crash Godot for CI, and for users not having Blender installed.
-    - Place them in the blender/ directory excluded from imports
+    - Place them in the assets/source/blender/ directory excluded from imports
 - For Dices distributed with the addon place them in
     `res://addons/dice_roller/dice/mydice`
 - For Dices in your own project, you can place them anywhere but we recommend to join them in a single folder.

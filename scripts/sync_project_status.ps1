@@ -8,19 +8,19 @@ $buildRoot = Join-Path $repoRoot "build/web"
 $staticRoutes = @(
     @{
         Name = "Project status dashboard"
-        Source = Join-Path $repoRoot "web/project-status"
+        Source = Join-Path $repoRoot "hosting/project-status"
         Destination = Join-Path $buildRoot "project-status"
         Route = "/project-status/"
     },
     @{
         Name = "BGO test launcher"
-        Source = Join-Path $repoRoot "web/test-launcher"
+        Source = Join-Path $repoRoot "hosting/test-launcher"
         Destination = Join-Path $buildRoot "test-launcher"
         Route = "/test-launcher/"
     },
     @{
         Name = "BGO user manual"
-        Source = Join-Path $repoRoot "web/help"
+        Source = Join-Path $repoRoot "hosting/help"
         Destination = Join-Path $buildRoot "help"
         Route = "/help/"
     }

@@ -885,7 +885,10 @@ func _print_object_help(registration: Dictionary) -> void:
 		if description.is_empty():
 			description = str(command.get("description", ""))
 		Console.print_line(
-			"  %s%s — %s" % [command_name, _format_arguments(command.get("args", [])), description]
+			(
+				"  %s%s â€” %s"
+				% [command_name, _format_arguments(command.get("args", [])), description]
+			)
 		)
 
 
@@ -1120,7 +1123,7 @@ func _call_from_console(object_name: String, method_name: String, arguments: Str
 	if not _registered_commands.has(command_name):
 		Console.print_error("Unknown game command: %s" % command_name)
 		return
-	var raw_args := (
+	var raw_args: PackedStringArray = (
 		Console.parse_line_input(arguments) if not arguments.is_empty() else PackedStringArray()
 	)
 	_invoke_registered(command_name, Array(raw_args))

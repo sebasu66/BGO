@@ -21,17 +21,26 @@ function Invoke-Godot {
         [Parameter(Mandatory = $true)]
         [string[]] $Arguments,
         [Parameter(Mandatory = $true)]
-        [string] $FailureMessage
+        [string] $FailureMessage,
+        [Parameter(Mandatory = $true)]
+        [string] $LogPath
     )
 
-    # Godot's normal Windows executable is a GUI subsystem process. In an
-    # interactive PowerShell session, invoking it directly can return control
-    # before the export process has actually finished. Start-Process -Wait makes
-    # the build pipeline deterministic regardless of whether godot.exe or the
-    # console wrapper is used.
-    $process = Start-Process -FilePath $Godot -ArgumentList $Arguments -Wait -PassThru
+    if (Test-Path $LogPath) {
+        Remove-Item $LogPath -Force
+    }
+
+    $process = Start-Process -FilePath $Godot -ArgumentList ($Arguments + @("--log-file", $LogPath)) -Wait -PassThru
     if ($process.ExitCode -ne 0) {
         throw "$FailureMessage with exit code $($process.ExitCode)"
+    }
+
+    if (Test-Path $LogPath) {
+        $parseErrors = Select-String -Path $LogPath -Pattern "SCRIPT ERROR: Parse Error:|Failed to load script"
+        if ($parseErrors) {
+            $parseErrors | ForEach-Object { Write-Error $_.Line }
+            throw "$FailureMessage because Godot logged GDScript parse/load errors"
+        }
     }
 }
 
@@ -39,9 +48,10 @@ if (Test-Path "build/web") {
     Remove-Item "build/web" -Recurse -Force
 }
 New-Item "build/web" -ItemType Directory -Force | Out-Null
+New-Item "build/logs" -ItemType Directory -Force | Out-Null
 
-Invoke-Godot -Arguments @("--headless", "--path", ".", "--import", "--quit") -FailureMessage "Godot import failed"
-Invoke-Godot -Arguments @("--headless", "--path", ".", "--export-release", "Web", "build/web/index.html") -FailureMessage "Godot Web export failed"
+Invoke-Godot -Arguments @("--headless", "--path", ".", "--import", "--quit") -FailureMessage "Godot import failed" -LogPath "build/logs/godot-import.log"
+Invoke-Godot -Arguments @("--headless", "--path", ".", "--export-release", "Web", "build/web/index.html") -FailureMessage "Godot Web export failed" -LogPath "build/logs/godot-web-export.log"
 
 node scripts/sync_project_status.mjs
 if ($LASTEXITCODE -ne 0) { throw "Web auxiliary sync failed with exit code $LASTEXITCODE" }

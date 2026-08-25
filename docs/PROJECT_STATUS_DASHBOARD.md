@@ -17,7 +17,7 @@ https://board-game-online-68c3f.web.app/project-status/
 The dashboard source lives in:
 
 ```text
-web/project-status/
+hosting/project-status/
 ```
 
 It must not be authored directly inside `build/web`, because Godot Web export output is generated and may be replaced.
@@ -59,7 +59,7 @@ The dashboard should answer, at a glance:
 The first implementation reads:
 
 ```text
-web/project-status/status.json
+hosting/project-status/status.json
 ```
 
 This is intentionally plain JSON so it can be updated by humans, coding agents, scripts, or GitHub Actions without rebuilding a frontend application.

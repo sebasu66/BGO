@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <title>BGO Latest Error</title>
+  <style>
+    :root { color-scheme: dark; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    body { margin: 0; background: #07090d; color: #e8edf4; }
+    main { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    h1 { font: 700 26px/1.2 system-ui, sans-serif; margin: 0 0 8px; }
+    .muted { color: #98a2b3; font: 14px/1.4 system-ui, sans-serif; }
+    .status { margin: 18px 0; padding: 12px 14px; border: 1px solid #303846; border-radius: 8px; background: #10151d; }
+    pre { white-space: pre-wrap; word-break: break-word; margin: 0; padding: 18px; border: 1px solid #303846; border-radius: 8px; background: #0b0f15; line-height: 1.45; }
+    button { margin: 12px 0 18px; padding: 9px 14px; border-radius: 7px; border: 1px solid #3b4658; background: #18202b; color: #fff; cursor: pointer; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>BGO · Latest TEST001 Error</h1>
+  <div class="muted">Read-only diagnostic view. Source remains Firebase RTDB; this page only renders it.</div>
+  <button id="refresh" type="button">Refresh</button>
+  <div id="status" class="status">Loading…</div>
+  <pre id="payload">Loading…</pre>
+</main>
+<script>
+(() => {
+  'use strict';
+  const endpoint = 'https://board-game-online-68c3f-default-rtdb.firebaseio.com/debug_public/latest_error/TEST001.json';
+  const status = document.getElementById('status');
+  const payload = document.getElementById('payload');
+  const refresh = document.getElementById('refresh');
+
+  async function load() {
+    status.textContent = 'Loading latest error…';
+    payload.textContent = '';
+    try {
+      const response = await fetch(endpoint, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText}`);
+      const data = await response.json();
+      if (data === null) {
+        status.textContent = 'No error payload is currently published.';
+        payload.textContent = 'null';
+        return;
+      }
+      const captured = data.captured_at ? new Date(Number(data.captured_at) * 1000).toISOString() : 'unknown';
+      status.textContent = `Latest error · game=${data.game_id || 'unknown'} · client=${data.client_id || 'unknown'} · captured=${captured}`;
+      payload.textContent = JSON.stringify(data, null, 2);
+    } catch (error) {
+      status.textContent = 'Unable to load the RTDB diagnostic payload.';
+      payload.textContent = String(error && error.stack ? error.stack : error);
+    }
+  }
+
+  refresh.addEventListener('click', load);
+  load();
+})();
+</script>
+</body>
+</html>

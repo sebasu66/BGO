@@ -29,7 +29,7 @@ def require(path: str) -> Path:
 for required in (
     "project.godot",
     "export_presets.cfg",
-    "scenes/main.tscn",
+    "src/runtime/bgo_client.tscn",
     "src/core/component_registry.gd",
     "src/core/game_definition_loader.gd",
     "games/test001/game.jsonh",
@@ -187,9 +187,9 @@ for core_path in sorted((ROOT / "src/core").rglob("*.gd")):
 if (ROOT / "build/web/index.html").exists():
     warn("build/web exists in the checkout. Treat it as generated output; source changes belong outside build/.")
 
-main_scene = (ROOT / "scenes/main.tscn").read_text(encoding="utf-8")
+main_scene = (ROOT / "src/runtime/bgo_client.tscn").read_text(encoding="utf-8")
 if "res://addons/" in main_scene:
-    fail("scenes/main.tscn hard-references an optional addon; a clean CI checkout would not be portable")
+    fail("src/runtime/bgo_client.tscn hard-references an optional addon; a clean CI checkout would not be portable")
 
 print(f"BGO structure check: {len(component_manifests)} component manifests, {len(seen_ids)} unique component IDs")
 for message in warnings:
