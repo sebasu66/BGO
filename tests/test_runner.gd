@@ -31,6 +31,7 @@ func _run() -> void:
 	MCP_GAME_API_TEST.run(_check)
 	MCP_COMMAND_PROCESSOR_TEST.run(_check)
 	GITHUB_JOBS_TRANSPORT_TEST.run(_check)
+	ACTIVITY_LOG_PERSISTENCE_TEST.run(_check)
 	GAMEPLAY_STATE_TEST.run(_check)
 	await CONSOLE_COMMAND_BRIDGE_TEST.run(_check)
 	FLUENT_GAME_BUILDER_TEST.run(_check)

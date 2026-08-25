@@ -25,8 +25,13 @@ authenticated GitHub dispatch: a server-side relay may submit work and persist
 the resulting job, while the client only consumes the persisted session data.
 
 Every public BGO API invocation records a structured `PUBLIC_API_INVOCATION`
-entry through the `BgoActivityLog` autoload and persists JSONL entries under
-`user://logs/bgo-activity.jsonl` where the platform supports local files.
+entry through the `BgoActivityLog` autoload. The authoritative bounded history
+is persisted in the shared match/session state at
+`activity_log/events/<event_id>` through the existing realtime repository, so
+another client can recover it. JSONL under `user://logs/bgo-activity.jsonl`
+remains optional local diagnostics only. Keyed child patches and repository-side
+pruning keep concurrent clients convergent without logging the persistence write
+back into the activity stream.
 
 This phase intentionally includes no toasts, timeline or panel UI, bridge
 settings UI, styling, or GitHub authentication in the client.

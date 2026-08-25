@@ -26,6 +26,7 @@ var _mcp_authority_participant_id := ""
 var _is_mcp_authority := false
 var _github_client_id := ""
 var _github_jobs_enabled := false
+const ACTIVITY_LOG_LIMIT := 500
 
 
 func _ready() -> void:
@@ -110,6 +111,7 @@ func set_github_jobs_transport(client_id: String, enabled: bool) -> void:
 ## Starts repository synchronization for the current session context.
 func start(target_game_id: String = DEFAULT_GAME_ID) -> void:
 	game_id = target_game_id
+	_bind_activity_log()
 	_log("SESSION_START", {"path": _game_path(), "poll_seconds": poll_interval_seconds})
 	refresh()
 	_poll_timer.start()
@@ -128,6 +130,51 @@ func ensure_demo_session() -> void:
 	var initial := _initial_session()
 	_log("FIREBASE_WRITE", {"operation": "seed", "path": _game_path()})
 	_adapter.write(_game_path(), initial)
+
+
+## Persists one public API event under the shared session root.
+## This method intentionally does not call _log: activity persistence is not an API event.
+func persist_activity_event(event: Dictionary) -> void:
+	if event.is_empty():
+		return
+	var event_id := str(event.get("event_id", ""))
+	if event_id.is_empty():
+		return
+	var payload := event.duplicate(true)
+	payload["session_id"] = str(payload.get("session_id", game_id))
+	_adapter.patch(_game_path(), activity_event_patch(payload))
+
+
+static func activity_event_patch(event: Dictionary) -> Dictionary:
+	var event_id := str(event.get("event_id", ""))
+	return {} if event_id.is_empty() else {"activity_log/events/%s" % event_id: event.duplicate(true)}
+
+
+static func merge_activity_events(existing: Dictionary, incoming: Dictionary) -> Dictionary:
+	var merged := existing.duplicate(true)
+	for event_id in incoming:
+		merged[str(event_id)] = incoming[event_id]
+	return bounded_activity_events(merged)
+
+
+static func bounded_activity_events(events: Dictionary, limit: int = ACTIVITY_LOG_LIMIT) -> Dictionary:
+	var ids: Array[String] = []
+	for event_id in events:
+		ids.append(str(event_id))
+	ids.sort()
+	var bounded := {}
+	for event_id in ids.slice(maxi(0, ids.size() - limit)):
+		bounded[event_id] = events[event_id]
+	return bounded
+
+
+static func activity_prune_patch(events: Dictionary, limit: int = ACTIVITY_LOG_LIMIT) -> Dictionary:
+	var bounded := bounded_activity_events(events, limit)
+	var patch := {}
+	for event_id in events:
+		if not bounded.has(str(event_id)):
+			patch["activity_log/events/%s" % str(event_id)] = null
+	return patch
 
 
 ## Moves a whole stack or atomically separates one unit into the player's hand.
@@ -311,6 +358,7 @@ func _initial_session() -> Dictionary:
 	if game_definition.is_empty():
 		return {
 			"metadata": {"status": "prototype", "label": "BGO Proof of Concept 01"},
+			"activity_log": {"events": {}},
 			"pieces":
 			{
 				"player_1_piece": _piece_payload("player_1", 1, Vector2i(1, 2), 1),
@@ -328,6 +376,7 @@ func _initial_session() -> Dictionary:
 			"schema": str(game_definition.get("schema", "bgo.game"))
 		},
 		"pieces": {},
+		"activity_log": {"events": {}},
 		"asset_box": (setup.get("asset_box", {}) as Dictionary).duplicate(true),
 		"definition": game_definition.duplicate(true),
 	}
@@ -451,6 +500,17 @@ func _on_request_succeeded(operation: StringName, path: String, data: Variant) -
 		return
 
 	var session: Dictionary = data
+	_bind_activity_log()
+	var activity_root: Variant = session.get("activity_log", {})
+	var activity_events: Dictionary = {}
+	if activity_root is Dictionary and activity_root.get("events", {}) is Dictionary:
+		activity_events = activity_root.get("events", {})
+		var activity_log := get_node_or_null("/root/BgoActivityLog")
+		if activity_log != null and activity_log.has_method("recover_shared_events"):
+			activity_log.recover_shared_events(bounded_activity_events(activity_events))
+			var prune_patch := activity_prune_patch(activity_events)
+			if not prune_patch.is_empty():
+				_adapter.patch(_game_path(), prune_patch)
 	_ensure_definition_objects(session)
 	_process_pending_mcp_commands(session)
 	_process_pending_github_jobs(session)
@@ -548,3 +608,9 @@ func _on_request_failed(
 func _log(event_name: String, payload: Dictionary = {}, level: String = "info") -> void:
 	if logger != null:
 		logger.log_event(event_name, payload, level)
+
+
+func _bind_activity_log() -> void:
+	var activity_log := get_node_or_null("/root/BgoActivityLog")
+	if activity_log != null and activity_log.has_method("bind_session_repository"):
+		activity_log.bind_session_repository(self, game_id)
