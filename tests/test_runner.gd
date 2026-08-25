@@ -285,13 +285,16 @@ func _test_tabletop_free_placement(table: TabletopState) -> void:
 	_check(table.object_slot("piece-1") == "pool", "logical object location updates")
 	_check(table.slot_occupants("a1").is_empty(), "source occupancy clears after move")
 	_check(
-		table.add_zone(
-			"studio",
-			"main",
-			{
-				"placement_mode": "free_or_slot",
-				"bounds": {"center": {"x": 0, "z": 0}, "size": {"x": 20, "z": 12}},
-			},
+		(
+			table
+			. add_zone(
+				"studio",
+				"main",
+				{
+					"placement_mode": "free_or_slot",
+					"bounds": {"center": {"x": 0, "z": 0}, "size": {"x": 20, "z": 12}},
+				},
+			)
 		),
 		"table zone supports bounded free placement",
 	)
@@ -310,17 +313,21 @@ func _test_tabletop_free_placement(table: TabletopState) -> void:
 	)
 	_check(table.to_dictionary() == before_invalid_pose, "rejected free move restores placement")
 	_check(
-		table.add_slot(
-			"board-home",
-			"board",
-			1,
-			{
-				"accepted_kinds": ["board"],
-				"pose": {
-					"position": {"x": 0.0, "y": 0.0, "z": 0.0},
-					"rotation": {"x": 0.0, "y": 0.0, "z": 0.0},
+		(
+			table
+			. add_slot(
+				"board-home",
+				"board",
+				1,
+				{
+					"accepted_kinds": ["board"],
+					"pose":
+					{
+						"position": {"x": 0.0, "y": 0.0, "z": 0.0},
+						"rotation": {"x": 0.0, "y": 0.0, "z": 0.0},
+					},
 				},
-			},
+			)
 		),
 		"slot declares accepted kinds and snap pose",
 	)
@@ -351,9 +358,7 @@ func _test_tabletop_grid_and_asset_box(table: TabletopState) -> void:
 		"asset box configures with centimetre spacing",
 	)
 	_check(
-		table.add_asset_to_box(
-			"reserve", "bgo.piece.basic_cylinder", {"color_source": "fixed"}, 8
-		),
+		table.add_asset_to_box("reserve", "bgo.piece.basic_cylinder", {"color_source": "fixed"}, 8),
 		"asset can be stored in the asset box",
 	)
 	_check(table.asset_box.has_asset("reserve"), "asset box exposes stored asset")

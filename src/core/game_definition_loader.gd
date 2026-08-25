@@ -357,9 +357,9 @@ static func _validate_asset_box_location(
 	location: Dictionary,
 	index: int,
 	asset_box_id: String,
-	columns: int,
-	rows: int,
-	occupied: Dictionary,
+	_columns: int,
+	_rows: int,
+	_occupied: Dictionary,
 	errors: Array[String]
 ) -> void:
 	if asset_box_id.is_empty():
@@ -391,9 +391,7 @@ static func _validate_quantity_policy(
 	elif policy in ["infinito", "unlimited"]:
 		policy = "infinite"
 	if policy not in ["unique", "finite", "infinite"]:
-		errors.append(
-			"setup.objects[%d].qty_available must be unique, finite or infinite." % index
-		)
+		errors.append("setup.objects[%d].qty_available must be unique, finite or infinite." % index)
 		return
 	var quantity := int(object_def.get("quantity", 1))
 	if quantity < 1:

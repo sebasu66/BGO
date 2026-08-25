@@ -95,13 +95,43 @@ jobs:
         id: structure
         run: python scripts/check_structure.py
 
+      - name: Collect changed GDScript files
+        id: gd_files
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          elif [[ "${{ github.event_name }}" == "push" && "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]]; then
+            base="${{ github.event.before }}"
+          else
+            base="$(git rev-parse HEAD^)"
+          fi
+          git diff --name-only --diff-filter=ACMR "$base" HEAD -- src tests | grep -E "[.]gd$" > /tmp/bgo-changed-gd.txt || true
+          echo "Changed GDScript files:"
+          cat /tmp/bgo-changed-gd.txt
+
       - name: GDScript format
         id: format
-        run: gdformat --check src tests
+        shell: bash
+        run: |
+          mapfile -t files < /tmp/bgo-changed-gd.txt
+          if ((${#files[@]})); then
+            gdformat --check "${files[@]}"
+          else
+            echo "No changed GDScript files to format-check."
+          fi
 
       - name: GDScript lint
         id: lint
-        run: gdlint src tests
+        shell: bash
+        run: |
+          mapfile -t files < /tmp/bgo-changed-gd.txt
+          if ((${#files[@]})); then
+            gdlint "${files[@]}"
+          else
+            echo "No changed GDScript files to lint."
+          fi
 
       - name: Install Godot ${{ env.GODOT_VERSION }}
         shell: bash

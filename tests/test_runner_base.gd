@@ -28,7 +28,6 @@ var failures := 0
 var assertions := 0
 
 
-
 func _check(condition: bool, message: String) -> void:
 	assertions += 1
 	if condition:
@@ -225,7 +224,9 @@ func _test_capability_contracts() -> void:
 	_check(component_ids == sorted_ids, "component registry ids are deterministic")
 	for component_id in component_ids:
 		var contract := COMPONENT_REGISTRY.get_contract(component_id)
-		_check(contract.get("capabilities", []) is Array, "%s capabilities are an array" % component_id)
+		_check(
+			contract.get("capabilities", []) is Array, "%s capabilities are an array" % component_id
+		)
 		_check(contract.get("verbs", {}) is Dictionary, "%s verbs are an object" % component_id)
 		_check(contract.get("state", {}) is Dictionary, "%s state is an object" % component_id)
 
@@ -397,6 +398,8 @@ func _test_settings_panel() -> void:
 	)
 	panel.queue_free()
 	await process_frame
+
+
 func _find_descendant_of_type(node: Node, class_name_value: String) -> Node:
 	for child in node.get_children():
 		if child.get_class() == class_name_value:

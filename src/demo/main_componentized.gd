@@ -455,11 +455,14 @@ func _add_landscape_player_identity(root: VBoxContainer) -> void:
 
 
 func _add_landscape_collection_controls(root: VBoxContainer) -> void:
-	_vertical_hand = _player_ui_controller.add_vertical_hand(
-		root,
-		Callable(self, "_build_hand_preview"),
-		Callable(self, "_on_hand_item_pressed"),
-		Callable(self, "_on_hand_mode_selected"),
+	_vertical_hand = (
+		_player_ui_controller
+		. add_vertical_hand(
+			root,
+			Callable(self, "_build_hand_preview"),
+			Callable(self, "_on_hand_item_pressed"),
+			Callable(self, "_on_hand_mode_selected"),
+		)
 	)
 
 

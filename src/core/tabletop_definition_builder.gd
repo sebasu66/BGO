@@ -15,12 +15,15 @@ static func build(game_definition: Dictionary) -> TabletopState:
 		return null
 	var setup: Dictionary = game_definition.get("setup", {})
 	var asset_box: Dictionary = setup.get("asset_box", {})
-	if not asset_box.is_empty() and not tabletop.configure_asset_box(
-		str(asset_box.get("id", "game_box")),
-		int(asset_box.get("point_columns", 0)),
-		int(asset_box.get("point_rows", 0)),
-		Vector2(5.0, 5.0),
-		str(asset_box.get("label", "ASSET BOX"))
+	if (
+		not asset_box.is_empty()
+		and not tabletop.configure_asset_box(
+			str(asset_box.get("id", "game_box")),
+			int(asset_box.get("point_columns", 0)),
+			int(asset_box.get("point_rows", 0)),
+			Vector2(5.0, 5.0),
+			str(asset_box.get("label", "ASSET BOX"))
+		)
 	):
 		return null
 	return tabletop
@@ -58,10 +61,7 @@ static func _add_area(tabletop: TabletopState, area: Dictionary) -> bool:
 			return false
 		var slot: Dictionary = slot_variant
 		if not tabletop.add_slot(
-			str(slot.get("id", "")),
-			area_id,
-			int(slot.get("capacity", 1)),
-			slot
+			str(slot.get("id", "")), area_id, int(slot.get("capacity", 1)), slot
 		):
 			return false
 	return true

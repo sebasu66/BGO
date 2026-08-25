@@ -3,9 +3,7 @@ extends RefCounted
 
 
 ## Builds the visible hand-item model for one player from runtime pieces.
-func build_raw_items(
-	pieces: Dictionary, player_id: String, color_for_owner: Callable
-) -> Array:
+func build_raw_items(pieces: Dictionary, player_id: String, color_for_owner: Callable) -> Array:
 	var raw_items: Array = []
 	for key in pieces.keys():
 		var piece := pieces[key] as Node3D
@@ -15,17 +13,20 @@ func build_raw_items(
 			continue
 		if str(piece.get_meta("holder_id", "")) != player_id:
 			continue
-		raw_items.append(
-			{
-				"id": str(key),
-				"label": str(key).to_upper().replace("_", " "),
-				"quantity": int(piece.get_meta("quantity", 1)),
-				"component_id": str(piece.get_meta("component_id", "")),
-				"owner_id": str(piece.get_meta("owner_id", "")),
-				"color": color_for_owner.call(str(piece.get_meta("owner_id", player_id))),
-				"hand_order": float(piece.get_meta("hand_order", 0.0)),
-				"stack_key": str(piece.get_meta("hand_stack_key", str(key))),
-			}
+		(
+			raw_items
+			. append(
+				{
+					"id": str(key),
+					"label": str(key).to_upper().replace("_", " "),
+					"quantity": int(piece.get_meta("quantity", 1)),
+					"component_id": str(piece.get_meta("component_id", "")),
+					"owner_id": str(piece.get_meta("owner_id", "")),
+					"color": color_for_owner.call(str(piece.get_meta("owner_id", player_id))),
+					"hand_order": float(piece.get_meta("hand_order", 0.0)),
+					"stack_key": str(piece.get_meta("hand_stack_key", str(key))),
+				}
+			)
 		)
 	raw_items.sort_custom(_sort_items)
 	return raw_items

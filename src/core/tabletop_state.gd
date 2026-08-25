@@ -1,3 +1,4 @@
+# gdlint: disable=max-public-methods
 class_name TabletopState
 extends RefCounted
 

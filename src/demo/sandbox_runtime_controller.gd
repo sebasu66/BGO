@@ -46,9 +46,7 @@ func _create_object(
 	_place_object(instance, object_state, tabletop_state)
 
 
-func _place_object(
-	instance: Node3D, object_state: Dictionary, tabletop_state: Dictionary
-) -> void:
+func _place_object(instance: Node3D, object_state: Dictionary, tabletop_state: Dictionary) -> void:
 	var object_id := str(object_state.get("object_id", instance.name))
 	var location_type := str(object_state.get("location_type", ""))
 	var location_id := str(object_state.get("location_id", ""))

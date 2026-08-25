@@ -38,10 +38,7 @@ func add_identity(
 
 ## Adds and wires the vertical hand component.
 func add_vertical_hand(
-	root: VBoxContainer,
-	preview_factory: Callable,
-	item_selected: Callable,
-	mode_selected: Callable
+	root: VBoxContainer, preview_factory: Callable, item_selected: Callable, mode_selected: Callable
 ) -> BgoVerticalHand:
 	var hand := VERTICAL_HAND_SCENE.instantiate() as BgoVerticalHand
 	hand.name = "PlayerHand"
@@ -76,9 +73,7 @@ func add_action_controls(
 
 
 ## Builds a non-authoritative visual preview for one hand item.
-func build_hand_preview(
-	item: Dictionary, player_id: String, color_for_owner: Callable
-) -> Node3D:
+func build_hand_preview(item: Dictionary, player_id: String, color_for_owner: Callable) -> Node3D:
 	var packed_scene := BgoComponentRegistry.load_scene(str(item.get("component_id", "")))
 	if packed_scene == null:
 		return null
@@ -88,12 +83,15 @@ func build_hand_preview(
 	var owner_id := str(item.get("owner_id", ""))
 	var color: Color = item.get("color", color_for_owner.call(owner_id))
 	if preview is BgoBasicCylinderPiece:
-		(preview as BgoBasicCylinderPiece).configure(
-			str(item.get("id", "preview")),
-			owner_id,
-			player_id,
-			int(item.get("quantity", 1)),
-			color,
+		(
+			(preview as BgoBasicCylinderPiece)
+			. configure(
+				str(item.get("id", "preview")),
+				owner_id,
+				player_id,
+				int(item.get("quantity", 1)),
+				color,
+			)
 		)
 	return preview
 
