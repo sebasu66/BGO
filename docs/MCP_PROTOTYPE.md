@@ -100,7 +100,7 @@ changing BGO Core.
 ## Remote DEV server
 
 The remote transport is a stateless Streamable HTTP MCP server implemented as
-the Firebase Function `bgoMcpDev` under `functions/`. It exposes:
+the Firebase Function `bgoMcpDev` under `backend/functions/`. It exposes:
 
 - context, definition, session and grid reads
 - object inspection and point queries
@@ -117,7 +117,7 @@ https://us-central1-board-game-online-68c3f.cloudfunctions.net/bgoMcpDev/mcp
 ```
 
 The non-secret DEV binding used by non-interactive deploys is explicit in
-`functions/.env.board-game-online-68c3f`. Production must never reuse this
+`backend/functions/.env.board-game-online-68c3f`. Production must never reuse this
 `dev_direct_no_auth` host binding.
 
 The health route is the same URL ending in `/health`. The function is deployed

@@ -9,7 +9,13 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Generated local/CI output
+/node_modules/
+/build/
+/artifacts/
+.firebase/
+
 # Firebase Functions build/dependencies
-/functions/lib/
-/functions/node_modules/
-/functions/.env.local
+/backend/functions/lib/
+/backend/functions/node_modules/
+/backend/functions/.env.local

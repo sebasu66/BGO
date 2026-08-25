@@ -2,6 +2,25 @@ class_name BgoGameDefinitionLoader
 extends RefCounted
 
 const JSONH_GD_PATH := "res://addons/JsonhGd/JsonhGd.gd"
+const GAME_ROOT := "res://games"
+
+
+## Loads one installed game definition by its stable directory/game id.
+static func load_game_id(game_id: String) -> Dictionary:
+	var normalized := game_id.strip_edges().to_lower()
+	if normalized.is_empty() or normalized.contains("/") or normalized.contains("\\"):
+		return {"ok": false, "data": {}, "errors": ["Invalid game id '%s'." % game_id]}
+	return load_game(GAME_ROOT.path_join(normalized).path_join("game.jsonh"))
+
+
+## Lists installed game definition ids in deterministic order.
+static func list_game_ids() -> Array[String]:
+	var result: Array[String] = []
+	for directory_name in DirAccess.get_directories_at(GAME_ROOT):
+		if FileAccess.file_exists(GAME_ROOT.path_join(directory_name).path_join("game.jsonh")):
+			result.append(directory_name)
+	result.sort()
+	return result
 
 
 static func load_game(path: String) -> Dictionary:
@@ -79,8 +98,24 @@ static func _parse_jsonh(source: String) -> Dictionary:
 	}
 
 
+static func _apply_canonical_defaults(data: Dictionary, runtime_mode: String) -> void:
+	if runtime_mode == "match" and not data.has("flow"):
+		data["flow"] = {
+			"initial_phase": "main",
+			"turn_order": "round_robin",
+			"turn_end": "manual",
+		}
+
+
 static func validate_game(data: Dictionary) -> Array[String]:
 	var errors: Array[String] = []
+	var runtime: Dictionary = data.get("runtime", {})
+	var runtime_mode := str(runtime.get("mode", "match"))
+	_apply_canonical_defaults(data, runtime_mode)
+	if runtime_mode not in ["match", "sandbox"]:
+		errors.append("runtime.mode must be 'match' or 'sandbox'.")
+	if runtime_mode == "sandbox" and str(runtime.get("persistence", "none")) != "none":
+		errors.append("sandbox runtime.persistence must be 'none'.")
 	if int(data.get("schema_version", 0)) != 1:
 		errors.append("schema_version must be 1.")
 
@@ -92,19 +127,26 @@ static func validate_game(data: Dictionary) -> Array[String]:
 			errors.append("game.id is required.")
 		var min_players := int(game.get("min_players", 0))
 		var max_players := int(game.get("max_players", 0))
-		if min_players < 1:
-			errors.append("game.min_players must be at least 1.")
+		var minimum_allowed := 0 if runtime_mode == "sandbox" else 1
+		if min_players < minimum_allowed:
+			errors.append("game.min_players must be at least %d." % minimum_allowed)
 		if max_players < min_players:
 			errors.append("game.max_players must be >= game.min_players.")
 
+	var table: Variant = data.get("table")
+	if not table is Dictionary:
+		errors.append("Missing object 'table'.")
+	else:
+		_validate_table(table, errors)
+
 	var board_columns := 0
 	var board_rows := 0
-	var board: Variant = _validate_table_instances(data.get("table", {}), errors)
+	var board: Variant = _validate_table_instances(table if table is Dictionary else {}, errors)
 	if not board is Dictionary or board.is_empty():
 		board = data.get("board")
-	if not board is Dictionary:
-		errors.append("A board component is required in table.instances.")
-	else:
+	if runtime_mode == "match" and not board is Dictionary:
+		errors.append("A board component is required in table.instances for match mode.")
+	elif board is Dictionary:
 		if data.has("board"):
 			_validate_component_reference(board, "board", errors)
 		var board_config: Variant = board.get("config", {})
@@ -112,10 +154,23 @@ static func validate_game(data: Dictionary) -> Array[String]:
 			board_columns = int(board_config.get("columns", 0))
 			board_rows = int(board_config.get("rows", 0))
 
+	var flow: Variant = data.get("flow", {})
+	if runtime_mode == "match" and not flow is Dictionary:
+		errors.append("Match definitions require object 'flow'.")
+	elif runtime_mode == "match":
+		if str(flow.get("initial_phase", "")).is_empty():
+			errors.append("flow.initial_phase is required.")
+		if str(flow.get("turn_order", "")) != "round_robin":
+			errors.append("flow.turn_order must currently be 'round_robin'.")
+		if str(flow.get("turn_end", "")) != "manual":
+			errors.append("flow.turn_end must be 'manual'.")
+
 	var player_ids: Dictionary = {}
 	var players: Variant = data.get("players")
-	if not players is Array or players.is_empty():
-		errors.append("players must be a non-empty array.")
+	if not players is Array:
+		errors.append("players must be an array.")
+	elif players.is_empty() and runtime_mode == "match":
+		errors.append("Match definitions require at least one player.")
 	else:
 		for index in players.size():
 			var player: Variant = players[index]
@@ -302,9 +357,9 @@ static func _validate_asset_box_location(
 	location: Dictionary,
 	index: int,
 	asset_box_id: String,
-	columns: int,
-	rows: int,
-	occupied: Dictionary,
+	_columns: int,
+	_rows: int,
+	_occupied: Dictionary,
 	errors: Array[String]
 ) -> void:
 	if asset_box_id.is_empty():
@@ -336,9 +391,7 @@ static func _validate_quantity_policy(
 	elif policy in ["infinito", "unlimited"]:
 		policy = "infinite"
 	if policy not in ["unique", "finite", "infinite"]:
-		errors.append(
-			"setup.objects[%d].qty_available must be unique, finite or infinite." % index
-		)
+		errors.append("setup.objects[%d].qty_available must be unique, finite or infinite." % index)
 		return
 	var quantity := int(object_def.get("quantity", 1))
 	if quantity < 1:
@@ -371,3 +424,37 @@ static func _validate_component_reference(
 		return
 	for component_error in BgoComponentRegistry.validate_config(component_id, config):
 		errors.append("%s: %s" % [label, component_error])
+
+
+static func _validate_table(table: Dictionary, errors: Array[String]) -> void:
+	if float(table.get("width", 0.0)) <= 0.0 or float(table.get("depth", 0.0)) <= 0.0:
+		errors.append("table.width and table.depth must be positive.")
+	var areas: Variant = table.get("areas", [])
+	if not areas is Array:
+		errors.append("table.areas must be an array.")
+		return
+	var ids: Dictionary = {}
+	for index in areas.size():
+		var area: Variant = areas[index]
+		if not area is Dictionary:
+			errors.append("table.areas[%d] must be an object." % index)
+			continue
+		var area_id := str(area.get("id", ""))
+		if area_id.is_empty() or ids.has(area_id):
+			errors.append("table.areas[%d].id must be unique and non-empty." % index)
+		else:
+			ids[area_id] = true
+		var mode := str(area.get("placement_mode", "free_or_slot"))
+		if mode not in ["free", "slots_only", "free_or_slot"]:
+			errors.append("table.areas[%d].placement_mode is invalid." % index)
+		var bounds: Variant = area.get("bounds")
+		if not bounds is Dictionary:
+			errors.append("table.areas[%d].bounds is required." % index)
+			continue
+		var size: Variant = bounds.get("size")
+		if (
+			not size is Dictionary
+			or float(size.get("x", 0.0)) <= 0.0
+			or float(size.get("z", 0.0)) <= 0.0
+		):
+			errors.append("table.areas[%d].bounds.size must be positive." % index)

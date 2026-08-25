@@ -4,12 +4,12 @@ The `Console` addon is enabled for development builds. `BgoGameCommandConsole`
 bridges the console to live BGO game objects without making the console part of
 the gameplay authority.
 
-## Implementation status — 2026-08-24
+## Implementation status â€” 2026-08-24
 
 Integrated in the current development branch:
 
 - `addons/console` is enabled as the `Console` autoload.
-- `src/debug/bgo_game_command_console.gd` owns BGO command discovery and
+- `src/debug/bgo_game_command_console.gd` is the autoload facade; focused `bgo_console_*` services own discovery, API projection, invocation/conversion and
   lifecycle cleanup.
 - `BGOGameObject`, `GameSessionRepository`, and component scripts are the
   supported command hosts.

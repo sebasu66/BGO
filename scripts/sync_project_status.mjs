@@ -9,31 +9,31 @@ const buildRoot = path.join(repoRoot, "build", "web");
 const staticRoutes = [
   {
     name: "BGO DEV hub",
-    source: path.join(repoRoot, "web", "dev"),
+    source: path.join(repoRoot, "hosting", "dev"),
     destination: path.join(buildRoot, "dev"),
     route: "/dev/",
   },
   {
     name: "Project status dashboard",
-    source: path.join(repoRoot, "web", "project-status"),
+    source: path.join(repoRoot, "hosting", "project-status"),
     destination: path.join(buildRoot, "project-status"),
     route: "/project-status/",
   },
   {
     name: "BGO test launcher",
-    source: path.join(repoRoot, "web", "test-launcher"),
+    source: path.join(repoRoot, "hosting", "test-launcher"),
     destination: path.join(buildRoot, "test-launcher"),
     route: "/test-launcher/",
   },
   {
     name: "BGO latest error viewer",
-    source: path.join(repoRoot, "web", "error-viewer"),
+    source: path.join(repoRoot, "hosting", "error-viewer"),
     destination: path.join(buildRoot, "error-viewer"),
     route: "/error-viewer/",
   },
   {
     name: "BGO user manual",
-    source: path.join(repoRoot, "web", "help"),
+    source: path.join(repoRoot, "hosting", "help"),
     destination: path.join(buildRoot, "help"),
     route: "/help/",
   },

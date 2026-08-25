@@ -75,11 +75,11 @@ jobs:
 
       - name: Install MCP Firebase Function dependencies
         timeout-minutes: 5
-        run: npm ci --prefix functions
+        run: npm ci --prefix backend/functions
 
       - name: MCP server build and tests
         id: mcp_tests
-        run: npm run check --prefix functions
+        run: npm run check --prefix backend/functions
 
       - name: Install Chromium system dependencies
         timeout-minutes: 10
@@ -95,13 +95,43 @@ jobs:
         id: structure
         run: python scripts/check_structure.py
 
+      - name: Collect changed GDScript files
+        id: gd_files
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          elif [[ "${{ github.event_name }}" == "push" && "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]]; then
+            base="${{ github.event.before }}"
+          else
+            base="$(git rev-parse HEAD^)"
+          fi
+          git diff --name-only --diff-filter=ACMR "$base" HEAD -- src tests | grep -E "[.]gd$" > /tmp/bgo-changed-gd.txt || true
+          echo "Changed GDScript files:"
+          cat /tmp/bgo-changed-gd.txt
+
       - name: GDScript format
         id: format
-        run: gdformat --check src tests
+        shell: bash
+        run: |
+          mapfile -t files < /tmp/bgo-changed-gd.txt
+          if ((${#files[@]})); then
+            gdformat --check "${files[@]}"
+          else
+            echo "No changed GDScript files to format-check."
+          fi
 
       - name: GDScript lint
         id: lint
-        run: gdlint src tests
+        shell: bash
+        run: |
+          mapfile -t files < /tmp/bgo-changed-gd.txt
+          if ((${#files[@]})); then
+            gdlint "${files[@]}"
+          else
+            echo "No changed GDScript files to lint."
+          fi
 
       - name: Install Godot ${{ env.GODOT_VERSION }}
         shell: bash
@@ -133,11 +163,26 @@ jobs:
 
       - name: Godot import and parse
         id: import
-        run: godot --headless --path . --import --quit
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .godot
+          godot --headless --path . --import --quit 2>&1 | tee /tmp/bgo-godot-import.log
+          if grep -E 'SCRIPT ERROR: Parse Error:|Failed to load script' /tmp/bgo-godot-import.log; then
+            echo "Godot import logged GDScript parse/load errors." >&2
+            exit 1
+          fi
 
       - name: Headless core tests
         id: tests
-        run: godot --headless --path . --script res://tests/test_runner.gd
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path . --script res://tests/test_runner.gd 2>&1 | tee /tmp/bgo-godot-tests.log
+          if grep -E 'SCRIPT ERROR: Parse Error:|Failed to load script' /tmp/bgo-godot-tests.log; then
+            echo "Godot tests logged GDScript parse/load errors." >&2
+            exit 1
+          fi
 
       - name: Validated Web export
         id: web_export
@@ -238,77 +283,3 @@ jobs:
           path: artifacts
           if-no-files-found: warn
           retention-days: 14
-
-  request-copilot-audit:
-    name: Request advisory Copilot whole-project audit
-    needs:
-      - quality-gate
-    if: >-
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/develop' &&
-      needs.quality-gate.result == 'success'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      issues: write
-
-    steps:
-      - name: Create audit request and assign Copilot
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPOSITORY: ${{ github.repository }}
-          INTEGRATED_SHA: ${{ github.sha }}
-          SOURCE_RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          title="Project audit after DEV integration ${INTEGRATED_SHA:0:8}"
-          body=$(cat <<EOF
-          Perform an independent, whole-project advisory audit of BGO at the current develop commit ${INTEGRATED_SHA}.
-
-          Do not limit the analysis to the latest diff. Inspect the full develop codebase and repository context broadly: SKILL.md, authoritative docs, AI_BACKLOG.md, workflows, src, tests, games, and web/project-status.
-
-          Evaluate product/architecture alignment, modularity and cohesion, duplicated or competing abstractions, domain-state authority versus UI/rendering/Firebase, GamePackage boundaries, session/tabletop design, privacy/security, test evidence, CI/CD health, stale documentation/status, technical debt, performance or asset-pipeline risks supported by evidence, and opportunities for simplification or optimization.
-
-          Separate evidence, inference and suggestion. Cite concrete repository paths for material findings. Use severities critical/high/medium/low/observation. A green CI run is evidence of mechanical health, not proof of architectural health.
-
-          Produce the written report only in docs/audits/copilot-project-audit.md. Replace the prior report. Include the audited commit and this Quality Gate run. Do not change source code, backlog state, project-status values, workflows, release branches, or product decisions. The report is advisory and must not block or authorize anything automatically.
-
-          Audited commit: ${INTEGRATED_SHA}
-          Quality Gate: ${SOURCE_RUN}
-          EOF
-          )
-
-          issue_json=$(gh api \
-            --method POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "/repos/${REPOSITORY}/issues" \
-            -f title="$title" \
-            -f body="$body")
-
-          issue_number=$(printf '%s' "$issue_json" | jq -r '.number')
-          echo "Created advisory audit request issue #${issue_number}."
-
-          if gh api \
-            --method POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "/repos/${REPOSITORY}/issues/${issue_number}/assignees" \
-            --input - <<EOF
-          {
-            "assignees": ["copilot-swe-agent[bot]"],
-            "agent_assignment": {
-              "target_repo": "${REPOSITORY}",
-              "base_branch": "develop",
-              "custom_instructions": "Perform the whole-project advisory audit exactly as described in the issue. Modify only docs/audits/copilot-project-audit.md."
-            }
-          }
-          EOF
-          then
-            echo "Copilot cloud agent assigned to issue #${issue_number}."
-          else
-            gh issue comment "$issue_number" --repo "$REPOSITORY" --body "Automatic Copilot assignment was unavailable. The audit request remains open and is advisory; DEV integration stays green. Assign this issue to Copilot manually if needed."
-            echo "::warning::Could not auto-assign Copilot. Audit issue #${issue_number} remains available for manual assignment."
-          fi

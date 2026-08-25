@@ -11,11 +11,12 @@ config_version=5
 [application]
 
 config/name="BGO"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://src/runtime/bgo_client.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [autoload]
 
+G="*res://src/core/game_api.gd"
 _mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
 GodotxToast="*uid://bgvixrj72u7rv"
 GdssRuntime="*uid://yu6lhnx763yp"

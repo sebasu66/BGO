@@ -16,6 +16,45 @@
   "table": {
     "width": 15.5,
     "depth": 9.8,
+    "environment": {
+      "preset": "studio",
+      "background_color": "#C7BFB0",
+      "lighting": "soft_grid"
+    },
+    "surface": {
+      "material": "wood",
+      "placement_mode": "free_or_slot"
+    },
+    "areas": [
+      {
+        "id": "board_area",
+        "bounds": { "center": { "x": 0, "z": 0 }, "size": { "x": 10.2, "z": 7.8 } },
+        "placement_mode": "free_or_slot",
+        "slots": [
+          {
+            "id": "main_board",
+            "capacity": 1,
+            "accepted_kinds": ["board"],
+            "pose": {
+              "position": { "x": 0, "y": 0, "z": 0 },
+              "rotation": { "x": 0, "y": 0, "z": 0 }
+            }
+          }
+        ]
+      },
+      {
+        "id": "player_1_area",
+        "bounds": { "center": { "x": -6.15, "z": 0 }, "size": { "x": 1.55, "z": 7.2 } },
+        "placement_mode": "free_or_slot",
+        "owner_id": "player_1"
+      },
+      {
+        "id": "player_2_area",
+        "bounds": { "center": { "x": 6.15, "z": 0 }, "size": { "x": 1.55, "z": 7.2 } },
+        "placement_mode": "free_or_slot",
+        "owner_id": "player_2"
+      }
+    ],
     "instances": [
       {
         "id": "main_board",

@@ -26,7 +26,7 @@ test('project status dashboard loads deployed build metadata', async ({ page }) 
   const consoleEntries = collectConsole(page);
   await page.goto('/project-status/', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('body')).toContainText(/BGO|PROJECT|STATUS/i);
-  await expect.poll(async () => page.locator('#build-details').innerText(), { timeout: 10_000 }).toMatch(/Versión|DEV-|LOCAL-/i);
+  await expect.poll(async () => page.locator('#build-details').innerText(), { timeout: 10_000 }).toMatch(/VersiÃ³n|DEV-|LOCAL-/i);
   await page.screenshot({ path: 'artifacts/screenshots/project-status.png', fullPage: true });
   expect(consoleEntries.filter(item => item.type === 'pageerror')).toEqual([]);
 });
@@ -54,5 +54,5 @@ test('error viewer surface is reachable', async ({ page }) => {
   await expect(page.locator('body')).toContainText(/error|diagnostic|BGO/i);
   // The error viewer can contain an arbitrarily tall remote log. A viewport
   // capture is stable in Chromium while still preserving smoke-test evidence.
-  await page.screenshot({ path: 'artifacts/screenshots/error-viewer.png' });
+  await page.locator('#status').screenshot({ path: 'artifacts/screenshots/error-viewer.png' });
 });

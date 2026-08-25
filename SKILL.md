@@ -98,6 +98,88 @@ After the session lifecycle is stable, continue formalizing continuous tabletop 
 
 GamePackage formalization, conformance fixtures and agent-readable Web build on those stable contracts rather than inventing parallel models.
 
+## Runtime structure, Web export and transport boundary
+
+The authoritative Godot client entry is:
+
+```text
+project.godot
+  -> src/runtime/bgo_client.tscn
+  -> src/runtime/bgo_client_runtime.gd
+```
+
+Production runtime code belongs in `src/runtime/`, not `src/demo/`. The historical `main_*` files accumulated real product behavior under a demo namespace and grew beyond the desired maintainability shape. They are now reorganized into policy-sized semantic runtime layers:
+
+```text
+client_runtime_base
+  -> client_runtime_state_sync
+  -> client_runtime_interaction
+  -> client_runtime_composition
+  -> client_runtime_gameplay
+  -> client_runtime_camera
+  -> bgo_client_runtime
+```
+
+This is a migration seam. **Do not extend this chain with another orchestration layer.** New camera, shell, session, networking, interaction or UI responsibilities should preferentially become focused controllers/services with explicit dependencies and be composed by the runtime. The objective is to progressively reduce orchestration inheritance, not recreate `main_3d`, `main_componentized` or `main_filtered` under new names.
+
+A runtime parent may call only methods declared by itself or an ancestor. Never make a parent depend on a method introduced by a later child; reorder responsibilities or extract a composed controller/service.
+
+After GDScript moves/renames or class_name/inheritance changes, remove the generated .godot cache and perform one full project import. A warm cache can preserve stale class metadata and mask invalid dependency direction.
+
+Godot may return exit 0 while logging SCRIPT ERROR: Parse Error: or Failed to load script. Build/check scripts must inspect logs for those signatures. Errors solely from explicitly editor-only add-ons do not justify widening the Web PCK.
+
+At typed plug-in boundaries prefer explicit collection types. Console.parse_line_input() returns PackedStringArray; keep the receiver explicitly typed rather than relying on ternary inference.
+
+Firebase Functions CI targets Node 22. If a newer local Node/npm resolves the lockfile differently, reproduce the CI-compatible toolchain before changing valid backend code; npm 10 correctly installed the Firebase database type packages that npm 11 omitted locally in this integration.
+
+`src/demo/` now contains only real demo/prototype behavior. `logical_client_runtime.gd` is the structured logical-session implementation path and remains explicit while its activation is integrated deliberately.
+
+### Web export contract
+
+The Web PCK is a runtime artifact, not a copy of the repository.
+
+It must include:
+
+- `src/runtime/bgo_client.tscn` and runtime resources reachable from the client;
+- `src/runtime/`, `src/core/`, required `src/components/`, `src/ui/`, `src/network/`, `src/mcp/` and current runtime diagnostics;
+- runtime portions of required add-ons;
+- declarative `games/*/*.jsonh`;
+- the runtime capability catalog `src/capabilities/*.jsonh`;
+- component `component.jsonh` contracts, which are opened with `FileAccess` at runtime.
+
+It must exclude repository/build/development surfaces such as:
+
+- `build/`, `docs/`, `examples/`, `assets/source/`, `assets/authoring/`, `fastlane/`, `backend/`, `scripts/`, `tests/`, `hosting/`;
+- `src/authoring/` and `src/editor/`;
+- editor-only add-ons such as Asset Placer, Reactive UI Editor/Analyzer and GDSS editor resources.
+
+Do not exclude `src/debug/` while `project.godot` still autoloads `BgoGameCommandConsole`; first remove or conditionalize that runtime dependency. Do not exclude Sandbox: Sandbox is a supported Web gameplay mode.
+
+Non-resource runtime files are not automatically guaranteed to enter a Godot export. Any JSON/JSONH-style contract read with `FileAccess` must be covered by the preset's include filter and verified in an exported build.
+
+### Realtime transport and MCP
+
+High-frequency peer gameplay and external MCP ingress are separate interfaces.
+
+```text
+RealtimeTransport
+- connect / disconnect
+- peer presence
+- realtime events/deltas
+- interaction leases
+
+SessionCommandBridge
+- submit external command
+- command id / actor id / expiry
+- result / status
+```
+
+MCP must remain transport-independent. MCP tools invoke domain commands and must never directly mutate Firebase RTDB rows, WebRTC/MQTT state or Godot scene nodes. The authoritative host validates rules, ownership and interaction leases, executes accepted commands against logical state and publishes resulting events/state.
+
+A future realtime adapter may be WebRTC/Piggyback, Freelay/MQTT, Tube or another transport without changing the MCP/domain command model. Firebase Functions may continue to host the public HTTPS MCP endpoint even if gameplay transport leaves RTDB.
+
+Sandbox bypasses `RuleAuthority`; it does **not** bypass `InteractionAuthority`. Simultaneous Sandbox clients still acquire/lease/release a component while interacting with it.
+
 ## Agent-readable Web
 
 Godot Web remains the primary human renderer, but a running page should expose a lightweight semantic projection of the same authorized logical model for E2E automation, accessibility and future agents.
@@ -131,6 +213,7 @@ Rules:
 - AI agents and CI must **never** autonomously promote `develop` to `main` or deploy PROD.
 - Do not run unrestricted `firebase deploy`; Hosting deployments must be explicit and scoped.
 - Do not weaken lint, tests, architecture checks or integrity rules merely to make a change pass.
+- Do not stage incidental `.godot`, `.import` or newly generated `.gd.uid` files. A tracked UID rename is only acceptable when it intentionally preserves the identity of a moved tracked script.
 - If a quality rule itself is wrong, treat that as a separate deliberate policy/tooling change.
 
 ## AI Commit Integrity protocol
@@ -150,6 +233,10 @@ AI-Context-Key: <response>
 Any meaningful edit to this file changes its content hash, automatically changing the challenge and invalidating a response based on an older version. There are no markers to rotate.
 
 The mechanism assumes cooperative contributors. It exists to make current context the easy/default path, not to defend against someone deliberately trying to defeat it.
+
+### Repository-wide AI audit
+
+Copilot Cloud coding-agent audit is currently disabled because it requires a paid capability not used by this project. Do not create automatic Copilot audit issues on `develop`. A future local agent may perform repository-wide advisory analysis derived from the current codebase, but its output must not become a parallel source of project truth.
 
 ## Quality and evidence
 
@@ -225,16 +312,18 @@ These limits are guardrails, not targets. Prefer smaller cohesive functions/clas
 
 Use these ownership boundaries:
 
-- `src/core/` — logical/domain contracts, validation and state transitions that must not depend directly on rendering or Firebase;
-- `src/components/` — reusable component implementations and component-local presentation/configuration;
-- `src/network/` — Firebase/network transport adapters and synchronization infrastructure;
-- `src/demo/` — prototype/demo composition that is not authoritative domain logic;
-- `scenes/` — top-level/composition scenes;
-- `tests/` — focused automated/domain tests and test runner support;
-- `games/` — declarative fixture/game definitions, never internal implementation paths;
-- `web/` — static Web product/diagnostic surfaces outside the Godot runtime;
-- `docs/` — authoritative architecture, roadmap, UX and deployment documentation;
-- `scripts/` — development/build tooling, not runtime domain behavior.
+- `src/core/` Ã¢â‚¬â€ logical/domain contracts, validation and state transitions that must not depend directly on rendering or Firebase;
+- `src/components/` Ã¢â‚¬â€ reusable component implementations and component-local presentation/configuration;
+- `src/network/` Ã¢â‚¬â€ Firebase/network transport adapters and synchronization infrastructure;
+- `src/runtime/` Ã¢â‚¬â€ actual client runtime/orchestration and runtime-only services; `src/runtime/bgo_client.tscn` enters through `src/runtime/bgo_client_runtime.gd`;
+- `src/demo/` Ã¢â‚¬â€ demonstrations/prototypes only; production runtime code must not accumulate here;
+- `tests/` Ã¢â‚¬â€ focused automated/domain tests and test runner support;
+- `games/` Ã¢â‚¬â€ declarative fixture/game definitions, never internal implementation paths;
+- `hosting/` Ã¢â‚¬â€ static Firebase Hosting source surfaces outside the Godot runtime/PCK;
+- `docs/` Ã¢â‚¬â€ authoritative architecture, roadmap, UX and deployment documentation;
+- `backend/functions/` Ã¢â‚¬â€ Firebase HTTPS Functions/MCP backend; separate from Godot `src/`.
+- `assets/source/` Ã¢â‚¬â€ original source material ignored by Godot; `assets/authoring/` is authoring-only and excluded from Web; `assets/runtime/` is shippable.
+- `scripts/` Ã¢â‚¬â€ development/build tooling, not runtime domain behavior.
 
 A reusable public component normally lives in a component-owned folder. When it has a `component.jsonh`, that folder must use `snake_case` and contain matching `<folder_name>.gd` and `<folder_name>.tscn` siblings. Existing component families may add one grouping directory, for example `src/components/boards/checkered_board/`; do not scatter one component's implementation across unrelated folders.
 
@@ -265,21 +354,19 @@ When a public behavior is added or changed, add focused tests whenever practical
 
 ## Documentation and project continuity
 
-Authoritative deeper documents currently include:
+Do not proliferate parallel status documents. Current project truth has three maintained sources:
 
-- `docs/CURRENT_PRODUCT_DIRECTION.md` — current product/architecture decisions;
-- `docs/IMPLEMENTATION_ROADMAP.md` — staged implementation/checkpoints;
-- `docs/DEPLOYMENT_ENVIRONMENTS.md` — DEV/PROD release rules;
-- `docs/PLAYER_CLIENT_UX.md` — player interaction direction where applicable;
-- `AGENTS.md` — detailed historical/operational development contract while content is progressively consolidated here.
+- `README.md`: product/architecture overview and repository structure;
+- `TODO.md`: current tasks, blockers and next steps;
+- `SKILL.md`: this coding-agent contract, workflow and engineering policy.
 
-The project-status dashboard is an operational projection, not a substitute for the roadmap. Update project state when checkpoints, blockers, implementation order or material risks change.
+Material under `docs/`, plus legacy `AGENTS.md`, `AI_BACKLOG.md` and `CHANGES.md`, is reference/history unless README or TODO explicitly points to it for a specialized contract. When architecture or project state changes, update README/TODO/SKILL rather than creating another status file.
 
-Git history records changes, but it is not sufficient project state documentation. Preserve the reason and current truth in the appropriate project document.
+The project-status dashboard is an operational projection generated for DEV visibility; it is not another source of project truth.
 
 ## Technology baseline and freshness rule
 
-Current verified baseline as of 2026-08-18:
+Current verified baseline as of 2026-08-25:
 
 - **Godot:** BGO is pinned to `4.7.1-stable`. Godot 4.8 is currently a development series, so do not silently move BGO to it. Official release/archive and API documentation are the authority for version-sensitive engine behavior.
 - **Node.js in CI:** `22`. Current Playwright documentation supports current Node 22.x, 24.x and 26.x lines.

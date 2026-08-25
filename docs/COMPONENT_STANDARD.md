@@ -85,6 +85,12 @@ Suggested stable projection:
 
 These are projections over the registries and command layer, not a second domain model.
 
+## Sandbox authoring runtime
+
+`runtime.mode: "sandbox"` selects a local authoring session rather than a match with disabled rules. A sandbox may have participants, table areas, scores and any registered components, but it has no turn flow, winner, terminal state, event history or remote persistence. All components remain discoverable through `G`, and sandbox commands may spawn, remove, configure and place instances without normal match authorization.
+
+Sandbox snapshots are explicit named in-memory restore points. They are not persisted match history. Exporting a sandbox produces a declarative initial-state fragment that can become part of a GamePackage; component implementation contracts remain in the core component catalog and the game package stores only component IDs and allowed configuration overrides.
+
 ## Web and agent projection
 
 The web client may expose the same safe projection as a namespaced JavaScript bridge for authorized browser automation, for example `window.BGO.game.components.list()` and `window.BGO.game.commands.execute(envelope)`. It must expose structured calls, never arbitrary code evaluation or direct state mutation. Every command carries actor/session identity, passes normal permission and revision checks, and is recorded exactly like a UI command.
@@ -95,9 +101,9 @@ Public information intended for AI discovery should use normal semantic HTML, JS
 
 Logical placement is authoritative. Slots and zones decide whether objects may share a location through capacity and acceptance rules. Physics is never the source of legality.
 
-For normal board games, occupancy prevents overlap deterministically without rigid-body instability. Visual colliders may assist picking, hover and animation but must not push authoritative objects or create divergent states between clients.
+Slots prevent overlap deterministically through capacity and acceptance rules. A slot owns a stable snap pose (position and rotation) and may whitelist component IDs or kinds.
 
-Free-form tabletop positioning is a separate future capability. It will require an explicit footprint/bounds contract and deterministic placement resolver. It must not be simulated implicitly by uncontrolled physics.
+Zones may allow free placement, slots only, or both. During direct manipulation a client may simulate local rigid-body physics for natural dropping and stacking. When manipulation settles, the stable logical pose is committed and becomes authoritative for synchronization, history and replay. Physics never independently changes authoritative state on multiple clients. Objects leaving valid bounds return to their last valid pose or declared home.
 
 Moving between table, hand and player area is handled by the shared placement/collection command handlers, not reimplemented independently by every visual component.
 

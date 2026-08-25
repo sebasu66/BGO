@@ -129,12 +129,12 @@ Keep secrets server-side. Do not put gameplay legality into the web frontend. La
 
 ## Project status dashboard
 
-The development overview lives under `web/project-status/` and is documented in `docs/PROJECT_STATUS_DASHBOARD.md`.
+The development overview lives under `hosting/project-status/` and is documented in `docs/PROJECT_STATUS_DASHBOARD.md`.
 
 Rules:
 
 - `docs/IMPLEMENTATION_ROADMAP.md` remains the authoritative roadmap.
-- `web/project-status/status.json` is the operational projection shown by the dashboard.
+- `hosting/project-status/status.json` is the operational projection shown by the dashboard.
 - do not mark a checkpoint complete merely because code exists; use its exit criteria.
 - update dashboard status when a checkpoint completes, a material blocker/risk is discovered or resolved, or implementation order changes.
 - Phase 1 CI should inject transient test/build results without requiring generated CI state to be committed back to Git.
@@ -208,7 +208,7 @@ For the existing prototype:
 
 - project ID: `board-game-online-68c3f`
 - Web build output: `build/web/index.html`
-- project status source: `web/project-status/`
+- project status source: `hosting/project-status/`
 - project status Firebase path after sync/deploy: `/project-status/`
 - sync dashboard after Web export with `./scripts/sync_project_status.ps1`
 - deploy Hosting only with `firebase deploy --only hosting`

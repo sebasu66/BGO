@@ -13,6 +13,11 @@
     "turn_end": "manual"
   },
   "listeners": [],
+  "table": {
+    "width": 5.0,
+    "depth": 3.0,
+    "areas": []
+  },
   "board": {
     "component": "bgo.board.checkered",
     "config": {

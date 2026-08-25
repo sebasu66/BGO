@@ -1,0 +1,68 @@
+{
+  "schema": "bgo.game",
+  "game": {
+    "id": "table_debug",
+    "name": "Table Areas Debug",
+    "min_players": 2,
+    "max_players": 2,
+    "turn_based": true
+  },
+  "runtime": {
+    "mode": "sandbox",
+    "persistence": "none"
+  },
+  "listeners": [],
+  "table": {
+    "width": 18,
+    "depth": 11,
+    "debug": true,
+    "environment": {
+      "preset": "studio",
+      "background_color": "#C7BFB0",
+      "lighting": "soft_grid"
+    },
+    "surface": {
+      "material": "wood",
+      "placement_mode": "free_or_slot"
+    },
+    "areas": [
+      {
+        "id": "free_objects",
+        "bounds": { "center": { "x": -5, "z": -2.7 }, "size": { "x": 6.5, "z": 4.2 } },
+        "placement_mode": "free"
+      },
+      {
+        "id": "board_slot",
+        "bounds": { "center": { "x": 3.2, "z": -2.7 }, "size": { "x": 8.5, "z": 4.2 } },
+        "placement_mode": "slots_only",
+        "slots": [
+          {
+            "id": "debug_board_home",
+            "capacity": 1,
+            "accepted_kinds": ["board"],
+            "pose": {
+              "position": { "x": 3.2, "y": 0, "z": -2.7 },
+              "rotation": { "x": 0, "y": 0, "z": 0 }
+            }
+          }
+        ]
+      },
+      {
+        "id": "pieces_only",
+        "bounds": { "center": { "x": -4.2, "z": 2.7 }, "size": { "x": 8, "z": 4.2 } },
+        "placement_mode": "free_or_slot",
+        "accepted_kinds": ["piece"]
+      },
+      {
+        "id": "mixed_area",
+        "bounds": { "center": { "x": 4.8, "z": 2.7 }, "size": { "x": 9, "z": 4.2 } },
+        "placement_mode": "free_or_slot"
+      }
+    ]
+  },
+  "players": [
+    { "id": "player_1", "name": "Player 1", "color": "#F2B837" },
+    { "id": "player_2", "name": "Player 2", "color": "#4DB7F2" }
+  ],
+  "setup": { "objects": [] }
+}
