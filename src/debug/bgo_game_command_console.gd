@@ -47,8 +47,6 @@ var _invocation = INVOCATION_SERVICE_SCRIPT.new()
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	if not OS.is_debug_build() or Engine.is_editor_hint():
-		return
 	call_deferred("_initialize")
 
 
@@ -78,6 +76,7 @@ func _initialize() -> void:
 			_registry,
 			Callable(self, "_queue_refresh"),
 			Callable(self, "_format_value"),
+			Callable(self, "_record_console_invocation"),
 		)
 	)
 	(
@@ -223,6 +222,7 @@ func _complete_fluent_expression(source: String) -> Array[String]:
 
 
 func _invoke_python_namespace(path: String, arguments: Array) -> Dictionary:
+	_record_console_invocation(path, arguments)
 	return _api_service._invoke_python_namespace(path, arguments)
 
 
@@ -248,6 +248,12 @@ func _describe_api(entity_name: String, method_name: String = "") -> void:
 
 func _format_value(value: Variant) -> String:
 	return _api_service._format_value(value)
+
+
+func _record_console_invocation(method_name: String, arguments: Array) -> void:
+	var activity_log := get_node_or_null("/root/BgoActivityLog")
+	if activity_log != null:
+		activity_log.record_invocation(method_name, "console", {"arguments": arguments})
 
 
 func _list_constants() -> void:

@@ -7,6 +7,7 @@ extends RefCounted
 
 var gameplay: GameplayState
 var game_definition: Dictionary = {}
+var activity_log: Node
 
 const ENTITY_GAME := "Game.definition"
 const ENTITY_MATCH := "Match"
@@ -36,15 +37,22 @@ static func create(p_gameplay: GameplayState, p_game_definition: Dictionary) -> 
 	var api = new()
 	api.gameplay = p_gameplay
 	api.game_definition = p_game_definition.duplicate(true)
+	api.activity_log = Engine.get_main_loop().root.get_node_or_null("BgoActivityLog") if Engine.get_main_loop() != null else null
 	return api
+
+func _record(method_name: String, context: Dictionary) -> void:
+	if activity_log != null:
+		activity_log.record_invocation(method_name, "mcp", context)
 
 
 func get_definition(_context: Dictionary) -> Dictionary:
+	_record("Game.definition.get", _context)
 	return {"ok": true, "definition": game_definition.duplicate(true)}
 
 
 ## Lists the logical entities visible to this caller and their declared commands.
 func get_entities(context: Dictionary) -> Dictionary:
+	_record("System.api.getEntities", context)
 	if gameplay == null:
 		return _rejected("gameplay_unavailable")
 	var entities: Array[Dictionary] = [
@@ -74,6 +82,7 @@ func get_entities(context: Dictionary) -> Dictionary:
 
 ## Returns an authorized property snapshot plus its predictable writable schema.
 func get_properties(context: Dictionary, entity: String) -> Dictionary:
+	_record("System.api.getProperties", context)
 	if entity == ENTITY_GAME:
 		return {
 			"ok": true,
@@ -126,6 +135,7 @@ func get_properties(context: Dictionary, entity: String) -> Dictionary:
 
 ## Applies only declared writable properties; movement and lifecycle remain commands.
 func set_properties(context: Dictionary, entity: String, changes: Dictionary) -> Dictionary:
+	_record("%s.setProperties" % entity, context)
 	var object := _object_from_entity(context, entity)
 	if object == null:
 		return _rejected("unknown_or_hidden_entity")
@@ -172,6 +182,7 @@ func set_properties(context: Dictionary, entity: String, changes: Dictionary) ->
 
 ## Executes one command from the entity's declared allowlist.
 func execute(context: Dictionary, entity: String, command: String, arguments: Dictionary) -> Dictionary:
+	_record("%s.%s" % [entity, command], context)
 	if entity == ENTITY_MATCH and command == "createObjectAtPoint":
 		return create_object_at_point(
 			context,
@@ -210,12 +221,14 @@ func execute(context: Dictionary, entity: String, command: String, arguments: Di
 
 
 func get_state(context: Dictionary) -> Dictionary:
+	_record("Match.getState", context)
 	if gameplay == null:
 		return _rejected("gameplay_unavailable")
 	return {"ok": true, "state": _filtered_state(context)}
 
 
 func get_grid_state(context: Dictionary) -> Dictionary:
+	_record("Match.table.getGridState", context)
 	if gameplay == null or gameplay.tabletop == null:
 		return _rejected("tabletop_unavailable")
 	var objects: Array[Dictionary] = []
@@ -237,6 +250,7 @@ func get_grid_state(context: Dictionary) -> Dictionary:
 
 
 func inspect_object(context: Dictionary, object_id: String) -> Dictionary:
+	_record("Match.objects.%s.inspect" % object_id, context)
 	if gameplay == null or not gameplay.objects.has(object_id):
 		return _rejected("unknown_object")
 	var object: LogicalObjectState = gameplay.objects[object_id]
@@ -246,6 +260,7 @@ func inspect_object(context: Dictionary, object_id: String) -> Dictionary:
 
 
 func objects_at_point(context: Dictionary, x: int, y: int) -> Dictionary:
+	_record("Match.table.objectsAtPoint", context)
 	if gameplay == null or gameplay.tabletop == null:
 		return _rejected("tabletop_unavailable")
 	var point := Vector2i(x, y)
@@ -271,6 +286,7 @@ func create_object_at_point(
 	footprint_y: int = 1,
 	allow_overlap: bool = false
 ) -> Dictionary:
+	_record("Match.createObjectAtPoint", context)
 	if not _is_host(context):
 		return _rejected("host_required")
 	if not _sandbox_enabled():
@@ -317,6 +333,7 @@ func move_object_to_point(
 	footprint_y: int = 1,
 	allow_overlap: bool = false
 ) -> Dictionary:
+	_record("Match.objects.%s.moveToPoint" % object_id, context)
 	if gameplay == null or gameplay.session == null:
 		return _rejected("gameplay_unavailable")
 	var participant_id := str(context.get("participant_id", ""))

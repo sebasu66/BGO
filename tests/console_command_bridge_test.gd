@@ -14,6 +14,10 @@ static func run(check: Callable) -> void:
 	check.call(bridge != null, "BGO console bridge autoload is available")
 	if console == null or bridge == null:
 		return
+	check.call(bool(bridge.get("_initialized")), "BGO console initializes whenever Console exists")
+	var activity := tree.root.get_node_or_null("BgoActivityLog")
+	if activity != null:
+		activity.clear_for_tests()
 
 	var definition_host := GameSessionRepository.new()
 	definition_host.name = "DefinitionApiFixture"
@@ -40,6 +44,7 @@ static func run(check: Callable) -> void:
 	var game_name_result: Dictionary = bridge.call(
 		"_invoke_python_namespace", "Game.definition.getName", []
 	)
+	check.call(activity != null and not activity.entries.is_empty(), "public API invocation is activity logged")
 	check.call(
 		bool(game_name_result.get("ok", false)) and game_name_result.get("value") == "Fixture Game",
 		"Game definition methods execute with Python-like parentheses"

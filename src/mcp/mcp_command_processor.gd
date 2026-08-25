@@ -12,6 +12,9 @@ const MCP_GAME_API = preload("res://src/mcp/mcp_game_api.gd")
 func process(
 	command: Dictionary, session_snapshot: Dictionary, game_definition: Dictionary
 ) -> Dictionary:
+	var activity_log: Node = Engine.get_main_loop().root.get_node_or_null("BgoActivityLog") if Engine.get_main_loop() != null else null
+	if activity_log != null:
+		activity_log.record_invocation("System.processCommand", "mcp", command.get("context", {}))
 	var context: Dictionary = command.get("context", {})
 	var tool_name := str(command.get("tool", ""))
 	var arguments: Dictionary = command.get("arguments", {})

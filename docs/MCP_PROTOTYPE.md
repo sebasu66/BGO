@@ -2,6 +2,9 @@
 
 ## Current boundary
 
+The Phase 1 GitHub Jobs adapter is documented in `docs/GITHUB_JOBS_TRANSPORT.md`.
+It preserves this MCP command processor as the canonical execution path.
+
 BGO currently has one development session namespace (`TEST001`) and no user
 authentication. The initial integration therefore declares the explicit
 `dev_direct_no_auth` policy in `src/mcp/mcp_prototype_access_policy.gd`.

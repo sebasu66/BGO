@@ -9,6 +9,7 @@ var _help_by_node: Dictionary
 var _registry
 var _queue_refresh_callback: Callable
 var _format_value_callback: Callable
+var _activity_callback: Callable
 
 
 func _configure(
@@ -18,6 +19,7 @@ func _configure(
 	registry,
 	queue_refresh_callback: Callable,
 	format_value_callback: Callable,
+	activity_callback: Callable = Callable(),
 ) -> void:
 	_registered_commands = registered_commands
 	_commands_by_node = commands_by_node
@@ -25,6 +27,7 @@ func _configure(
 	_registry = registry
 	_queue_refresh_callback = queue_refresh_callback
 	_format_value_callback = format_value_callback
+	_activity_callback = activity_callback
 
 
 func _convert_argument(raw: String, argument: Dictionary) -> Dictionary:
@@ -32,6 +35,8 @@ func _convert_argument(raw: String, argument: Dictionary) -> Dictionary:
 
 
 func _invoke_registered(command_name: String, raw_args: Array) -> void:
+	if _activity_callback.is_valid():
+		_activity_callback.call(command_name, raw_args)
 	if not _registered_commands.has(command_name):
 		Console.print_error("Unknown game command: %s" % command_name)
 		return

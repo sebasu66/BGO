@@ -7,6 +7,7 @@ signal session_error(message: String)
 signal piece_changed(piece_id: String, piece_data: Dictionary)
 
 const MCP_COMMAND_PROCESSOR = preload("res://src/mcp/mcp_command_processor.gd")
+const GITHUB_JOBS_TRANSPORT = preload("res://src/network/github_jobs_transport.gd")
 const DEFAULT_GAME_ID := "TEST001"
 
 var game_id: String = DEFAULT_GAME_ID
@@ -23,6 +24,8 @@ var _mcp_command_processor: Variant = MCP_COMMAND_PROCESSOR.new()
 var _mcp_commands_in_flight: Dictionary = {}
 var _mcp_authority_participant_id := ""
 var _is_mcp_authority := false
+var _github_client_id := ""
+var _github_jobs_enabled := false
 
 
 func _ready() -> void:
@@ -96,6 +99,12 @@ func console_api() -> Dictionary:
 func set_mcp_command_authority(participant_id: String, enabled: bool) -> void:
 	_mcp_authority_participant_id = participant_id
 	_is_mcp_authority = enabled and not participant_id.is_empty()
+
+
+## Enables the per-session GitHub job worker. No GitHub credentials are held here.
+func set_github_jobs_transport(client_id: String, enabled: bool) -> void:
+	_github_client_id = client_id
+	_github_jobs_enabled = enabled and not client_id.is_empty()
 
 
 ## Starts repository synchronization for the current session context.
@@ -444,6 +453,7 @@ func _on_request_succeeded(operation: StringName, path: String, data: Variant) -
 	var session: Dictionary = data
 	_ensure_definition_objects(session)
 	_process_pending_mcp_commands(session)
+	_process_pending_github_jobs(session)
 	session_loaded.emit(session)
 	var current_pieces: Dictionary = session.get("pieces", {})
 	for piece_id in current_pieces:
@@ -507,6 +517,19 @@ func _finish_mcp_command(command_id: String, result: Dictionary) -> void:
 			event["timestamp"] = revision
 			_adapter.push("%s/events" % _game_path(), event)
 	_mcp_commands_in_flight.erase(command_id)
+
+
+func _process_pending_github_jobs(session: Dictionary) -> void:
+	if not _github_jobs_enabled or game_definition.is_empty():
+		return
+	var result := GITHUB_JOBS_TRANSPORT.process_pending(
+		session, _github_client_id, _mcp_command_processor, game_definition, int(Time.get_unix_time_from_system())
+	)
+	if not bool(result.get("should_patch_lease", false)):
+		return
+	var patch: Dictionary = result.get("patch", {})
+	_adapter.patch(_game_path(), patch)
+	_log("GITHUB_JOBS_PROCESSED", {"client_id": _github_client_id, "processed": int(result.get("processed", 0))})
 
 
 func _on_request_failed(

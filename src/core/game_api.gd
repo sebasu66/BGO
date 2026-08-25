@@ -9,15 +9,22 @@ var _definition: Dictionary = {}
 var _definition_path := ""
 var _runtime: Variant
 
+func _record(method_name: String, result: Variant = null) -> void:
+	var activity: Node = Engine.get_main_loop().root.get_node_or_null("BgoActivityLog") if Engine.get_main_loop() != null else null
+	if activity != null:
+		activity.record_invocation(method_name, "internal", {}, result)
+
 
 ## Binds the immutable definition projection for the currently loaded game.
 func bind_definition(value: Dictionary, path: String) -> void:
+	_record("Game.bindDefinition")
 	_definition = value.duplicate(true)
 	_definition_path = path
 
 
 ## Binds authoritative runtime state for console queries and commands.
 func bind_runtime(value: Variant) -> void:
+	_record("Match.bindRuntime")
 	_runtime = value
 
 
@@ -54,46 +61,63 @@ func help() -> Dictionary:
 
 ## Lists game definitions available to the current build.
 func games() -> Array[String]:
-	return BgoGameDefinitionLoader.list_game_ids()
+	var result := BgoGameDefinitionLoader.list_game_ids()
+	_record("System.games", result)
+	return result
 
 
 ## Reads the loaded game definition or one dotted path from it.
 func definition(path: String = "") -> Variant:
-	return _read_path(_definition, path)
+	var result: Variant = _read_path(_definition, path)
+	_record("Game.definition", result)
+	return result
 
 
 ## Reads authoritative runtime state or one dotted path from it.
 func state(path: String = "") -> Variant:
 	if _runtime == null or not _runtime.has_method("to_dictionary"):
+		_record("Match.state", {})
 		return {}
-	return _read_path(_runtime.to_dictionary(), path)
+	var result: Variant = _read_path(_runtime.to_dictionary(), path)
+	_record("Match.state", result)
+	return result
 
 
 ## Lists component contracts or returns one contract by stable id.
 func components(component_id: String = "") -> Variant:
 	if not component_id.is_empty():
-		return BgoComponentRegistry.get_contract(component_id)
+		var result := BgoComponentRegistry.get_contract(component_id)
+		_record("System.components", result)
+		return result
 	var result: Dictionary = {}
 	for id in BgoComponentRegistry.component_ids():
 		result[id] = BgoComponentRegistry.get_contract(id)
+	_record("System.components", result)
 	return result
 
 
 ## Submits one canonical command through the normal validated mutation path.
 func execute(command: Dictionary) -> Dictionary:
 	if _runtime == null or not _runtime.has_method("execute"):
-		return {"ok": false, "reason": "runtime_not_bound"}
+		var rejected := {"ok": false, "reason": "runtime_not_bound"}
+		_record("Match.execute", rejected)
+		return rejected
 	var result: Dictionary = _runtime.execute(command.duplicate(true))
 	if bool(result.get("ok", false)):
 		runtime_changed.emit(_runtime.to_dictionary())
+	_record("Match.execute", result)
 	return result
 
 
 ## Exports the current sandbox state as a declarative initial-state fragment.
 func export_initial_state() -> Dictionary:
 	if _runtime == null or not _runtime.has_method("export_initial_state"):
-		return {"ok": false, "reason": "sandbox_not_bound"}
-	return _runtime.export_initial_state()
+		var rejected := {"ok": false, "reason": "sandbox_not_bound"}
+		_record("Game.exportInitialState", rejected)
+		return rejected
+	var result: Dictionary = _runtime.export_initial_state()
+	_record("Game.exportInitialState", result)
+	return result
 
 
 func _read_path(source: Dictionary, path: String) -> Variant:
