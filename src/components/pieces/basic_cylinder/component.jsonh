@@ -2,14 +2,18 @@
   "schema": "bgo.component",
   "id": "bgo.piece.basic_cylinder",
   "kind": "piece",
-  "description": "Basic quantity-aware board piece rendered as a cylinder.",
+  "description": "Configurable simple geometric board piece with quantity, shape, color, and material controls.",
   "state": {},
   "scene": "res://src/components/pieces/basic_cylinder/basic_cylinder_piece.tscn",
   "config": {
-    "radius": { "type": "float", "min": 0.1, "max": 2.0, "default": 0.38 },
-    "height": { "type": "float", "min": 0.05, "max": 2.0, "default": 0.32 },
-    "color_source": { "type": "enum", "values": ["player", "fixed"], "default": "player" },
-    "color": { "type": "string", "default": "#ffffff" }
+    "shape": { "type": "enum", "values": ["cylinder", "cube", "cone", "sphere"], "default": "cylinder", "description": "Simple geometric shape used to render the piece.", "example": "cone", "agent_visible": true },
+    "radius": { "type": "float", "min": 0.1, "max": 2.0, "default": 0.38, "description": "Horizontal radius or half-width of the rendered piece.", "example": 0.42, "agent_visible": true },
+    "height": { "type": "float", "min": 0.05, "max": 2.0, "default": 0.32, "description": "Rendered height of cylinder, cube, or cone pieces.", "example": 0.5, "agent_visible": true },
+    "color_source": { "type": "enum", "values": ["player", "fixed"], "default": "player", "description": "Use the owning player's color or the explicit fixed color.", "example": "fixed", "agent_visible": true },
+    "color": { "type": "string", "default": "#ffffff", "description": "Fixed CSS-style color used when color_source is fixed.", "example": "#E24A3B", "agent_visible": true },
+    "roughness": { "type": "float", "min": 0.0, "max": 1.0, "default": 0.38, "description": "Surface roughness: 0 is glossy and 1 is matte.", "example": 0.15, "agent_visible": true },
+    "metallic": { "type": "float", "min": 0.0, "max": 1.0, "default": 0.08, "description": "Metallic response: 0 is dielectric and 1 is strongly metallic.", "example": 0.65, "agent_visible": true },
+    "emission_strength": { "type": "float", "min": 0.0, "max": 5.0, "default": 0.0, "description": "Optional self-illumination strength for a glowing/brighter appearance.", "example": 0.8, "agent_visible": true }
   },
   "capabilities": ["movable", "ownable", "holdable", "placeable", "quantifiable", "stateful"],
   "verbs": {
