@@ -1,0 +1,36 @@
+{
+  "job": {
+    "arguments": {
+      "operation": "instructions"
+    },
+    "attempt": 0,
+    "context": {
+      "participant_id": "chatgpt",
+      "role": "host",
+      "session_id": "TEST001"
+    },
+    "created_at": 1787785200,
+    "job_id": "chatgpt-instructions-20260826-2000",
+    "processed_by": "display-player_1-1650-5112",
+    "result": {
+      "job_id": "chatgpt-instructions-20260826-2000",
+      "ok": false,
+      "processed_at": 1787784972,
+      "result": {
+        "ok": false,
+        "reason": "unsupported_mcp_command"
+      },
+      "schema_version": 1,
+      "status": "rejected"
+    },
+    "schema_version": 1,
+    "session_id": "TEST001",
+    "status": "rejected",
+    "tool": "bgo_query",
+    "transport": "github"
+  },
+  "job_id": "chatgpt-instructions-20260826-2000",
+  "relay": "github-actions-rtdb",
+  "session_id": "TEST001",
+  "status": "rejected"
+}
