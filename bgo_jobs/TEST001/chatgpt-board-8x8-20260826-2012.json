@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "job_id": "chatgpt-board-8x8-20260826-2012",
+  "session_id": "TEST001",
+  "transport": "github",
+  "tool": "bgo_set_properties",
+  "context": {
+    "session_id": "TEST001",
+    "participant_id": "chatgpt",
+    "role": "host"
+  },
+  "arguments": {
+    "entity": "Game.table.instances.main_board",
+    "changes": {
+      "configuration": {
+        "rows": 8
+      }
+    }
+  },
+  "status": "pending",
+  "attempt": 0,
+  "created_at": 1787785920
+}
