@@ -63,11 +63,17 @@ func _update_piece_from_state(piece: Node3D, state: Dictionary, cell: Vector2i) 
 	var old_location_type := str(piece.get_meta("location_type", "board"))
 	var old_holder := str(piece.get_meta("holder_id", ""))
 	var old_cell: Vector2i = piece.get_meta("cell", Vector2i(-1, -1))
+	var next_quantity := int(state.get("quantity", piece.get_meta("quantity", 1)))
 
 	piece.set_meta("owner_id", str(state.get("owner_id", piece.get_meta("owner_id", ""))))
 	piece.set_meta("holder_id", holder)
 	piece.set_meta("location_type", location_type)
 	piece.set_meta("cell", cell)
+	piece.set_meta("quantity", next_quantity)
+	if piece is BgoBasicCylinderPiece:
+		(piece as BgoBasicCylinderPiece).quantity = next_quantity
+	if piece.has_method("apply_configuration"):
+		piece.call("apply_configuration", state.get("object_config", {}) as Dictionary)
 
 	var state_changed := (
 		old_location_type != location_type or old_holder != holder or old_cell != cell
