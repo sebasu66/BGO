@@ -1,0 +1,109 @@
+{
+  "job": {
+    "arguments": {
+      "operation": "instructions"
+    },
+    "attempt": 0,
+    "context": {
+      "participant_id": "chatgpt",
+      "role": "host",
+      "session_id": "TEST001"
+    },
+    "created_at": 1787785560,
+    "job_id": "chatgpt-instructions-20260826-2006",
+    "processed_by": "display-player_1-1821-4848",
+    "result": {
+      "job_id": "chatgpt-instructions-20260826-2006",
+      "ok": true,
+      "processed_at": 1787785169,
+      "result": {
+        "api_version": "0.3.0",
+        "canonical": "System.instructions",
+        "examples": [
+          {
+            "call": {
+              "arguments": {
+                "entity": "Game.table.instances.main_board",
+                "operation": "getProperties"
+              },
+              "tool": "bgo_query"
+            },
+            "goal": "Inspect the main board"
+          },
+          {
+            "call": {
+              "arguments": {
+                "changes": {
+                  "configuration": {
+                    "rows": 8
+                  }
+                },
+                "entity": "Game.table.instances.main_board"
+              },
+              "tool": "bgo_set_properties"
+            },
+            "goal": "Change a 6-row board to 8 rows while preserving other configuration"
+          },
+          {
+            "call": {
+              "arguments": {
+                "arguments": {
+                  "x": 3,
+                  "y": 1
+                },
+                "command": "moveToPoint",
+                "entity": "Match.objects.player_1_piece"
+              },
+              "tool": "bgo_execute"
+            },
+            "goal": "Move one visible piece"
+          }
+        ],
+        "kind": "instructions",
+        "ok": true,
+        "query_transport": {
+          "arguments": {
+            "operation": "describe",
+            "target": "Game.table.instances.main_board"
+          },
+          "tool": "bgo_query"
+        },
+        "recommended_flow": [
+          "Call System.instructions once.",
+          "Call System.api.getEntities to discover stable logical entities.",
+          "Call System.api.getMethods for the entity you intend to use.",
+          "Call System.api.describe before an unfamiliar mutation.",
+          "Use Match.getView for a compact player-like view of the table.",
+          "Mutate only through bgo_set_properties or bgo_execute using the documented examples."
+        ],
+        "roots": [
+          {
+            "name": "Game",
+            "responsibility": "Declarative game definition and component configuration/authoring."
+          },
+          {
+            "name": "Match",
+            "responsibility": "Current session state, visible objects, turns, and gameplay actions."
+          },
+          {
+            "name": "System",
+            "responsibility": "API discovery plus runtime/environment/system capabilities when exposed."
+          }
+        ],
+        "schema_version": 1,
+        "summary": "Discover and operate BGO through Game, Match, and System without engine-level knowledge."
+      },
+      "schema_version": 1,
+      "status": "completed"
+    },
+    "schema_version": 1,
+    "session_id": "TEST001",
+    "status": "completed",
+    "tool": "bgo_query",
+    "transport": "github"
+  },
+  "job_id": "chatgpt-instructions-20260826-2006",
+  "relay": "github-actions-rtdb",
+  "session_id": "TEST001",
+  "status": "completed"
+}
