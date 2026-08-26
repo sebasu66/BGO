@@ -205,6 +205,7 @@ func _session_from_snapshot(p_session_id: String, persisted: Dictionary) -> Sess
 		true
 	))
 	session.result = (persisted.get("result", {}) as Dictionary).duplicate(true)
+	session.github_jobs_enabled = bool(persisted.get("github_jobs_enabled", false))
 	session.lifecycle = _lifecycle_value(str(persisted.get("lifecycle", "lobby")))
 	if session.lifecycle < 0:
 		return null

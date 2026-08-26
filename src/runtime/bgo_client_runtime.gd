@@ -353,6 +353,7 @@ func _open_settings() -> void:
 	if _settings_panel == null or _settings_controller == null:
 		return
 	_settings_panel.open(_settings_controller.values)
+	_refresh_bridge_settings_ui_impl()
 	logger.info("SETTINGS_OPENED", {"role": client_role, "player_id": player_id})
 
 
@@ -377,7 +378,16 @@ func _on_client_setting_changed(key: String, value: Variant) -> void:
 		_apply_ui_theme_from_settings()
 	if key == "visual_debug":
 		_apply_visual_debug_ui()
+	if key == "github_jobs_enabled" and repository != null:
+		repository.set_github_jobs_transport(client_id, bool(value))
+		_refresh_bridge_settings_ui_impl()
 	logger.info("CLIENT_SETTING_CHANGED", {"key": key, "value": value})
+
+
+func _refresh_bridge_settings_ui_impl() -> void:
+	if _settings_panel == null or repository == null:
+		return
+	_settings_panel.set_match_context(repository.github_bridge_context())
 
 
 func _apply_visual_debug_ui() -> void:

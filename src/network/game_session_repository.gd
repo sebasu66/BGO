@@ -5,6 +5,7 @@ signal session_loaded(data: Dictionary)
 signal session_missing
 signal session_error(message: String)
 signal piece_changed(piece_id: String, piece_data: Dictionary)
+signal github_bridge_status_changed(status: String)
 
 const MCP_COMMAND_PROCESSOR = preload("res://src/mcp/mcp_command_processor.gd")
 const GITHUB_JOBS_TRANSPORT = preload("res://src/network/github_jobs_transport.gd")
@@ -26,6 +27,9 @@ var _mcp_authority_participant_id := ""
 var _is_mcp_authority := false
 var _github_client_id := ""
 var _github_jobs_enabled := false
+var _github_bridge_status := "disabled"
+var _github_bridge_error := ""
+var _last_session: Dictionary = {}
 const ACTIVITY_LOG_LIMIT := 500
 
 
@@ -103,9 +107,23 @@ func set_mcp_command_authority(participant_id: String, enabled: bool) -> void:
 
 
 ## Enables the per-session GitHub job worker. No GitHub credentials are held here.
-func set_github_jobs_transport(client_id: String, enabled: bool) -> void:
+func set_github_jobs_transport(client_id: String, enabled: bool, persist: bool = true) -> void:
 	_github_client_id = client_id
 	_github_jobs_enabled = enabled and not client_id.is_empty()
+	_github_bridge_error = "" if not enabled else ("client_required" if client_id.is_empty() else "")
+	_update_github_bridge_status(_last_session)
+	if persist and not game_id.is_empty():
+		_adapter.patch(_game_path(), {"session/github_jobs_enabled": enabled})
+	if enabled:
+		refresh()
+
+
+func github_bridge_context() -> Dictionary:
+	return {
+		"session_id": game_id,
+		"github_jobs_enabled": _github_jobs_enabled,
+		"github_bridge_status": _github_bridge_status,
+	}
 
 
 ## Starts repository synchronization for the current session context.
@@ -357,6 +375,7 @@ func move_piece(piece_id: String, actor_id: String, cell: Vector2i) -> void:
 func _initial_session() -> Dictionary:
 	if game_definition.is_empty():
 		return {
+			"session": {"session_id": game_id, "github_jobs_enabled": false},
 			"metadata": {"status": "prototype", "label": "BGO Proof of Concept 01"},
 			"activity_log": {"events": {}},
 			"pieces":
@@ -369,6 +388,7 @@ func _initial_session() -> Dictionary:
 	var game: Dictionary = game_definition.get("game", {})
 	var setup: Dictionary = game_definition.get("setup", {})
 	var initial := {
+		"session": {"session_id": game_id, "github_jobs_enabled": false},
 		"metadata":
 		{
 			"status": "prototype",
@@ -500,6 +520,12 @@ func _on_request_succeeded(operation: StringName, path: String, data: Variant) -
 		return
 
 	var session: Dictionary = data
+	_github_bridge_error = ""
+	_last_session = session.duplicate(true)
+	var persisted_session: Dictionary = session.get("session", {})
+	if persisted_session.has("github_jobs_enabled"):
+		_github_jobs_enabled = bool(persisted_session.get("github_jobs_enabled", false)) and not _github_client_id.is_empty()
+	_update_github_bridge_status(session)
 	_bind_activity_log()
 	var activity_root: Variant = session.get("activity_log", {})
 	var activity_events: Dictionary = {}
@@ -589,7 +615,25 @@ func _process_pending_github_jobs(session: Dictionary) -> void:
 		return
 	var patch: Dictionary = result.get("patch", {})
 	_adapter.patch(_game_path(), patch)
+	if patch.has("github_lease"):
+		_last_session["github_lease"] = patch["github_lease"]
+		_update_github_bridge_status(_last_session)
 	_log("GITHUB_JOBS_PROCESSED", {"client_id": _github_client_id, "processed": int(result.get("processed", 0))})
+
+
+func _update_github_bridge_status(session: Dictionary) -> void:
+	var lease: Dictionary = session.get("github_lease", {})
+	var next := BgoGithubJobsTransport.status(
+		_github_jobs_enabled,
+		_github_client_id,
+		lease,
+		int(Time.get_unix_time_from_system()),
+		_github_bridge_error
+	)
+	if next == _github_bridge_status:
+		return
+	_github_bridge_status = next
+	github_bridge_status_changed.emit(next)
 
 
 func _on_request_failed(
@@ -597,6 +641,8 @@ func _on_request_failed(
 ) -> void:
 	if operation == &"read" and path == _game_path():
 		_poll_in_flight = false
+		_github_bridge_error = message if _github_jobs_enabled else ""
+		_update_github_bridge_status(_last_session)
 	_log(
 		"FIREBASE_ERROR",
 		{"operation": str(operation), "path": path, "http_code": http_code, "message": message},

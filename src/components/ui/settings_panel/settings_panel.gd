@@ -18,6 +18,9 @@ const OPEN_DURATION := 0.22  # Overlay entrance duration.
 var _controls: Dictionary = {}
 var _syncing := false
 var _panel: PanelContainer
+var _match_context: Dictionary = {}
+var _bridge_status_label: Label
+var _match_id_label: Label
 
 
 func _ready() -> void:
@@ -32,6 +35,7 @@ func _ready() -> void:
 ## Opens the settings overlay and synchronizes every control with current values.
 func open(values: Dictionary) -> void:
 	_sync_controls(values)
+	_sync_match_context()
 	visible = true
 	modulate.a = 0.0
 	_panel.scale = Vector2(0.97, 0.97)
@@ -155,6 +159,28 @@ func _build_lighting_section() -> Control:
 	return section
 
 
+func set_match_context(context: Dictionary) -> void:
+	_match_context = context.duplicate(true)
+	_sync_match_context()
+
+
+func _sync_match_context() -> void:
+	if _match_id_label != null:
+		_match_id_label.text = str(_match_context.get("session_id", "Not connected"))
+	if _bridge_status_label != null:
+		_bridge_status_label.text = str(_match_context.get("github_bridge_status", "disabled")).to_upper()
+	if _controls.has("github_jobs_enabled") and not _syncing:
+		_syncing = true
+		(_controls["github_jobs_enabled"] as CheckButton).button_pressed = bool(_match_context.get("github_jobs_enabled", false))
+		_syncing = false
+
+
+func _copy_match_id() -> void:
+	var session_id := str(_match_context.get("session_id", ""))
+	if not session_id.is_empty():
+		DisplayServer.clipboard_set(session_id)
+
+
 func _build_appearance_section() -> Control:
 	var section := _section("APPEARANCE")
 	var content := section.get_node("Scroll/Content") as VBoxContainer
@@ -197,6 +223,21 @@ func _build_gameplay_section() -> Control:
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	note.add_theme_color_override("font_color", MUTED_COLOR)
 	content.add_child(note)
+	_match_id_label = Label.new()
+	_match_id_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(_row("MATCH / SESSION ID", _match_id_label))
+	var copy := Button.new()
+	copy.text = "COPY MATCH ID"
+	copy.pressed.connect(_copy_match_id)
+	content.add_child(copy)
+	var bridge := CheckButton.new()
+	bridge.text = "ENABLE GITHUB JOBS BRIDGE"
+	bridge.toggled.connect(func(value: bool) -> void: _emit_value("github_jobs_enabled", value))
+	_controls["github_jobs_enabled"] = bridge
+	content.add_child(_row("Allow this match to participate in the Phase 1 lease and polling bridge.", bridge))
+	_bridge_status_label = Label.new()
+	_bridge_status_label.add_theme_color_override("font_color", MUTED_COLOR)
+	content.add_child(_row("BRIDGE STATUS", _bridge_status_label))
 	return section
 
 

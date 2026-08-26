@@ -16,6 +16,7 @@ const MCP_PROTOTYPE_ACCESS_POLICY = preload("res://src/mcp/mcp_prototype_access_
 const MCP_GAME_API_TEST = preload("res://tests/mcp_game_api_test.gd")
 const MCP_COMMAND_PROCESSOR_TEST = preload("res://tests/mcp_command_processor_test.gd")
 const GITHUB_JOBS_TRANSPORT_TEST = preload("res://tests/github_jobs_transport_test.gd")
+const GITHUB_BRIDGE_UI_TEST = preload("res://tests/github_bridge_ui_test.gd")
 const ACTIVITY_LOG_PERSISTENCE_TEST = preload("res://tests/activity_log_persistence_test.gd")
 const SESSION_STATE = preload("res://src/core/session_state.gd")
 const TABLE_GRID_STATE = preload("res://src/core/table_grid_state.gd")

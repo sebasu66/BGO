@@ -16,6 +16,7 @@ const DEFAULTS := {
 	"ui_accent_color": Color("#d7aa4c"),
 	"hand_pickup_mode": 0,
 	"visual_debug": false,
+	"github_jobs_enabled": false,
 }
 const QUALITY_MSAA := [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X]
 const QUALITY_SHADOW_ATLAS := [1024, 2048, 4096]
@@ -192,5 +193,7 @@ func _save() -> void:
 		return
 	var config := ConfigFile.new()
 	for key in values:
+		if key == "github_jobs_enabled":
+			continue
 		config.set_value(SECTION, key, values[key])
 	config.save(SETTINGS_PATH)

@@ -35,6 +35,9 @@ var turn_number: int = 0
 ## Expected shape: {"outcome": String, "winner_participant_ids": Array[String]}
 var result: Dictionary = {}
 
+## Per-match opt-in for the Phase 1 GitHub Jobs bridge.
+var github_jobs_enabled: bool = false
+
 
 ## Creates a new lobby session with the given identity and optional host.
 static func create_lobby(p_session_id: String, p_host_participant_id: String = "") -> SessionState:
@@ -163,6 +166,7 @@ func to_dictionary() -> Dictionary:
 		"active_participant_id": active_participant_id,
 		"turn_number": turn_number,
 		"result": result.duplicate(true),
+		"github_jobs_enabled": github_jobs_enabled,
 	}
 
 

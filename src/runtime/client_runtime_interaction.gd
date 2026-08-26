@@ -360,9 +360,11 @@ func _connect_session() -> void:
 	repository = GameSessionRepository.new()
 	add_child(repository)
 	repository.set_logger(logger)
+	repository.set_github_jobs_transport(client_id, false, false)
 	repository.session_missing.connect(_on_session_missing)
 	repository.session_loaded.connect(_on_session_loaded)
 	repository.session_error.connect(_on_session_error)
+	repository.github_bridge_status_changed.connect(_on_github_bridge_status_changed)
 	repository.piece_changed.connect(_on_piece_changed)
 	repository.start(game_id)
 	_set_status("Connecting to Firebase /games/%s â€¦" % game_id)
@@ -378,6 +380,16 @@ func _on_session_missing() -> void:
 
 func _on_session_loaded(_data: Dictionary) -> void:
 	_set_status("Connected Â· %s Â· %s" % [game_id, client_role.to_upper()])
+	_refresh_bridge_settings_ui()
+
+
+func _on_github_bridge_status_changed(_status: String) -> void:
+	_refresh_bridge_settings_ui()
+
+
+func _refresh_bridge_settings_ui() -> void:
+	if has_method("_refresh_bridge_settings_ui_impl"):
+		_refresh_bridge_settings_ui_impl()
 
 
 func _on_session_error(message: String) -> void:

@@ -1,6 +1,21 @@
 class_name BgoGithubJobsTransport
 extends RefCounted
 
+const STATUS_DISABLED := "disabled"
+const STATUS_LEADER_POLLING := "leader/polling"
+const STATUS_STANDBY := "standby"
+const STATUS_ERROR := "error"
+
+## Derives the bridge state from the persisted match setting and Phase 1 lease.
+static func status(enabled: bool, client_id: String, lease: Dictionary, now: int, error_message: String = "") -> String:
+	if not enabled:
+		return STATUS_DISABLED
+	if not error_message.is_empty() or client_id.is_empty():
+		return STATUS_ERROR
+	if LEASE.owns(lease, client_id, now):
+		return STATUS_LEADER_POLLING
+	return STATUS_STANDBY
+
 const JOB_SCHEMA = preload("res://src/network/github_job_schema.gd")
 const LEASE = preload("res://src/network/github_job_lease.gd")
 
