@@ -17,12 +17,15 @@
 
 ## Realtime networking
 
+Architecture and rationale: [`docs/REALTIME_TRANSPORT_SPIKE.md`](docs/REALTIME_TRANSPORT_SPIKE.md).
+
 - [ ] Create a disposable `spike/realtime-transport` from the integrated `develop` branch.
 - [ ] Define the minimal `RealtimeTransport` abstraction without coupling game rules to a provider.
 - [ ] Compare Freelay, WebRTC Piggyback, and Tube with the same two-browser proof.
 - [ ] Proof: create/join session, acquire one component, drag it, publish transient pose, release it.
 - [ ] Measure Web compatibility, latency, reconnect behavior, host loss, NAT/TURN needs, dependency weight, and code volume.
 - [ ] Evaluate optional LAN discovery separately from Internet transport.
+- [ ] Do not treat full-session REST polling as the target architecture; Firebase realtime listeners are the fallback/intermediate option if the transport spike does not replace RTDB live traffic.
 
 ## MCP / external agents
 
