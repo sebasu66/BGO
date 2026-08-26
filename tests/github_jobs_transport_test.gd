@@ -36,6 +36,17 @@ static func run(check: Callable) -> void:
 		int(definition_patch.get("definition/table/instances/0/config/rows", 0)) == 8,
 		"GitHub definition jobs project their patch below the shared session definition"
 	)
+	var stored_result: Dictionary = definition_patch.get("github_jobs/job-definition/result", {})
+	var public_result: Dictionary = stored_result.get("result", {})
+	check.call(
+		not public_result.has("definition_update") and not public_result.has("definition_patch"),
+		"GitHub job confirmation omits internal definition snapshots and slash-key patches"
+	)
+	var changes: Array = public_result.get("definition_changes", [])
+	check.call(
+		changes == [{"path": "table/instances/0/config/rows", "value": 8}],
+		"GitHub job confirmation serializes definition changes as Firebase-safe path/value entries"
+	)
 	var completed := session.duplicate(true)
 	completed["github_jobs"]["job-1"]["status"] = "completed"
 	completed["github_jobs"]["job-1"]["result"] = {"ok": true}
