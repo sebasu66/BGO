@@ -1,6 +1,7 @@
 class_name BgoGithubJobSchema
 extends RefCounted
 
+const RESULT_PROJECTION = preload("res://src/mcp/mcp_result_projection.gd")
 const SCHEMA_VERSION := 1
 const STATUS_PENDING := "pending"
 const STATUS_COMPLETED := "completed"
@@ -32,7 +33,7 @@ static func create_result(job_id: String, result: Dictionary, processed_at: int)
 		"schema_version": SCHEMA_VERSION,
 		"job_id": job_id,
 		"ok": bool(result.get("ok", false)),
-		"result": result.duplicate(true),
+		"result": RESULT_PROJECTION.for_persistence(result),
 		"processed_at": processed_at,
 	}
 
