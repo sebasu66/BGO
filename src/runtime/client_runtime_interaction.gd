@@ -389,7 +389,7 @@ func _on_github_bridge_status_changed(_status: String) -> void:
 
 func _refresh_bridge_settings_ui() -> void:
 	if has_method("_refresh_bridge_settings_ui_impl"):
-		_refresh_bridge_settings_ui_impl()
+		call("_refresh_bridge_settings_ui_impl")
 
 
 func _on_session_error(message: String) -> void:
