@@ -30,6 +30,9 @@ static func run(check: Callable) -> void:
 		},
 	}
 	var session := {
+		"session_id": "TEST001",
+		"turn_number": 3,
+		"active_participant_id": "host",
 		"pieces":
 		{
 			"existing":
@@ -49,6 +52,93 @@ static func run(check: Callable) -> void:
 		"participant_id": "host",
 		"role": "host",
 	}
+	var instructions: Dictionary = processor.process(
+		{
+			"tool": "bgo_query",
+			"context": context,
+			"arguments": {"operation": "instructions"},
+		},
+		session,
+		definition
+	)
+	check.call(
+		bool(instructions.get("ok", false))
+		and str(instructions.get("canonical", "")) == "System.instructions",
+		"read-only API query exposes a single LLM bootstrap entry"
+	)
+	check.call(
+		(instructions.get("recommended_flow", []) as Array).has(
+			"Call System.api.getEntities to discover stable logical entities."
+		),
+		"bootstrap instructions explain the discovery sequence"
+	)
+	var entities: Dictionary = processor.process(
+		{
+			"tool": "bgo_query",
+			"context": context,
+			"arguments": {"operation": "getEntities"},
+		},
+		session,
+		definition
+	)
+	var entity_names: Array[String] = []
+	for descriptor_variant in entities.get("entities", []):
+		var descriptor: Dictionary = descriptor_variant
+		entity_names.append(str(descriptor.get("entity", "")))
+	check.call(
+		entity_names.has("Game.table.instances.main_board"),
+		"API discovery exposes declarative table instances"
+	)
+	var described: Dictionary = processor.process(
+		{
+			"tool": "bgo_query",
+			"context": context,
+			"arguments": {
+				"operation": "describe",
+				"target": "Game.table.instances.main_board.configuration.rows",
+			},
+		},
+		session,
+		definition
+	)
+	check.call(
+		bool(described.get("ok", false))
+		and str(described.get("kind", "")) == "property"
+		and int(described.get("current_value", 0)) == 6,
+		"describe resolves a manifest-backed configuration property"
+	)
+	var view: Dictionary = processor.process(
+		{
+			"tool": "bgo_query",
+			"context": context,
+			"arguments": {"operation": "getView", "detail": "compact"},
+		},
+		session,
+		definition
+	)
+	check.call(
+		bool(view.get("ok", false))
+		and int(((view.get("table", {}) as Dictionary).get("board", {}) as Dictionary).get("rows", 0)) == 6
+		and (view.get("objects", []) as Array).size() == 1,
+		"Match.getView returns a compact semantic board/object projection"
+	)
+	var player_context := context.duplicate(true)
+	player_context["participant_id"] = "player_2"
+	player_context["role"] = "player"
+	var player_query: Dictionary = processor.process(
+		{
+			"tool": "bgo_query",
+			"context": player_context,
+			"arguments": {"operation": "getMethods", "entity": "Match.objects.existing"},
+		},
+		session,
+		definition
+	)
+	check.call(
+		bool(player_query.get("ok", false)),
+		"read-only discovery queries do not require host authority"
+	)
+
 	var created: Dictionary = (
 		processor
 		. process(
