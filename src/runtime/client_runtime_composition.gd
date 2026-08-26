@@ -305,7 +305,7 @@ func _create_piece_from_state(id: String, state: Dictionary, cell: Vector2i) -> 
 		return
 	_connect_runtime_component_events(body, id, component_id)
 	if body is BgoBasicCylinderPiece:
-		(body as BgoBasicCylinderPiece).configure(id, owner, holder, quantity, color)
+		(body as BgoBasicCylinderPiece).configure(id, owner, holder, quantity, color, object_config)
 	else:
 		body.name = id
 		body.set_meta("bgo_piece", true)
