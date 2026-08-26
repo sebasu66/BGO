@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "job_id": "chatgpt-board-properties-20260826-2010",
+  "session_id": "TEST001",
+  "transport": "github",
+  "tool": "bgo_query",
+  "context": {
+    "session_id": "TEST001",
+    "participant_id": "chatgpt",
+    "role": "host"
+  },
+  "arguments": {
+    "operation": "getProperties",
+    "entity": "Game.table.instances.main_board"
+  },
+  "status": "pending",
+  "attempt": 0,
+  "created_at": 1787785800
+}
