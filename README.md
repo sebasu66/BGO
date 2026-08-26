@@ -115,6 +115,8 @@ MCP tools operate on domain concepts such as `piece.move`, `deck.shuffle` and `g
 
 Firebase Functions can continue hosting the public HTTPS MCP endpoint even if high-frequency gameplay later moves away from Firebase RTDB.
 
+The current full-session Firebase REST polling is a prototype mechanism, not the target realtime architecture. The planned comparison of Firebase realtime listeners versus peer/realtime transports, including Freelay, WebRTC Piggyback and Tube, is documented in [`docs/REALTIME_TRANSPORT_SPIKE.md`](docs/REALTIME_TRANSPORT_SPIKE.md). The experiment must occur on the disposable `spike/realtime-transport` branch created from a green integrated `develop` branch.
+
 ## Development flow
 
 ```text
