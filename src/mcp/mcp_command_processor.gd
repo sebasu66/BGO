@@ -3,6 +3,7 @@ extends RefCounted
 # gdlint: disable=max-returns
 
 const MCP_GAME_API = preload("res://src/mcp/mcp_game_api.gd")
+const PUBLIC_API_DISCOVERY = preload("res://src/mcp/public_api_discovery.gd")
 
 ## Converts Firebase session projections into domain state, executes one
 ## validated MCP command through BgoMcpGameApi, and returns a persistence patch.
@@ -18,10 +19,15 @@ func process(
 	var context: Dictionary = command.get("context", {})
 	var tool_name := str(command.get("tool", ""))
 	var arguments: Dictionary = command.get("arguments", {})
-	if str(context.get("role", "")) != "host":
-		return _rejected("host_required")
 	if str(context.get("participant_id", "")).is_empty():
 		return _rejected("participant_required")
+	if tool_name == "bgo_query":
+		var discovery: BgoPublicApiDiscovery = PUBLIC_API_DISCOVERY.create(
+			session_snapshot, game_definition, context
+		)
+		return discovery.query(str(arguments.get("operation", "instructions")), arguments)
+	if str(context.get("role", "")) != "host":
+		return _rejected("host_required")
 
 	var gameplay := _restore_gameplay(session_snapshot, game_definition, context)
 	if gameplay == null:
