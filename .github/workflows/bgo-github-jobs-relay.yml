@@ -1,0 +1,48 @@
+name: BGO GitHub Jobs Relay
+
+on:
+  push:
+    branches:
+      - feature/github-transport-ai-timeline
+    paths:
+      - "bgo_jobs/**/*.json"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bgo-github-jobs-relay-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  relay:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Relay pending BGO jobs
+        env:
+          BGO_FIREBASE_DATABASE_URL: https://board-game-online-68c3f-default-rtdb.firebaseio.com
+        run: python tools/github_jobs_relay.py --timeout-seconds 90
+
+      - name: Publish BGO results
+        shell: bash
+        run: |
+          if [ -z "$(git status --porcelain bgo_results)" ]; then
+            echo "No result files to publish."
+            exit 0
+          fi
+          git config user.name "bgo-github-relay"
+          git config user.email "bgo-github-relay@users.noreply.github.com"
+          git add bgo_results
+          git commit -m "chore: publish BGO job results [skip ci]"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
