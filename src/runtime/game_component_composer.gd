@@ -14,6 +14,24 @@ func compose(definitions: Array, parent: Node3D) -> Dictionary:
 	return instances.duplicate()
 
 
+## Applies a validated declarative update to an already composed component.
+## The scene node remains an internal presentation detail of the runtime.
+func apply_definition(instance: Node3D, definition: Dictionary) -> bool:
+	if instance == null:
+		return false
+	var component_id := str(definition.get("component", ""))
+	if component_id != str(instance.get_meta("component_id", "")):
+		return false
+	var config: Variant = definition.get("config", {})
+	if not config is Dictionary:
+		return false
+	if not BgoComponentRegistry.validate_config(component_id, config as Dictionary).is_empty():
+		return false
+	_apply_config(instance, config, str(instance.name))
+	_apply_placement(instance, definition.get("placement", {}), str(instance.name))
+	return true
+
+
 func _instantiate_component(definition: Dictionary, parent: Node3D) -> void:
 	var instance_id := str(definition.get("id", ""))
 	var component_id := str(definition.get("component", ""))

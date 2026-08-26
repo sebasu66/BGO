@@ -17,6 +17,7 @@ var _asset_box: BgoAssetBox
 var _asset_box_open := false
 var _vertical_hand: BgoVerticalHand
 var _table_components: Dictionary = {}
+var _table_composer: BgoGameComponentComposer
 var _player_areas: Dictionary = {}
 var _primary_board: BgoCheckeredBoard
 var _load_drop_animator: BgoSequentialDropAnimator
@@ -54,12 +55,39 @@ func _create_board() -> void:
 		return
 	var table_definition: Dictionary = game_definition.get("table", {})
 	var definitions: Array = table_definition.get("instances", [])
-	var composer := GAME_COMPONENT_COMPOSER.new() as BgoGameComponentComposer
-	composer.logger = logger
-	_table_components = composer.compose(definitions, components_root)
+	_table_composer = GAME_COMPONENT_COMPOSER.new() as BgoGameComponentComposer
+	_table_composer.logger = logger
+	_table_components = _table_composer.compose(definitions, components_root)
 	_index_table_components()
 	_prepare_table_component_intro(definitions)
 	_create_asset_box()
+
+
+func _on_session_loaded(data: Dictionary) -> void:
+	super._on_session_loaded(data)
+	var shared_definition: Variant = data.get("definition", {})
+	if not shared_definition is Dictionary or (shared_definition as Dictionary).is_empty():
+		return
+	var next_definition: Dictionary = shared_definition as Dictionary
+	if next_definition == game_definition:
+		return
+	var errors := BgoGameDefinitionLoader.validate_game(next_definition)
+	if not errors.is_empty():
+		logger.error("SHARED_GAME_DEFINITION_REJECTED", {"errors": errors})
+		return
+	game_definition = next_definition.duplicate(true)
+	get_node("/root/G").bind_definition(game_definition, game_definition_path)
+	var table: Dictionary = game_definition.get("table", {})
+	var definitions: Array = table.get("instances", [])
+	for definition_value in definitions:
+		if not definition_value is Dictionary:
+			continue
+		var definition: Dictionary = definition_value
+		var instance_id := str(definition.get("id", ""))
+		var instance := _table_components.get(instance_id) as Node3D
+		if instance != null and _table_composer != null:
+			_table_composer.apply_definition(instance, definition)
+	_index_table_components()
 
 
 func _begin_initial_load_presentation(on_finished: Callable) -> bool:

@@ -20,6 +20,13 @@ The job id and persisted terminal status provide duplicate suppression.
 and delegates to `BgoMcpCommandProcessor`. It does not implement Game, Match,
 or System command semantics.
 
+Declarative authoring uses the same path with logical entities such as
+`Game.table.instances.main_board`. The canonical processor validates component
+configuration through the registry and returns a definition patch. The
+repository projects that patch below the shared session `definition` node;
+clients observing the updated definition apply it to the already composed
+runtime component.
+
 Godot Web must not contain a GitHub PAT. `BgoGithubJobRelay` is the boundary for
 authenticated GitHub dispatch: a server-side relay may submit work and persist
 the resulting job, while the client only consumes the persisted session data.

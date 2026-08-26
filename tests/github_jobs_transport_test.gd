@@ -6,6 +6,13 @@ const SCHEMA = preload("res://src/network/github_job_schema.gd")
 
 class FakeProcessor:
 	func process(command: Dictionary, _session: Dictionary, _definition: Dictionary) -> Dictionary:
+		if str(command.get("tool", "")) == "bgo_set_properties":
+			return {
+				"ok": true,
+				"entity": "Game.table.instances.main_board",
+				"definition_update": {"table": {"instances": [{"id": "main_board", "config": {"columns": 8, "rows": 8}}]}},
+				"definition_patch": {"table/instances/0/config/rows": 8},
+			}
 		return {"ok": true, "piece_id": str(command.get("arguments", {}).get("object_id", "job-piece")), "piece_state": {"from": "github"}}
 
 static func run(check: Callable) -> void:
@@ -21,6 +28,14 @@ static func run(check: Callable) -> void:
 	var patch: Dictionary = processed.get("patch", {})
 	check.call(int(processed.get("processed", 0)) == 1, "GitHub job routes through the supplied canonical processor")
 	check.call(str(patch.get("github_jobs/job-1/status", "")) == "completed", "GitHub job receives a structured result status")
+	var definition_job := SCHEMA.create_job("MATCH-1", "job-definition", "bgo_set_properties", {"session_id": "MATCH-1", "role": "host", "participant_id": "host"}, {"entity": "Game.table.instances.main_board", "changes": {"configuration": {"rows": 8}}}, 100)
+	var definition_session := {"session_id": "MATCH-1", "github_jobs": {"job-definition": definition_job}}
+	var definition_processed := TRANSPORT.process_pending(definition_session, "client-a", FakeProcessor.new(), {"table": {"instances": [{"id": "main_board", "config": {"columns": 8, "rows": 6}}]}}, 101)
+	var definition_patch: Dictionary = definition_processed.get("patch", {})
+	check.call(
+		int(definition_patch.get("definition/table/instances/0/config/rows", 0)) == 8,
+		"GitHub definition jobs project their patch below the shared session definition"
+	)
 	var completed := session.duplicate(true)
 	completed["github_jobs"]["job-1"]["status"] = "completed"
 	completed["github_jobs"]["job-1"]["result"] = {"ok": true}

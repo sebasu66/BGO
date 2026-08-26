@@ -73,6 +73,8 @@ func process(
 	var object_id := _result_object_id(tool_name, arguments, result)
 	var object: LogicalObjectState = gameplay.objects.get(object_id)
 	if object == null:
+		if result.has("definition_update"):
+			return result
 		return _rejected("command_result_missing_object")
 	return {
 		"ok": true,

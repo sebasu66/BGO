@@ -14,6 +14,15 @@ static func run(check: Callable) -> void:
 	var gameplay := GameplayState.create(session, tabletop)
 	var definition := {
 		"game": {"id": "test001"},
+		"table": {
+			"instances": [{
+				"id": "main_board",
+				"component": "bgo.board.checkered",
+				"config": {"columns": 8, "rows": 6, "cell_size": 1.2,
+					"grid_cell_size_cm": 5.0, "grid_points_per_unit": 5,
+					"grid_virtual_infinite": true}
+			}]
+		},
 		"sandbox":
 		{
 			"enabled": true,
@@ -78,6 +87,33 @@ static func run(check: Callable) -> void:
 	check.call(
 		found_entity,
 		"MCP discovers visible entities through canonical Match.objects paths"
+	)
+	var game_entities: Dictionary = api.get_entities(host)
+	var game_entity_found := false
+	for entity_variant in game_entities.get("entities", []):
+		if str((entity_variant as Dictionary).get("entity", "")) == "Game.table.instances.main_board":
+			game_entity_found = true
+			break
+	check.call(game_entity_found, "MCP discovers declarative Game table instances")
+	var board_change: Dictionary = api.set_properties(
+		host, "Game.table.instances.main_board", {"configuration": {"rows": 8}}
+	)
+	check.call(
+		bool(board_change.get("ok", false))
+		and int(((board_change.get("properties", {}) as Dictionary).get("configuration", {}) as Dictionary).get("columns", 0)) == 8
+		and int(((board_change.get("properties", {}) as Dictionary).get("configuration", {}) as Dictionary).get("rows", 0)) == 8,
+		"MCP validates and applies a declarative board configuration change"
+	)
+	check.call(
+		str((board_change.get("definition_patch", {}) as Dictionary).get("table/instances/0/config/rows", "")) == "8",
+		"MCP projects declarative changes as a shared-definition patch"
+	)
+	var invalid_board_change: Dictionary = api.set_properties(
+		host, "Game.table.instances.main_board", {"configuration": {"rows": 1}}
+	)
+	check.call(
+		str(invalid_board_change.get("reason", "")) == "invalid_component_config",
+		"MCP rejects invalid declarative component configuration"
 	)
 	var properties: Dictionary = api.get_properties(player, "Match.objects.mcp-mini-1")
 	var property_schema: Dictionary = properties.get("schema", {})

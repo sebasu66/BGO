@@ -10,8 +10,9 @@ static func run(check: Callable) -> void:
 			"instances":
 			[
 				{
+					"id": "main_board",
 					"component": "bgo.board.checkered",
-					"config": {"columns": 8, "rows": 6, "grid_cell_size_cm": 5.0},
+					"config": {"columns": 8, "rows": 6, "cell_size": 1.2, "grid_cell_size_cm": 5.0, "grid_points_per_unit": 5, "grid_virtual_infinite": true},
 				}
 			]
 		},
@@ -110,6 +111,24 @@ static func run(check: Callable) -> void:
 		and str((changed.get("piece_state", {}) as Dictionary).get("visibility", ""))
 		== "owner_only",
 		"MCP processor persists generic validated properties"
+	)
+	var board_changed: Dictionary = processor.process(
+		{
+			"tool": "bgo_set_properties",
+			"context": context,
+			"arguments": {
+				"entity": "Game.table.instances.main_board",
+				"changes": {"configuration": {"rows": 8}},
+			},
+		},
+		session,
+		definition
+	)
+	check.call(
+		bool(board_changed.get("ok", false))
+		and not board_changed.has("piece_id")
+		and int(((board_changed.get("definition_update", {}) as Dictionary).get("table", {}) as Dictionary).get("instances", [])[0].get("config", {}).get("rows", 0)) == 8,
+		"MCP processor returns a definition update for Game authoring"
 	)
 
 	var executed: Dictionary = processor.process(

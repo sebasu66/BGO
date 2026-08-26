@@ -11,7 +11,7 @@ func _run() -> void:
 	_test_component_validation()
 	_test_game_definition()
 	_test_debug_game_api()
-	_test_declarative_component_composition()
+	await _test_declarative_component_composition()
 	await _test_sequential_drop_animator()
 	_test_logger_levels()
 	_test_client_settings_controller()

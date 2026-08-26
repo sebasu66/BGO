@@ -61,6 +61,14 @@ static func process_pending(
 		var piece_state: Dictionary = result.get("piece_state", {})
 		if accepted and not piece_id.is_empty() and not piece_state.is_empty():
 			patch["pieces/%s" % piece_id] = piece_state
+		if accepted and result.has("definition_update"):
+			var definition_patch: Dictionary = result.get("definition_patch", {})
+			for path_variant in definition_patch:
+				patch["definition/%s" % str(path_variant)] = definition_patch[path_variant]
+			var updated_definition: Dictionary = result.get("definition_update", {})
+			if not updated_definition.is_empty():
+				game_definition.clear()
+				game_definition.merge(updated_definition, true)
 		processed += 1
 	return {"ok": true, "should_patch_lease": true, "patch": patch, "processed": processed}
 

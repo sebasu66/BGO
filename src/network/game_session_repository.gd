@@ -521,6 +521,11 @@ func _on_request_succeeded(operation: StringName, path: String, data: Variant) -
 
 	var session: Dictionary = data
 	_github_bridge_error = ""
+	var shared_definition: Variant = session.get("definition", {})
+	if shared_definition is Dictionary and not (shared_definition as Dictionary).is_empty():
+		if game_definition != shared_definition:
+			game_definition = (shared_definition as Dictionary).duplicate(true)
+			_definition_objects_checked = false
 	_last_session = session.duplicate(true)
 	var persisted_session: Dictionary = session.get("session", {})
 	if persisted_session.has("github_jobs_enabled"):
@@ -540,6 +545,8 @@ func _on_request_succeeded(operation: StringName, path: String, data: Variant) -
 	_ensure_definition_objects(session)
 	_process_pending_mcp_commands(session)
 	_process_pending_github_jobs(session)
+	if not game_definition.is_empty():
+		session["definition"] = game_definition.duplicate(true)
 	session_loaded.emit(session)
 	var current_pieces: Dictionary = session.get("pieces", {})
 	for piece_id in current_pieces:
@@ -587,6 +594,14 @@ func _finish_mcp_command(command_id: String, result: Dictionary) -> void:
 		var piece_state: Dictionary = result.get("piece_state", {})
 		if not piece_id.is_empty() and not piece_state.is_empty():
 			patch["pieces/%s" % piece_id] = piece_state
+		if result.has("definition_update"):
+			var definition_patch: Dictionary = result.get("definition_patch", {})
+			for path_variant in definition_patch:
+				patch["definition/%s" % str(path_variant)] = definition_patch[path_variant]
+			var updated_definition: Dictionary = result.get("definition_update", {})
+			if not updated_definition.is_empty():
+				game_definition = updated_definition.duplicate(true)
+				_definition_objects_checked = false
 	_log(
 		"MCP_COMMAND_PROCESSED",
 		{

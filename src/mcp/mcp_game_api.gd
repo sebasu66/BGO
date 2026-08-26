@@ -10,6 +10,7 @@ var game_definition: Dictionary = {}
 var activity_log: Node
 
 const ENTITY_GAME := "Game.definition"
+const GAME_TABLE_INSTANCE_PREFIX := "Game.table.instances."
 const ENTITY_MATCH := "Match"
 const ENTITY_TABLE := "Match.table"
 const ENTITY_SYSTEM := "System.api"
@@ -73,6 +74,19 @@ func get_entities(context: Dictionary) -> Dictionary:
 				_can_edit_object(context, object)
 			)
 		)
+	for instance_variant in _table_instances():
+		var instance: Dictionary = instance_variant
+		var instance_id := str(instance.get("id", ""))
+		if instance_id.is_empty():
+			continue
+		entities.append(
+			_entity_summary(
+				GAME_TABLE_INSTANCE_PREFIX + instance_id,
+				"GameTableComponent",
+				[],
+				_is_host(context)
+			)
+		)
 	entities.sort_custom(
 		func(left: Dictionary, right: Dictionary) -> bool:
 			return str(left.get("entity", "")) < str(right.get("entity", ""))
@@ -121,6 +135,21 @@ func get_properties(context: Dictionary, entity: String) -> Dictionary:
 			"schema": {},
 			"commands": [],
 		}
+	var game_instance := _game_table_instance(entity)
+	if not game_instance.is_empty():
+		var instance_definition: Dictionary = game_instance.get("definition", {})
+		var component_id := str(instance_definition.get("component", ""))
+		return {
+			"ok": true,
+			"entity": entity,
+			"properties": {
+				"componentId": component_id,
+				"configuration": (instance_definition.get("config", {}) as Dictionary).duplicate(true),
+				"placement": (instance_definition.get("placement", {}) as Dictionary).duplicate(true),
+			},
+			"schema": _game_instance_schema(component_id, context),
+			"commands": [],
+		}
 	var object := _object_from_entity(context, entity)
 	if object == null:
 		return _rejected("unknown_or_hidden_entity")
@@ -136,6 +165,9 @@ func get_properties(context: Dictionary, entity: String) -> Dictionary:
 ## Applies only declared writable properties; movement and lifecycle remain commands.
 func set_properties(context: Dictionary, entity: String, changes: Dictionary) -> Dictionary:
 	_record("%s.setProperties" % entity, context)
+	var game_instance := _game_table_instance(entity)
+	if not game_instance.is_empty():
+		return _set_game_instance_properties(context, entity, game_instance, changes)
 	var object := _object_from_entity(context, entity)
 	if object == null:
 		return _rejected("unknown_or_hidden_entity")
@@ -430,6 +462,96 @@ func _object_from_entity(context: Dictionary, entity: String) -> LogicalObjectSt
 	var object_id := entity.trim_prefix(OBJECT_PREFIX)
 	var object: LogicalObjectState = gameplay.objects.get(object_id) if gameplay != null else null
 	return object if object != null and _can_view_object(context, object) else null
+
+
+func _table_instances() -> Array:
+	var table: Dictionary = game_definition.get("table", {})
+	var instances: Variant = table.get("instances", [])
+	return instances if instances is Array else []
+
+
+func _game_table_instance(entity: String) -> Dictionary:
+	if not entity.begins_with(GAME_TABLE_INSTANCE_PREFIX):
+		return {}
+	var requested_id := entity.trim_prefix(GAME_TABLE_INSTANCE_PREFIX)
+	if requested_id.is_empty() or requested_id.contains("."):
+		return {}
+	var instances := _table_instances()
+	for index in instances.size():
+		if not instances[index] is Dictionary:
+			continue
+		var instance: Dictionary = instances[index]
+		if str(instance.get("id", "")) == requested_id:
+			return {"index": index, "definition": instance}
+	return {}
+
+
+func _game_instance_schema(component_id: String, context: Dictionary) -> Dictionary:
+	var contract := BgoComponentRegistry.get_contract(component_id)
+	var config_schema: Dictionary = contract.get("config", {})
+	var schema := {
+		"componentId": {"type": "string", "writable": false},
+		"configuration": {
+			"type": "object",
+			"writable": _is_host(context),
+			"properties": config_schema.duplicate(true),
+		},
+		"placement": {"type": "object", "writable": false},
+	}
+	return schema
+
+
+func _set_game_instance_properties(
+	context: Dictionary, entity: String, game_instance: Dictionary, changes: Dictionary
+) -> Dictionary:
+	if not _is_host(context):
+		return _rejected("host_required")
+	if changes.is_empty():
+		return _rejected("empty_changes")
+	for property_name_variant in changes:
+		if str(property_name_variant) != "configuration":
+			return _rejected("property_not_writable:%s" % str(property_name_variant))
+	var configuration: Variant = changes.get("configuration")
+	if not configuration is Dictionary:
+		return _rejected("configuration_must_be_object")
+	var instance_definition: Dictionary = game_instance.get("definition", {})
+	var next_configuration: Dictionary = (instance_definition.get("config", {}) as Dictionary).duplicate(true)
+	next_configuration.merge(configuration, true)
+	var component_id := str(instance_definition.get("component", ""))
+	var errors := BgoComponentRegistry.validate_config(component_id, next_configuration)
+	if not errors.is_empty():
+		return {"ok": false, "reason": "invalid_component_config", "errors": errors}
+	var next_definition := game_definition.duplicate(true)
+	var next_table: Dictionary = next_definition.get("table", {})
+	var next_instances: Array = next_table.get("instances", [])
+	var index := int(game_instance.get("index", -1))
+	if index < 0 or index >= next_instances.size():
+		return _rejected("unknown_game_table_instance")
+	var updated_instance: Dictionary = (next_instances[index] as Dictionary).duplicate(true)
+	updated_instance["config"] = next_configuration
+	next_instances[index] = updated_instance
+	next_table["instances"] = next_instances
+	next_definition["table"] = next_table
+	var patch := {}
+	for property_name in configuration:
+		patch["table/instances/%d/config/%s" % [index, str(property_name)]] = configuration[property_name]
+	return {
+		"ok": true,
+		"entity": entity,
+		"properties": {
+			"componentId": component_id,
+			"configuration": next_configuration.duplicate(true),
+			"placement": (updated_instance.get("placement", {}) as Dictionary).duplicate(true),
+		},
+		"definition_update": next_definition,
+		"definition_patch": patch,
+		"event": {
+			"type": "game_definition_changed",
+			"entity": entity,
+			"participant_id": str(context.get("participant_id", "")),
+			"properties": changes.keys(),
+		},
+	}
 
 
 func _object_properties(object: LogicalObjectState) -> Dictionary:

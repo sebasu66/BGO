@@ -336,9 +336,22 @@ func _test_declarative_component_composition() -> void:
 	var board := instances.get("main_board") as BgoCheckeredBoard
 	_check(board != null and board.columns == 8 and board.rows == 6, "board config is applied")
 	_check(board.grid_points_per_unit == 5, "game package defines five grid points per unit")
+	var live_definition: Dictionary = data.duplicate(true)
+	var live_table: Dictionary = live_definition.get("table", {})
+	var live_instances: Array = live_table.get("instances", [])
+	var live_board: Dictionary = (live_instances[0] as Dictionary).duplicate(true)
+	var live_config: Dictionary = (live_board.get("config", {}) as Dictionary).duplicate(true)
+	live_config["rows"] = 8
+	live_board["config"] = live_config
+	live_instances[0] = live_board
+	live_table["instances"] = live_instances
+	live_definition["table"] = live_table
+	_check(composer.apply_definition(board, live_board), "composed component accepts a live definition update")
+	await process_frame
+	_check(board.columns == 8 and board.rows == 8, "live board configuration updates rows without changing columns")
 	var fine_grid := board.get_node_or_null("TableGrid") as BgoTableGrid
 	_check(
-		fine_grid != null and fine_grid.point_columns == 40 and fine_grid.point_rows == 30,
+		fine_grid != null and fine_grid.point_columns == 40 and fine_grid.point_rows == 40,
 		"one-centimetre grid points cover the complete board surface"
 	)
 	_check(fine_grid.virtual_infinite, "game package enables a virtually infinite table grid")
