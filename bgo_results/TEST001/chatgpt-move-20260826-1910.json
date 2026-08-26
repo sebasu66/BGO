@@ -1,0 +1,76 @@
+{
+  "job": {
+    "arguments": {
+      "allow_overlap": false,
+      "footprint_x": 1,
+      "footprint_y": 1,
+      "object_id": "player_1_piece",
+      "x": 3,
+      "y": 1
+    },
+    "attempt": 0,
+    "context": {
+      "participant_id": "chatgpt",
+      "role": "host",
+      "session_id": "TEST001"
+    },
+    "created_at": 1787782150,
+    "job_id": "chatgpt-move-20260826-1910",
+    "processed_by": "display-player_1-1650-5112",
+    "result": {
+      "job_id": "chatgpt-move-20260826-1910",
+      "ok": true,
+      "processed_at": 1787782159,
+      "result": {
+        "event": {
+          "object_id": "player_1_piece",
+          "participant_id": "chatgpt",
+          "to_footprint": {
+            "x": 1,
+            "y": 1
+          },
+          "to_origin": {
+            "x": 3,
+            "y": 1
+          },
+          "type": "sandbox_object_grid_moved"
+        },
+        "ok": true,
+        "piece_id": "player_1_piece",
+        "piece_state": {
+          "availability": "unique",
+          "available_quantity": 1,
+          "cell": {
+            "x": 3,
+            "y": 1
+          },
+          "component_id": "bgo.piece.basic_cylinder",
+          "footprint": {
+            "x": 1,
+            "y": 1
+          },
+          "holder_id": "",
+          "location": {
+            "slot_id": "board:3:1",
+            "type": "slot"
+          },
+          "owner_id": "player_1",
+          "quantity": 1,
+          "revision": 1787782159.767,
+          "visibility": "public"
+        }
+      },
+      "schema_version": 1,
+      "status": "completed"
+    },
+    "schema_version": 1,
+    "session_id": "TEST001",
+    "status": "completed",
+    "tool": "bgo_move_object_to_point",
+    "transport": "github"
+  },
+  "job_id": "chatgpt-move-20260826-1910",
+  "relay": "github-actions-rtdb",
+  "session_id": "TEST001",
+  "status": "completed"
+}
