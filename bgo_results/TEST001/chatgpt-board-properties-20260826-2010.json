@@ -1,0 +1,164 @@
+{
+  "job": {
+    "arguments": {
+      "entity": "Game.table.instances.main_board",
+      "operation": "getProperties"
+    },
+    "attempt": 0,
+    "context": {
+      "participant_id": "chatgpt",
+      "role": "host",
+      "session_id": "TEST001"
+    },
+    "created_at": 1787785800,
+    "job_id": "chatgpt-board-properties-20260826-2010",
+    "processed_by": "display-player_1-1821-4848",
+    "result": {
+      "job_id": "chatgpt-board-properties-20260826-2010",
+      "ok": true,
+      "processed_at": 1787785287,
+      "result": {
+        "api_version": "0.3.0",
+        "entity": "Game.table.instances.main_board",
+        "kind": "properties",
+        "ok": true,
+        "properties": {
+          "componentId": "bgo.board.checkered",
+          "configuration": {
+            "cell_size": 1.2,
+            "columns": 8.0,
+            "grid_cell_size_cm": 5.0,
+            "rows": 6.0
+          },
+          "placement": {
+            "position": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            }
+          }
+        },
+        "schema": {
+          "componentId": {
+            "type": "string",
+            "writable": false
+          },
+          "configuration": {
+            "properties": {
+              "cell_size": {
+                "agent_visible": true,
+                "default": 1.2,
+                "description": "Rendered width/depth of each board cell in world units.",
+                "example": 1.2,
+                "max": 3.0,
+                "min": 0.5,
+                "type": "float",
+                "writable": true
+              },
+              "columns": {
+                "agent_visible": true,
+                "default": 8.0,
+                "description": "Number of board columns.",
+                "example": 8.0,
+                "max": 30.0,
+                "min": 2.0,
+                "type": "int",
+                "writable": true
+              },
+              "dark_color": {
+                "agent_visible": true,
+                "default": "#1F242B",
+                "description": "Color of the dark checker cells as a CSS-style color string.",
+                "example": "#5A4636",
+                "type": "string",
+                "writable": true
+              },
+              "grid_cell_size_cm": {
+                "default": 5.0,
+                "description": "Logical physical size represented by one board unit, in centimetres.",
+                "example": 5.0,
+                "max": 100.0,
+                "min": 0.1,
+                "type": "float",
+                "writable": true
+              },
+              "grid_point_color": {
+                "default": "#73C7F2B8",
+                "description": "Color of fine-grid point markers.",
+                "example": "#FFFFFF66",
+                "type": "string",
+                "writable": true
+              },
+              "grid_points_per_unit": {
+                "default": 5.0,
+                "description": "Fine-grid subdivisions available inside each board unit.",
+                "example": 5.0,
+                "max": 100.0,
+                "min": 1.0,
+                "type": "int",
+                "writable": true
+              },
+              "grid_virtual_infinite": {
+                "default": true,
+                "description": "Allow logical fine-grid coordinates beyond the rendered board.",
+                "example": true,
+                "type": "bool",
+                "writable": true
+              },
+              "light_color": {
+                "agent_visible": true,
+                "default": "#33383F",
+                "description": "Color of the light checker cells as a CSS-style color string.",
+                "example": "#D9D0BF",
+                "type": "string",
+                "writable": true
+              },
+              "rows": {
+                "agent_visible": true,
+                "default": 6.0,
+                "description": "Number of board rows.",
+                "example": 8.0,
+                "max": 30.0,
+                "min": 2.0,
+                "type": "int",
+                "writable": true
+              },
+              "show_grid_points": {
+                "default": true,
+                "description": "Show or hide fine-grid point markers on this board.",
+                "example": false,
+                "type": "bool",
+                "writable": true
+              },
+              "slots_enabled": {
+                "default": true,
+                "description": "Expose each rendered cell as a stable named slot.",
+                "example": true,
+                "type": "bool",
+                "writable": true
+              }
+            },
+            "type": "object",
+            "writable": true
+          },
+          "placement": {
+            "type": "object",
+            "writable": false
+          }
+        },
+        "schema_version": 1
+      },
+      "schema_version": 1,
+      "status": "completed"
+    },
+    "schema_version": 1,
+    "session_id": "TEST001",
+    "status": "completed",
+    "tool": "bgo_query",
+    "transport": "github"
+  },
+  "job_id": "chatgpt-board-properties-20260826-2010",
+  "relay": "github-actions-rtdb",
+  "session_id": "TEST001",
+  "status": "completed"
+}
