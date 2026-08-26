@@ -6,13 +6,17 @@
   "state": {},
   "scene": "res://src/components/boards/checkered_board/checkered_board.tscn",
   "config": {
-    "columns": { "type": "int", "min": 2, "max": 30, "default": 8 },
-    "rows": { "type": "int", "min": 2, "max": 30, "default": 6 },
-    "cell_size": { "type": "float", "min": 0.5, "max": 3.0, "default": 1.2 },
-    "grid_cell_size_cm": { "type": "float", "min": 0.1, "max": 100.0, "default": 5.0 },
-    "grid_points_per_unit": { "type": "int", "min": 1, "max": 100, "default": 5 },
-    "grid_virtual_infinite": { "type": "bool", "default": true },
-    "slots_enabled": { "type": "bool", "default": true }
+    "columns": { "type": "int", "min": 2, "max": 30, "default": 8, "description": "Number of board columns.", "example": 8, "agent_visible": true },
+    "rows": { "type": "int", "min": 2, "max": 30, "default": 6, "description": "Number of board rows.", "example": 8, "agent_visible": true },
+    "cell_size": { "type": "float", "min": 0.5, "max": 3.0, "default": 1.2, "description": "Rendered width/depth of each board cell in world units.", "example": 1.2, "agent_visible": true },
+    "grid_cell_size_cm": { "type": "float", "min": 0.1, "max": 100.0, "default": 5.0, "description": "Logical physical size represented by one board unit, in centimetres.", "example": 5.0 },
+    "grid_points_per_unit": { "type": "int", "min": 1, "max": 100, "default": 5, "description": "Fine-grid subdivisions available inside each board unit.", "example": 5 },
+    "grid_virtual_infinite": { "type": "bool", "default": true, "description": "Allow logical fine-grid coordinates beyond the rendered board.", "example": true },
+    "slots_enabled": { "type": "bool", "default": true, "description": "Expose each rendered cell as a stable named slot.", "example": true },
+    "light_color": { "type": "string", "default": "#33383F", "description": "Color of the light checker cells as a CSS-style color string.", "example": "#D9D0BF", "agent_visible": true },
+    "dark_color": { "type": "string", "default": "#1F242B", "description": "Color of the dark checker cells as a CSS-style color string.", "example": "#5A4636", "agent_visible": true },
+    "show_grid_points": { "type": "bool", "default": true, "description": "Show or hide fine-grid point markers on this board.", "example": false },
+    "grid_point_color": { "type": "string", "default": "#73C7F2B8", "description": "Color of fine-grid point markers.", "example": "#FFFFFF66" }
   },
   "capabilities": ["slot_grid", "placeable_surface"],
   "verbs": {}
