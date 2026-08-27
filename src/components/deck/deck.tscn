@@ -1,0 +1,33 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_game_object_3d.gd" id="1_root"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_box_representation.gd" id="2_repr"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_pivot.gd" id="3_pivot"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_placeable.gd" id="4_place"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_rotatable.gd" id="5_rotate"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_container_feature.gd" id="6_container"]
+
+[node name="Deck" type="Node3D"]
+script = ExtResource("1_root")
+component_id = "bgo.deck"
+
+[node name="Representation" type="Node3D" parent="."]
+script = ExtResource("2_repr")
+size = Vector3(1.04, 0.22, 1.44)
+color = Color(0.18, 0.18, 0.2, 1)
+
+[node name="Pivot" type="Marker3D" parent="."]
+script = ExtResource("3_pivot")
+
+[node name="Placeable" type="Node3D" parent="."]
+script = ExtResource("4_place")
+
+[node name="Rotatable" type="Node3D" parent="."]
+script = ExtResource("5_rotate")
+
+[node name="Container" type="Node3D" parent="."]
+script = ExtResource("6_container")
+capacity = 500
+accepted_component_ids = PackedStringArray("bgo.card")
+ordered = true
+hidden_contents = true
