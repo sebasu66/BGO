@@ -1,85 +1,77 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=14 format=3]
 
-[ext_resource type="Script" path="res://src/authoring/nodes/bgo_game_object_3d.gd" id="1_root"]
-[ext_resource type="Script" path="res://src/authoring/nodes/bgo_box_representation.gd" id="2_box"]
-[ext_resource type="Script" path="res://src/authoring/nodes/bgo_pbr_material.gd" id="3_pbr"]
-[ext_resource type="Script" path="res://src/authoring/nodes/bgo_surface.gd" id="4_surface"]
-[ext_resource type="Script" path="res://src/authoring/nodes/bgo_slot_layout.gd" id="5_layout"]
-[ext_resource type="Script" path="res://src/authoring/nodes/bgo_plane_representation.gd" id="6_plane"]
-[ext_resource type="Script" path="res://src/authoring/nodes/bgo_pivot.gd" id="7_pivot"]
-[ext_resource type="Script" path="res://src/authoring/nodes/bgo_stackable.gd" id="8_stack"]
-[ext_resource type="Script" path="res://src/authoring/nodes/bgo_billboard_representation.gd" id="9_billboard"]
-[ext_resource type="Script" path="res://src/authoring/nodes/bgo_placeable.gd" id="10_placeable"]
-[ext_resource type="Script" path="res://src/authoring/nodes/bgo_rotatable.gd" id="11_rotatable"]
-[ext_resource type="Script" path="res://src/authoring/nodes/bgo_behavior.gd" id="12_behavior"]
+[ext_resource type="PackedScene" path="res://src/shared/tabletop_world_base.tscn" id="1_world"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_game_object_3d.gd" id="2_root"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_box_representation.gd" id="3_box"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_pbr_material.gd" id="4_pbr"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_surface.gd" id="5_surface"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_slot_layout.gd" id="6_layout"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_plane_representation.gd" id="7_plane"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_pivot.gd" id="8_pivot"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_stackable.gd" id="9_stack"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_billboard_representation.gd" id="10_billboard"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_placeable.gd" id="11_placeable"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_rotatable.gd" id="12_rotatable"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_behavior.gd" id="13_behavior"]
 
-[node name="NodeCompositionDemo" type="Node3D"]
-
-[node name="KeyLight" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-55, -30, 0)
-shadow_enabled = true
-
-[node name="Camera3D" type="Camera3D" parent="."]
-position = Vector3(8, 8, 11)
-rotation_degrees = Vector3(-32, 36, 0)
-current = true
+[node name="NodeCompositionDemo" instance=ExtResource("1_world")]
 
 [node name="Table" type="Node3D" parent="."]
-script = ExtResource("1_root")
+script = ExtResource("2_root")
 component_id = "bgo.demo.table"
 variant_id = "demo.table"
 definition_properties = {"color": "#5b4938", "size_x": 8.0, "size_y": 0.3, "size_z": 6.0, "surface_width": 7.2, "surface_depth": 5.2, "layout_rows": 3, "layout_columns": 4, "layout_gap_x": 0.15, "layout_gap_z": 0.15, "layout_stagger": 0.5, "roughness": 0.9}
 
 [node name="Representation" type="Node3D" parent="Table"]
-script = ExtResource("2_box")
+script = ExtResource("3_box")
 
 [node name="PbrMaterial" type="Node3D" parent="Table"]
-script = ExtResource("3_pbr")
+script = ExtResource("4_pbr")
 
 [node name="Surface" type="Node3D" parent="Table"]
 position = Vector3(0, 0.17, 0)
-script = ExtResource("4_surface")
+script = ExtResource("5_surface")
 
 [node name="Slots" type="Node3D" parent="Table/Surface"]
-script = ExtResource("5_layout")
+script = ExtResource("6_layout")
 mode = 3
 slot_size = Vector2(1.45, 1.25)
 
 [node name="Card" type="Node3D" parent="."]
 position = Vector3(-4.6, 0.25, 1.2)
-script = ExtResource("1_root")
+script = ExtResource("2_root")
 component_id = "bgo.demo.card"
 variant_id = "demo.card.rifleman"
 definition_properties = {"width": 1.3, "height": 1.9, "color": "#d7c59a", "max_stack": 40, "stack_spacing": 0.025}
 
 [node name="Representation" type="Node3D" parent="Card"]
-script = ExtResource("6_plane")
+script = ExtResource("7_plane")
 
 [node name="Pivot" type="Marker3D" parent="Card"]
-script = ExtResource("7_pivot")
+script = ExtResource("8_pivot")
 
 [node name="Stackable" type="Node3D" parent="Card"]
-script = ExtResource("8_stack")
+script = ExtResource("9_stack")
 
 [node name="Raider" type="Node3D" parent="."]
 position = Vector3(4.5, 0.15, 0.8)
-script = ExtResource("1_root")
+script = ExtResource("2_root")
 component_id = "bgo.demo.character"
 variant_id = "demo.raider"
 definition_properties = {"width": 1.0, "height": 2.1, "color": "#d5523d", "billboard_mode": "y_axis", "snap_to_slots": true, "allow_free_placement": false}
 
 [node name="Representation" type="Node3D" parent="Raider"]
-script = ExtResource("9_billboard")
+script = ExtResource("10_billboard")
 
 [node name="Pivot" type="Marker3D" parent="Raider"]
-script = ExtResource("7_pivot")
+script = ExtResource("8_pivot")
 
 [node name="Placeable" type="Node3D" parent="Raider"]
-script = ExtResource("10_placeable")
+script = ExtResource("11_placeable")
 
 [node name="Rotatable" type="Node3D" parent="Raider"]
-script = ExtResource("11_rotatable")
+script = ExtResource("12_rotatable")
 
 [node name="Behavior" type="Node3D" parent="Raider"]
-script = ExtResource("12_behavior")
+script = ExtResource("13_behavior")
 rules = [{"event": "onTake", "actions": [{"target": "Match.variables.alert", "operation": "add", "value": 1}]}]
