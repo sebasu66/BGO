@@ -62,7 +62,7 @@ func rebuild() -> void:
 	var stagger := float(definition_value(&"layout_stagger", stagger_fraction))
 	for row in actual_rows:
 		for column in actual_columns:
-			var slot := SLOT_SCRIPT.new()
+			var slot := SLOT_SCRIPT.new() as Node3D
 			slot.name = "Slot_%d_%d" % [column, row]
 			slot.set_meta("bgo_generated_slot", true)
 			slot.call(

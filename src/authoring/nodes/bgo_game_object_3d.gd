@@ -26,7 +26,7 @@ func get_definition_value(key: StringName, fallback: Variant = null) -> Variant:
 
 ## Updates one authored value and refreshes all definition-consuming children.
 func set_definition_value(key: StringName, value: Variant) -> void:
-	var next := definition_properties.duplicate(true)
+	var next: Dictionary = definition_properties.duplicate(true)
 	next[String(key)] = value
 	definition_properties = next
 	definition_changed.emit(effective_definition())
@@ -41,7 +41,7 @@ func effective_definition() -> Dictionary:
 func get_definition_schema() -> Dictionary:
 	var schema := {}
 	for child in find_children("*", "", true, false):
-		if not child.has_method("get_definition_schema"):
+		if not is_instance_valid(child) or not child.has_method("get_definition_schema"):
 			continue
 		var child_schema: Variant = child.call("get_definition_schema")
 		if child_schema is Dictionary:
@@ -52,7 +52,7 @@ func get_definition_schema() -> Dictionary:
 ## Returns validation errors that are meaningful before a GamePackage is exported.
 func validate_definition() -> PackedStringArray:
 	var errors := PackedStringArray()
-	var schema := get_definition_schema()
+	var schema: Dictionary = get_definition_schema()
 	for key in schema:
 		var descriptor: Variant = schema[key]
 		if descriptor is Dictionary and bool(descriptor.get("required", false)):
@@ -64,19 +64,22 @@ func validate_definition() -> PackedStringArray:
 ## Refreshes every child that consumes authored definition values.
 func refresh_composition() -> void:
 	_refresh_queued = false
-	for child in find_children("*", "", true, false):
-		if child.has_method("refresh_from_definition"):
-			child.call("refresh_from_definition")
+	var consumers := find_children("*", "", true, false)
+	for child in consumers:
+		if not is_instance_valid(child) or not child.has_method("refresh_from_definition"):
+			continue
+		child.call("refresh_from_definition")
 
 
 ## Compact composition description for future authoring/MCP discovery.
 func describe_composition() -> Dictionary:
 	var items: Array[Dictionary] = []
 	for child in find_children("*", "", true, false):
-		if child.has_method("composition_descriptor"):
-			var descriptor: Variant = child.call("composition_descriptor")
-			if descriptor is Dictionary:
-				items.append(descriptor)
+		if not is_instance_valid(child) or not child.has_method("composition_descriptor"):
+			continue
+		var descriptor: Variant = child.call("composition_descriptor")
+		if descriptor is Dictionary:
+			items.append(descriptor)
 	return {
 		"component_id": component_id,
 		"variant_id": variant_id,

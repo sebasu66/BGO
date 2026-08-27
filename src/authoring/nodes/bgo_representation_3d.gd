@@ -21,7 +21,7 @@ func definition_value(key: StringName, fallback: Variant = null) -> Variant:
 
 
 func definition_color(key: StringName, fallback: Color) -> Color:
-	var value := definition_value(key, fallback)
+	var value: Variant = definition_value(key, fallback)
 	if value is Color:
 		return value
 	if value is String:
