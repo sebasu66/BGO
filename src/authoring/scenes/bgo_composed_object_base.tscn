@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_game_object_3d.gd" id="1_root"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_pivot.gd" id="2_pivot"]
+
+[node name="BgoComposedObject" type="Node3D"]
+script = ExtResource("1_root")
+component_id = "bgo.authoring.composed_object"
+
+[node name="Pivot" type="Marker3D" parent="."]
+script = ExtResource("2_pivot")
