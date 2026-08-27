@@ -1,0 +1,33 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_game_object_3d.gd" id="1_root"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_primitive_representation.gd" id="2_repr"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_pivot.gd" id="3_pivot"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_placeable.gd" id="4_place"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_rotatable.gd" id="5_rotate"]
+[ext_resource type="Script" path="res://src/authoring/nodes/bgo_rollable.gd" id="6_roll"]
+
+[node name="Die" type="Node3D"]
+script = ExtResource("1_root")
+component_id = "bgo.die"
+
+[node name="Representation" type="Node3D" parent="."]
+script = ExtResource("2_repr")
+shape = 0
+size = Vector3(0.72, 0.72, 0.72)
+color = Color(0.92, 0.92, 0.88, 1)
+roughness = 0.48
+
+[node name="Pivot" type="Marker3D" parent="."]
+script = ExtResource("3_pivot")
+
+[node name="Placeable" type="Node3D" parent="."]
+script = ExtResource("4_place")
+
+[node name="Rotatable" type="Node3D" parent="."]
+script = ExtResource("5_rotate")
+
+[node name="Rollable" type="Node3D" parent="."]
+script = ExtResource("6_roll")
+sides = 6
+face_values = Array[String](["1", "2", "3", "4", "5", "6"])
