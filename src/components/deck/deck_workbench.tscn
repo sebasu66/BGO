@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://src/authoring/scenes/component_workbench_base.tscn" id="1_workbench"]
+[ext_resource type="PackedScene" path="res://src/components/deck/deck.tscn" id="2_component"]
+
+[node name="DeckWorkbench" instance=ExtResource("1_workbench")]
+
+[node name="ComponentUnderEdit" parent="." instance=ExtResource("2_component")]
+position = Vector3(0, 0.12, 0)
