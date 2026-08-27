@@ -7,18 +7,18 @@ extends Node3D
 @export var property_schema: Dictionary = {}
 
 
-func root_object() -> BgoGameObject3D:
+func root_object() -> Node:
 	var current := get_parent()
 	while current != null:
-		if current is BgoGameObject3D:
-			return current as BgoGameObject3D
+		if current.has_method("get_definition_value") and current.has_method("effective_definition"):
+			return current
 		current = current.get_parent()
 	return null
 
 
 func definition_value(key: StringName, fallback: Variant = null) -> Variant:
 	var root := root_object()
-	return fallback if root == null else root.get_definition_value(key, fallback)
+	return fallback if root == null else root.call("get_definition_value", key, fallback)
 
 
 func get_definition_schema() -> Dictionary:

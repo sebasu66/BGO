@@ -1,6 +1,6 @@
 @tool
 class_name BgoPlaceable
-extends BgoFeature
+extends "res://src/authoring/nodes/bgo_feature.gd"
 
 @export var snap_to_slots := true
 @export var allow_free_placement := false

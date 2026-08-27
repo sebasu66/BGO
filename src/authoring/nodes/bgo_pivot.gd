@@ -11,11 +11,11 @@ func _ready() -> void:
 	refresh_from_definition()
 
 
-func root_object() -> BgoGameObject3D:
+func root_object() -> Node:
 	var current := get_parent()
 	while current != null:
-		if current is BgoGameObject3D:
-			return current as BgoGameObject3D
+		if current.has_method("get_definition_value") and current.has_method("effective_definition"):
+			return current
 		current = current.get_parent()
 	return null
 
@@ -34,7 +34,7 @@ func refresh_from_definition() -> void:
 	if root == null:
 		position = default_offset
 		return
-	var value := root.get_definition_value(definition_key, default_offset)
+	var value: Variant = root.call("get_definition_value", definition_key, default_offset)
 	if value is Vector3:
 		position = value
 	elif value is Dictionary:

@@ -1,6 +1,6 @@
 @tool
 class_name BgoPlaneRepresentation
-extends BgoRepresentation3D
+extends "res://src/authoring/nodes/bgo_representation_3d.gd"
 
 @export var default_width := 1.0
 @export var default_height := 1.4

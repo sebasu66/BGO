@@ -1,8 +1,10 @@
 @tool
 class_name BgoSlotLayout
-extends BgoFeature
+extends "res://src/authoring/nodes/bgo_feature.gd"
 
 enum LayoutMode { ROW, COLUMN, GRID, STAGGERED_GRID }
+
+const SLOT_SCRIPT = preload("res://src/authoring/nodes/bgo_slot.gd")
 
 @export var mode := LayoutMode.GRID
 @export_range(1, 50, 1) var rows := 2
@@ -60,11 +62,15 @@ func rebuild() -> void:
 	var stagger := float(definition_value(&"layout_stagger", stagger_fraction))
 	for row in actual_rows:
 		for column in actual_columns:
-			var slot := BgoSlot.new()
+			var slot := SLOT_SCRIPT.new()
 			slot.name = "Slot_%d_%d" % [column, row]
 			slot.set_meta("bgo_generated_slot", true)
-			slot.configure_generated(
-				"layout:%d:%d" % [column, row], slot_size, slot_capacity, accepted_kinds
+			slot.call(
+				"configure_generated",
+				"layout:%d:%d" % [column, row],
+				slot_size,
+				slot_capacity,
+				accepted_kinds
 			)
 			var offset_x := 0.0
 			if mode == LayoutMode.STAGGERED_GRID and row % 2 == 1:
@@ -77,9 +83,9 @@ func rebuild() -> void:
 			add_child(slot)
 
 
-func generated_slots() -> Array[BgoSlot]:
-	var result: Array[BgoSlot] = []
+func generated_slots() -> Array[Node]:
+	var result: Array[Node] = []
 	for child in get_children():
-		if child is BgoSlot and child.has_meta("bgo_generated_slot"):
-			result.append(child as BgoSlot)
+		if child.has_meta("bgo_generated_slot"):
+			result.append(child)
 	return result

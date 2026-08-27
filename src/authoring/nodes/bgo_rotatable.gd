@@ -1,6 +1,6 @@
 @tool
 class_name BgoRotatable
-extends BgoFeature
+extends "res://src/authoring/nodes/bgo_feature.gd"
 
 @export var step_degrees := 15.0
 @export var free_rotation := true

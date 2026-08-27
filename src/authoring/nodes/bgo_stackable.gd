@@ -1,6 +1,6 @@
 @tool
 class_name BgoStackable
-extends BgoFeature
+extends "res://src/authoring/nodes/bgo_feature.gd"
 
 @export_range(1, 10000, 1) var max_stack := 999
 @export var visual_spacing := 0.035

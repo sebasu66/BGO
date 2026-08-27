@@ -1,6 +1,6 @@
 @tool
 class_name BgoPbrMaterial
-extends BgoFeature
+extends "res://src/authoring/nodes/bgo_feature.gd"
 
 @export var default_roughness := 0.8
 @export var default_metallic := 0.0
@@ -39,7 +39,10 @@ func refresh_from_definition() -> void:
 		if mesh_instance == null:
 			continue
 		var material := mesh_instance.material_override as StandardMaterial3D
-		material = material.duplicate() as StandardMaterial3D if material != null else StandardMaterial3D.new()
+		if material != null:
+			material = material.duplicate() as StandardMaterial3D
+		else:
+			material = StandardMaterial3D.new()
 		material.roughness = float(definition_value(&"roughness", default_roughness))
 		material.metallic = float(definition_value(&"metallic", default_metallic))
 		var uv_scale := float(definition_value(&"uv_scale", 1.0))

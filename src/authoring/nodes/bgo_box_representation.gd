@@ -1,6 +1,6 @@
 @tool
 class_name BgoBoxRepresentation
-extends BgoRepresentation3D
+extends "res://src/authoring/nodes/bgo_representation_3d.gd"
 
 @export var default_size := Vector3(1.0, 0.2, 1.0)
 @export var default_color := Color(0.5, 0.5, 0.5)

@@ -1,6 +1,6 @@
 @tool
 class_name BgoModelRepresentation
-extends BgoRepresentation3D
+extends "res://src/authoring/nodes/bgo_representation_3d.gd"
 
 
 func _init() -> void:

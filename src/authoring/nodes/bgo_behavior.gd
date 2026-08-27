@@ -1,6 +1,6 @@
 @tool
 class_name BgoBehavior
-extends BgoFeature
+extends "res://src/authoring/nodes/bgo_feature.gd"
 
 ## Authoring-only rule descriptors for now. Execution/interpreter is intentionally deferred.
 @export var rules: Array = []
@@ -14,7 +14,7 @@ func _init() -> void:
 func matching_rules(event_name: StringName) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for raw_rule in rules:
-		if raw_rule is not Dictionary:
+		if not (raw_rule is Dictionary):
 			continue
 		var rule := raw_rule as Dictionary
 		if StringName(rule.get("event", "")) == event_name:

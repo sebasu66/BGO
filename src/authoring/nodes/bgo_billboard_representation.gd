@@ -1,6 +1,6 @@
 @tool
 class_name BgoBillboardRepresentation
-extends BgoRepresentation3D
+extends "res://src/authoring/nodes/bgo_representation_3d.gd"
 
 @export var default_width := 0.9
 @export var default_height := 1.8

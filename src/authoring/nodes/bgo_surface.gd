@@ -1,6 +1,6 @@
 @tool
 class_name BgoSurface
-extends BgoFeature
+extends "res://src/authoring/nodes/bgo_feature.gd"
 
 @export var default_size := Vector2(4.0, 4.0)
 @export var show_debug_surface := true
