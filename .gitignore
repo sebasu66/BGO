@@ -21,6 +21,8 @@ Thumbs.db
 /backend/functions/.env.local
 
 # Local tools, downloaded archives and native binaries
+*.uid
+*.import
 *.zip
 *.exe
 *.dll
