@@ -8,6 +8,12 @@
 
 config_version=5
 
+[ambientcg]
+
+extract_path="res://AmbientCG/Extracted"
+material_file_directory="res://AmbientCG/Materials"
+environment_file_directory="res://AmbientCG/Environments"
+
 [application]
 
 config/name="BGO"
@@ -18,11 +24,15 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 
 G="*res://src/core/game_api.gd"
 BgoActivityLog="*res://src/core/bgo_activity_log.gd"
-_mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
 GodotxToast="*uid://bgvixrj72u7rv"
 GdssRuntime="*uid://yu6lhnx763yp"
 Console="*uid://ouiu5xh1cs8n"
 BgoGameCommandConsole="*res://src/debug/bgo_game_command_console.gd"
+_mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
+AmbientAPI="*uid://cmbh88h6yljhy"
+AmbientParser="*uid://dcdrqnwmpgvk4"
+AmbientFileHandler="*uid://dnh8sqjyu74hs"
+AmbientMaterialMaker="*uid://nig0lamfd3mv"
 
 [debug]
 
@@ -43,7 +53,7 @@ window/handheld/orientation=4
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/asset_placer/plugin.cfg", "res://addons/console/plugin.cfg", "res://addons/gdss/plugin.cfg", "res://addons/godot_ai/plugin.cfg", "res://addons/godotx_toast/plugin.cfg", "res://addons/lente/plugin.cfg", "res://addons/lucide/plugin.cfg", "res://addons/reactive_ui/plugin.cfg", "res://addons/reactive_ui_editor/plugin.cfg", "res://addons/spark/plugin.cfg")
+enabled=PackedStringArray("res://addons/ambientcg/plugin.cfg", "res://addons/asset_placer/plugin.cfg", "res://addons/blendkit/plugin.cfg", "res://addons/console/plugin.cfg", "res://addons/gdss/plugin.cfg", "res://addons/godot_ai/plugin.cfg", "res://addons/godotx_toast/plugin.cfg", "res://addons/lente/plugin.cfg", "res://addons/lucide/plugin.cfg", "res://addons/reactive_ui/plugin.cfg", "res://addons/reactive_ui_editor/plugin.cfg", "res://addons/spark/plugin.cfg")
 
 [gdss]
 
