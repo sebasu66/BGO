@@ -82,11 +82,13 @@ func search(search_query : String = "", use_next_query : bool = false):
 	
 	awaiting_search_finish = true
 	
-	var search_result := await AmbientAPI.search_assets(search_query, type_text, next_query_uri if use_next_query else "")
+	var search_result: Dictionary = await AmbientAPI.search_assets(
+		search_query, type_text, next_query_uri if use_next_query else ""
+	)
 	
 	# avoid parsing if awaiting_search_finish is false, can happen if a new search is started while waiting for a response
 	if awaiting_search_finish: 
-		var parsed := AmbientParser.parse_search_query_data(search_result)
+		var parsed: Dictionary = AmbientParser.parse_search_query_data(search_result)
 		last_search_result = parsed
 		next_query_uri = parsed.get("next_query_uri", "")
 		create_search_results(parsed, not use_next_query)

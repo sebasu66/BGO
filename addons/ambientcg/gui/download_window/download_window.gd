@@ -68,7 +68,7 @@ func process_implementations() -> void:
 
 func fetch_implementation(implementation_uri : String) -> void:
 	var request = await AmbientAPI.http_request(implementation_uri)
-	var result := AmbientAPI.parse_pba_json(request[3])
+	var result: Dictionary = AmbientAPI.parse_pba_json(request[3])
 	
 	parsed_implementations = AmbientParser.parse_asset_implementation(result)
 	
@@ -169,7 +169,9 @@ func prompt_user_for_extraction(source_file : String) -> void:
 		read_files[found_tres] = tres_content
 		
 		AmbientFileHandler.check_dirs()
-		var directory := await AmbientFileHandler.open_directory_dialog_for_path(ProjectSettings.get_setting("ambientcg/material_file_directory"))
+		var directory: String = await AmbientFileHandler.open_directory_dialog_for_path(
+			ProjectSettings.get_setting("ambientcg/material_file_directory")
+		)
 		if not (directory.ends_with("\\") or directory.ends_with("/")):
 			directory = directory + "/"
 		
