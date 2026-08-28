@@ -3,7 +3,7 @@ class_name BgoTabletopWorld
 extends Node3D
 
 const DEFAULT_PRESET := "Default"
-const DEFAULT_COLLECTION_ROOT := "res://assets/table_pbr"
+const DEFAULT_COLLECTION_ROOT := "res://assets"
 
 @export_group("Table Surface")
 @export_dir var pbr_collection_root := DEFAULT_COLLECTION_ROOT:
@@ -46,13 +46,20 @@ func _get_property_list() -> Array[Dictionary]:
 	discovered.sort()
 	for name in discovered:
 		names.append(name)
-	return [{
-		"name": "surface_pbr_preset",
-		"type": TYPE_STRING,
-		"hint": PROPERTY_HINT_ENUM,
-		"hint_string": ",".join(names),
-		"usage": PROPERTY_USAGE_DEFAULT,
-	}]
+	return [
+		{
+			"name": "PBR Surface",
+			"type": TYPE_NIL,
+			"usage": PROPERTY_USAGE_GROUP,
+		},
+		{
+			"name": "surface_pbr_preset",
+			"type": TYPE_STRING,
+			"hint": PROPERTY_HINT_ENUM,
+			"hint_string": ",".join(names),
+			"usage": PROPERTY_USAGE_DEFAULT,
+		},
+	]
 
 
 func _get(property: StringName) -> Variant:
@@ -120,7 +127,7 @@ func _rescan_presets() -> void:
 func _perform_rescan() -> void:
 	_scan_queued = false
 	_preset_paths.clear()
-	if not pbr_collection_root.is_empty() and DirAccess.dir_exists_absolute(pbr_collection_root):
+	if not pbr_collection_root.is_empty() and DirAccess.open(pbr_collection_root) != null:
 		_scan_directory(pbr_collection_root)
 	if not _surface_preset.is_empty() and _surface_preset != DEFAULT_PRESET and not _preset_paths.has(_surface_preset):
 		_surface_preset = DEFAULT_PRESET
@@ -135,12 +142,24 @@ func _scan_directory(path: String) -> void:
 		var preset_name := path.get_file()
 		if preset_name.is_empty():
 			preset_name = "Surface"
-		_preset_paths[preset_name] = path
+		_preset_paths[_unique_preset_name(preset_name, path)] = path
 
 	for child in DirAccess.get_directories_at(path):
 		if child.begins_with("."):
 			continue
 		_scan_directory(path.path_join(child))
+
+
+func _unique_preset_name(base_name: String, path: String) -> String:
+	if not _preset_paths.has(base_name):
+		return base_name
+	var parent_name := path.get_base_dir().get_file()
+	var candidate := "%s / %s" % [parent_name, base_name]
+	var suffix := 2
+	while _preset_paths.has(candidate):
+		candidate = "%s / %s (%d)" % [parent_name, base_name, suffix]
+		suffix += 1
+	return candidate
 
 
 func _find_material_resource(path: String) -> String:
