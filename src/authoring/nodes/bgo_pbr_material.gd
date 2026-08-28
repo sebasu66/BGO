@@ -56,6 +56,16 @@ func refresh_from_definition() -> void:
 		mesh_instance.material_override = material
 
 
+## Applies the shared PBR presentation settings to one board motif material.
+func configure_board_material(material: StandardMaterial3D, is_light_cell: bool) -> void:
+	if material == null:
+		return
+	material.roughness = float(definition_value(&"roughness", default_roughness))
+	material.metallic = float(definition_value(&"metallic", default_metallic))
+	var uv_scale := float(definition_value(&"uv_scale", 1.0))
+	material.uv1_scale = Vector3(uv_scale, uv_scale, 1.0)
+
+
 func _apply_texture(
 	material: StandardMaterial3D,
 	property_name: String,

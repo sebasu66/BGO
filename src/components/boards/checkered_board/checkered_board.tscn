@@ -1,6 +1,10 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource path="res://src/components/boards/checkered_board/checkered_board.gd" type="Script" id="1_board"]
+[ext_resource path="res://src/authoring/nodes/bgo_pbr_material.gd" type="Script" id="2_pbr"]
 
 [node name="CheckeredBoard" type="Node3D"]
 script = ExtResource("1_board")
+
+[node name="PbrMaterial" type="Node3D" parent="."]
+script = ExtResource("2_pbr")

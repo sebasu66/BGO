@@ -126,6 +126,9 @@ func rebuild() -> void:
 			material.albedo_color = light_color if is_light_cell else dark_color
 			material.albedo_texture = light_texture if is_light_cell else dark_texture
 			material.roughness = 0.78
+			var pbr_feature := get_node_or_null("PbrMaterial") as BgoPbrMaterial
+			if pbr_feature != null:
+				pbr_feature.configure_board_material(material, is_light_cell)
 			mesh_instance.material_override = material
 			cell.add_child(mesh_instance)
 
