@@ -42,6 +42,15 @@ const TABLE_GRID_SCENE = preload("res://src/components/grids/table_grid/table_gr
 	set(value):
 		dark_color = value
 		_queue_rebuild()
+@export_category("PBR Material")
+@export var light_texture: Texture2D:
+	set(value):
+		light_texture = value
+		_queue_rebuild()
+@export var dark_texture: Texture2D:
+	set(value):
+		dark_texture = value
+		_queue_rebuild()
 @export var show_grid_points := true:
 	set(value):
 		show_grid_points = value
@@ -113,7 +122,9 @@ func rebuild() -> void:
 			mesh.size = Vector3(cell_size - 0.03, 0.08, cell_size - 0.03)
 			mesh_instance.mesh = mesh
 			var material := StandardMaterial3D.new()
-			material.albedo_color = light_color if (x + y) % 2 == 0 else dark_color
+			var is_light_cell := (x + y) % 2 == 0
+			material.albedo_color = light_color if is_light_cell else dark_color
+			material.albedo_texture = light_texture if is_light_cell else dark_texture
 			material.roughness = 0.78
 			mesh_instance.material_override = material
 			cell.add_child(mesh_instance)

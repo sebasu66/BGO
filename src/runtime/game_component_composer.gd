@@ -127,6 +127,11 @@ func _on_component_event(
 
 
 func _coerce_value(value: Variant, target_type: int) -> Variant:
+	if target_type == TYPE_OBJECT and value is String:
+		var resource_path := str(value)
+		if resource_path.is_empty() or not ResourceLoader.exists(resource_path):
+			return null
+		return ResourceLoader.load(resource_path)
 	if target_type == TYPE_COLOR and value is String:
 		return Color.from_string(value, Color.WHITE)
 	if target_type == TYPE_VECTOR3:
