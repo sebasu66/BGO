@@ -1,4 +1,6 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://src/shared/bgo_tabletop_world.gd" id="1_world_script"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -15,6 +17,7 @@ roughness = 0.86
 size = Vector2(2000, 2000)
 
 [node name="BgoTabletopWorld" type="Node3D"]
+script = ExtResource("1_world_script")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_main")
