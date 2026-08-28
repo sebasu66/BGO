@@ -100,20 +100,104 @@ func set_light_color_string(value: String) -> bool:
 	return true
 
 
+## Updates the dark-cell color from a CSS-style color string.
+func set_dark_color_string(value: String) -> bool:
+	var color := Color.from_string(value, Color.TRANSPARENT)
+	if color == Color.TRANSPARENT and value.to_lower() not in ["transparent", "#00000000"]:
+		return false
+	dark_color = color
+	return true
+
+
+## Updates the fine-grid marker color from a CSS-style color string.
+func set_grid_point_color_string(value: String) -> bool:
+	var color := Color.from_string(value, Color.TRANSPARENT)
+	if color == Color.TRANSPARENT and value.to_lower() not in ["transparent", "#00000000"]:
+		return false
+	grid_point_color = color
+	return true
+
+
 ## Returns the stable console/MCP method surface for this component.
 func console_api() -> Dictionary:
-	return {
-		"scope": "Match",
-		"entity": str(get_meta("entity_id", name)),
-		"class": "BgoCheckeredBoard",
-		"description": "Configurable checkered board preview and runtime controls.",
-		"methods": {
-			"setLightTexture": {"call": "set_light_texture_path", "args": [{"name": "resource_path", "type": "string"}], "returns": "bool"},
-			"setDarkTexture": {"call": "set_dark_texture_path", "args": [{"name": "resource_path", "type": "string"}], "returns": "bool"},
-			"setLightColor": {"call": "set_light_color_string", "args": [{"name": "value", "type": "string"}], "returns": "bool"},
-			"refresh": {"call": "rebuild", "returns": "void"},
-		},
-	}
+	return (
+		BgoComponentApiDescriptor
+		. create(
+			self,
+			"bgo.board.checkered",
+			"BgoCheckeredBoard",
+			"Configurable checkered board preview and runtime controls.",
+			{
+				"setColumns":
+				BgoComponentApiDescriptor.bound_setter("_set_config_value", "columns", "int"),
+				"setRows":
+				BgoComponentApiDescriptor.bound_setter("_set_config_value", "rows", "int"),
+				"setCellSize":
+				BgoComponentApiDescriptor.bound_setter("_set_config_value", "cell_size", "float"),
+				"setGridCellSizeCm":
+				BgoComponentApiDescriptor.bound_setter(
+					"_set_config_value", "grid_cell_size_cm", "float"
+				),
+				"setGridPointsPerUnit":
+				BgoComponentApiDescriptor.bound_setter(
+					"_set_config_value", "grid_points_per_unit", "int"
+				),
+				"setGridVirtualInfinite":
+				BgoComponentApiDescriptor.bound_setter(
+					"_set_config_value", "grid_virtual_infinite", "bool"
+				),
+				"setSlotsEnabled":
+				BgoComponentApiDescriptor.bound_setter(
+					"_set_config_value", "slots_enabled", "bool"
+				),
+				"setLightTexture":
+				BgoComponentApiDescriptor.setter(
+					"set_light_texture_path", "light_texture", "string", "bool"
+				),
+				"setDarkTexture":
+				BgoComponentApiDescriptor.setter(
+					"set_dark_texture_path", "dark_texture", "string", "bool"
+				),
+				"setLightColor":
+				BgoComponentApiDescriptor.setter(
+					"set_light_color_string", "light_color", "string", "bool"
+				),
+				"setDarkColor":
+				BgoComponentApiDescriptor.setter(
+					"set_dark_color_string", "dark_color", "string", "bool"
+				),
+				"setShowGridPoints":
+				BgoComponentApiDescriptor.bound_setter(
+					"_set_config_value", "show_grid_points", "bool"
+				),
+				"setGridPointColor":
+				BgoComponentApiDescriptor.setter(
+					"set_grid_point_color_string", "grid_point_color", "string", "bool"
+				),
+				"refresh": BgoComponentApiDescriptor.method("rebuild"),
+			},
+		)
+	)
+
+
+func _set_config_value(value: Variant, property_name: String) -> void:
+	match property_name:
+		"columns":
+			columns = int(value)
+		"rows":
+			rows = int(value)
+		"cell_size":
+			cell_size = float(value)
+		"grid_cell_size_cm":
+			grid_cell_size_cm = float(value)
+		"grid_points_per_unit":
+			grid_points_per_unit = int(value)
+		"grid_virtual_infinite":
+			grid_virtual_infinite = bool(value)
+		"slots_enabled":
+			slots_enabled = bool(value)
+		"show_grid_points":
+			show_grid_points = bool(value)
 
 
 ## Describes the developer-facing methods exposed by this component.
@@ -123,6 +207,8 @@ func console_help() -> Dictionary:
 		"set_light_texture_path": "Loads a Texture2D from a res:// project path for light cells.",
 		"set_dark_texture_path": "Loads a Texture2D from a res:// project path for dark cells.",
 		"set_light_color_string": "Sets the light-cell color from a CSS-style string.",
+		"set_dark_color_string": "Sets the dark-cell color from a CSS-style string.",
+		"set_grid_point_color_string": "Sets the fine-grid marker color.",
 		"rebuild": "Rebuilds cells, materials and the logical grid projection.",
 	}
 

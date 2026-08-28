@@ -124,6 +124,7 @@ func _invoke_python_namespace(path: String, arguments: Array) -> Dictionary:
 				),
 			}
 		typed_arguments.append(converted.get("value"))
+	typed_arguments.append_array(registration.get("bound_args", []))
 	var target: Object = registration.get("target")
 	if not is_instance_valid(target):
 		return {"ok": false, "error": "Target for %s is no longer available." % path}

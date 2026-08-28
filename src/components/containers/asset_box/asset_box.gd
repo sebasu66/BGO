@@ -49,6 +49,44 @@ func _ready() -> void:
 	visible = open
 
 
+## Updates the number of authoring points across the box surface.
+func set_point_columns(value: int) -> void:
+	point_columns = value
+
+
+## Updates the number of authoring points down the box surface.
+func set_point_rows(value: int) -> void:
+	point_rows = value
+
+
+## Updates logical point spacing in centimetres.
+func set_point_spacing_cm(value: Vector2) -> void:
+	point_spacing_cm = value
+
+
+## Updates the visual scale used to represent one centimetre.
+func set_world_units_per_cm(value: float) -> void:
+	world_units_per_cm = value
+
+
+## Updates the box floor color from a CSS-style color string.
+func set_box_color_string(value: String) -> bool:
+	var parsed := Color.from_string(value, Color.TRANSPARENT)
+	if parsed == Color.TRANSPARENT and value.to_lower() not in ["transparent", "#00000000"]:
+		return false
+	box_color = parsed
+	return true
+
+
+## Updates the authoring-grid color from a CSS-style color string.
+func set_grid_color_string(value: String) -> bool:
+	var parsed := Color.from_string(value, Color.TRANSPARENT)
+	if parsed == Color.TRANSPARENT and value.to_lower() not in ["transparent", "#00000000"]:
+		return false
+	grid_color = parsed
+	return true
+
+
 ## Configures the visual box from a declarative asset-box definition.
 func configure(
 	new_point_columns: int,
@@ -67,6 +105,54 @@ func configure(
 func set_open(value: bool) -> void:
 	open = value
 	visible = value
+
+
+## Returns the stable console, GUI, and MCP method surface for this component.
+func console_api() -> Dictionary:
+	return (
+		BgoComponentApiDescriptor
+		. create(
+			self,
+			"bgo.container.asset_box",
+			"BgoAssetBox",
+			"Authoring representation of the logical component catalog box.",
+			{
+				"setPointColumns":
+				BgoComponentApiDescriptor.setter("set_point_columns", "point_columns", "int"),
+				"setPointRows":
+				BgoComponentApiDescriptor.setter("set_point_rows", "point_rows", "int"),
+				"setPointSpacingCm":
+				BgoComponentApiDescriptor.setter(
+					"set_point_spacing_cm", "point_spacing_cm", "Vector2"
+				),
+				"setWorldUnitsPerCm":
+				BgoComponentApiDescriptor.setter(
+					"set_world_units_per_cm", "world_units_per_cm", "float"
+				),
+				"setOpen":
+				BgoComponentApiDescriptor.method("set_open", [{"name": "value", "type": "bool"}]),
+				"setBoxColor":
+				BgoComponentApiDescriptor.method(
+					"set_box_color_string", [{"name": "value", "type": "string"}], "bool"
+				),
+				"setGridColor":
+				BgoComponentApiDescriptor.method(
+					"set_grid_color_string", [{"name": "value", "type": "string"}], "bool"
+				),
+				"refresh": BgoComponentApiDescriptor.method("rebuild"),
+			},
+		)
+	)
+
+
+## Describes the developer-facing methods exposed by this component.
+func console_help() -> Dictionary:
+	return {
+		"_summary": "Controls the Asset Box authoring representation.",
+		"configure": "Updates dimensions, point spacing, and visual scale.",
+		"set_open": "Shows or hides the box without changing logical contents.",
+		"rebuild": "Rebuilds the box floor and authoring grid.",
+	}
 
 
 ## Returns the world position of a logical box point.
@@ -123,6 +209,7 @@ func rebuild() -> void:
 			child.owner = get_tree().edited_scene_root
 
 
+## Converts a logical grid point into this component's local 3D coordinates.
 func point_local(point: Vector2i) -> Vector3:
 	var cell_size := Vector2(point_spacing_cm.x, point_spacing_cm.y) * world_units_per_cm
 	return Vector3(

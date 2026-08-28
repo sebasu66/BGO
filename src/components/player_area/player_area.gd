@@ -31,6 +31,88 @@ func _ready() -> void:
 	)
 
 
+## Updates the player identity associated with this presentation.
+func set_player_id(value: String) -> void:
+	player_id = value
+	set_meta("player_id", value)
+
+
+## Updates the public label rendered above the area.
+func set_label_text(value: String) -> void:
+	label_text = value
+
+
+## Updates the area color from a CSS-style string.
+func set_area_color_string(value: String) -> bool:
+	var parsed := Color.from_string(value, Color.TRANSPARENT)
+	if parsed == Color.TRANSPARENT and value.to_lower() not in ["transparent", "#00000000"]:
+		return false
+	area_color = parsed
+	return true
+
+
+## Updates the rendered area dimensions when every axis is positive.
+func set_area_size(value: Vector3) -> bool:
+	if value.x <= 0.0 or value.y <= 0.0 or value.z <= 0.0:
+		return false
+	area_size = value
+	return true
+
+
+## Shows or hides this presentation without changing logical contents.
+func set_area_visible(value: bool) -> void:
+	visible = value
+
+
+## Declares whether objects in the area belong to the public projection.
+func set_public_objects(value: bool) -> void:
+	public_objects = value
+	set_meta("bgo_public_objects", value)
+
+
+## Returns the stable console, GUI, and MCP method surface for this component.
+func console_api() -> Dictionary:
+	return (
+		BgoComponentApiDescriptor
+		. create(
+			self,
+			"bgo.player_area.basic",
+			"BgoPlayerArea",
+			"Player-associated tabletop area presentation controls.",
+			{
+				"setPlayerId":
+				BgoComponentApiDescriptor.setter("set_player_id", "player_id", "string"),
+				"setLabelText":
+				BgoComponentApiDescriptor.setter("set_label_text", "label_text", "string"),
+				"setAreaColor":
+				BgoComponentApiDescriptor.setter(
+					"set_area_color_string", "area_color", "string", "bool"
+				),
+				"setAreaSize":
+				BgoComponentApiDescriptor.setter("set_area_size", "area_size", "Vector3", "bool"),
+				"setVisible":
+				BgoComponentApiDescriptor.setter("set_area_visible", "visible", "bool"),
+				"setPublicObjects":
+				BgoComponentApiDescriptor.setter("set_public_objects", "public_objects", "bool"),
+				"getSlotWorld":
+				BgoComponentApiDescriptor.method(
+					"area_slot_world", [{"name": "slot", "type": "int"}], "Vector3"
+				),
+			},
+		)
+	)
+
+
+## Describes the developer-facing methods exposed by this component.
+func console_help() -> Dictionary:
+	return {
+		"_summary": "Controls player-area identity and visual representation.",
+		"set_player_id": "Associates the presentation with a logical player id.",
+		"set_area_size": "Updates positive world-space dimensions.",
+		"area_slot_world": "Returns a stable presentation slot position.",
+	}
+
+
 ## Returns the world-space position of a player-area slot.
 func area_slot_world(slot: int) -> Vector3:
 	return global_position + Vector3(0.0, area_size.y * 0.5, -2.3 + float(slot) * 0.85)

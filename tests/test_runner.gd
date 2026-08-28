@@ -1,5 +1,7 @@
 extends "res://tests/test_runner_base.gd"
 
+const COMPONENT_API_TEST = preload("res://tests/component_api_test.gd")
+
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -10,6 +12,7 @@ func _run() -> void:
 	_test_capability_contracts()
 	_test_component_validation()
 	await _test_checkered_board_public_api()
+	await COMPONENT_API_TEST.run(_check)
 	_test_game_definition()
 	_test_debug_game_api()
 	await _test_declarative_component_composition()

@@ -8,6 +8,7 @@ var test_width := 10
 var test_active := true
 
 
+## Stores an integer received through the console invocation fixture.
 func set_test_value(value: int) -> void:
 	test_value = value
 
@@ -36,10 +37,16 @@ func _api_set_width(value: int) -> void:
 	test_width = value
 
 
+func _api_set_bound_value(value: int, property_name: String) -> void:
+	if property_name == "width":
+		test_width = value
+
+
 func _api_is_active() -> bool:
 	return test_active
 
 
+## Returns the command descriptor exercised by console bridge tests.
 func console_api() -> Dictionary:
 	return {
 		"scope": "Match",
@@ -87,6 +94,14 @@ func console_api() -> Dictionary:
 				"returns": "void",
 				"description": "Sets the entity width.",
 			},
+			"setBoundWidth":
+			{
+				"call": "_api_set_bound_value",
+				"args": [{"name": "value", "type": TYPE_INT}],
+				"bound_args": ["width"],
+				"returns": "void",
+				"description": "Sets width through a descriptor-bound property.",
+			},
 			"isActive":
 			{
 				"call": "_api_is_active",
@@ -97,6 +112,7 @@ func console_api() -> Dictionary:
 	}
 
 
+## Describes the fixture commands shown by console help discovery.
 func console_help() -> Dictionary:
 	return {
 		"_summary": "Fixture used to verify dynamic console command discovery.",

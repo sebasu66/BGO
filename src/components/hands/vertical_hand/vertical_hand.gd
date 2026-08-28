@@ -19,6 +19,9 @@ const SELECTION_COLOR := Color(0.96, 0.78, 0.30, 0.95)
 var _items: Array = []
 var _selected_item_id := ""
 var _mode := "none"
+var _orientation := "floating_vertical_stack"
+var _stack_order := "filo"
+var _visibility_policy := "owner_face_others_hidden"
 var _preview_factory: Callable
 var _stack: Control
 var _preview_viewports: Array[SubViewport] = []
@@ -29,6 +32,85 @@ func _ready() -> void:
 	clip_contents = false
 	get_viewport().size_changed.connect(_rebuild_items)
 	_build_shell()
+
+
+## Selects the supported vertical hand presentation.
+func set_orientation(value: String) -> bool:
+	if value != "floating_vertical_stack":
+		return false
+	_orientation = value
+	return true
+
+
+## Selects the logical ordering expected by this presentation.
+func set_stack_order(value: String) -> bool:
+	if value != "filo":
+		return false
+	_stack_order = value
+	return true
+
+
+## Stores the visibility policy applied by the authorized client projection.
+func set_visibility_policy(value: String) -> bool:
+	if value not in ["owner_face_others_hidden", "owner_only", "public"]:
+		return false
+	_visibility_policy = value
+	set_meta("bgo_visibility_policy", value)
+	return true
+
+
+## Returns the stable console, GUI, and MCP method surface for this component.
+func console_api() -> Dictionary:
+	return (
+		BgoComponentApiDescriptor
+		. create(
+			self,
+			"bgo.hand.vertical",
+			"BgoVerticalHand",
+			"Client-local vertical hand presentation controls.",
+			{
+				"setOrientation":
+				BgoComponentApiDescriptor.setter(
+					"set_orientation", "orientation", "string", "bool"
+				),
+				"setStackOrder":
+				BgoComponentApiDescriptor.setter(
+					"set_stack_order", "stack_order", "string", "bool"
+				),
+				"setVisibility":
+				BgoComponentApiDescriptor.setter(
+					"set_visibility_policy", "visibility", "string", "bool"
+				),
+				"setItems":
+				BgoComponentApiDescriptor.method(
+					"set_items",
+					[{"name": "items", "type": "Array"}, {"name": "selected_id", "type": "string"}],
+					"void",
+					"",
+					1
+				),
+				"setSelected":
+				BgoComponentApiDescriptor.method(
+					"set_selected", [{"name": "item_id", "type": "string"}]
+				),
+				"setMode":
+				BgoComponentApiDescriptor.method("set_mode", [{"name": "mode", "type": "string"}]),
+				"getSelected":
+				BgoComponentApiDescriptor.method("get_selected_item_id", [], "string"),
+				"getMode": BgoComponentApiDescriptor.method("get_mode", [], "string"),
+			},
+		)
+	)
+
+
+## Describes the developer-facing methods exposed by this component.
+func console_help() -> Dictionary:
+	return {
+		"_summary": "Controls a client-local vertical hand without bypassing logical privacy.",
+		"set_items": "Updates presented hand items in FILO order.",
+		"set_selected": "Selects a visible item by logical id.",
+		"set_mode": "Selects pickup, place, or neutral presentation mode.",
+	}
 
 
 ## The renderer supplies the real component representation; Hand owns only presentation.
@@ -49,12 +131,14 @@ func set_items(items: Array, selected_id := "") -> void:
 		_rebuild_items()
 
 
+## Selects an item when present, or falls back to the first visible item.
 func set_selected(item_id: String) -> void:
 	_selected_item_id = item_id if _contains_item(item_id) else _first_item_id()
 	if is_node_ready():
 		_rebuild_items()
 
 
+## Returns the currently selected visible item identifier.
 func get_selected_item_id() -> String:
 	return _selected_item_id
 
@@ -64,6 +148,7 @@ func set_mode(mode: String) -> void:
 	_mode = mode if mode in ["pickup", "none", "place"] else "none"
 
 
+## Returns the current client-local hand interaction mode.
 func get_mode() -> String:
 	return _mode
 

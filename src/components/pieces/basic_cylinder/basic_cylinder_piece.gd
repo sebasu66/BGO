@@ -37,13 +37,13 @@ signal component_event(event_name: String, payload: Dictionary)
 		quantity = maxi(value, 1)
 		_apply_visuals()
 
-@onready var mesh_instance: MeshInstance3D = $MeshInstance3D
-@onready var collision_shape: CollisionShape3D = $CollisionShape3D
-@onready var quantity_label: Label3D = $QuantityLabel
-
 var _owner_color := Color(0.95, 0.72, 0.22)
 var _color_source := "player"
 var _configuration: Dictionary = {}
+
+@onready var mesh_instance: MeshInstance3D = $MeshInstance3D
+@onready var collision_shape: CollisionShape3D = $CollisionShape3D
+@onready var quantity_label: Label3D = $QuantityLabel
 
 
 func _ready() -> void:
@@ -63,6 +63,66 @@ func placement_anchor() -> String:
 ## Returns whether this simple geometric piece can represent a quantity stack.
 func is_stackable() -> bool:
 	return true
+
+
+## Updates the rendered primitive shape when the value is supported.
+func set_shape(value: String) -> bool:
+	if value not in ["cylinder", "cube", "cone", "sphere"]:
+		return false
+	piece_shape = value
+	_configuration["shape"] = value
+	return true
+
+
+## Updates the rendered horizontal radius or half-width.
+func set_radius(value: float) -> void:
+	piece_radius = value
+	_configuration["radius"] = piece_radius
+
+
+## Updates the rendered piece height.
+func set_height(value: float) -> void:
+	piece_height = value
+	_configuration["height"] = piece_height
+
+
+## Selects owner-derived or fixed component color.
+func set_color_source(value: String) -> bool:
+	if value not in ["player", "fixed"]:
+		return false
+	_color_source = value
+	_configuration["color_source"] = value
+	piece_color = _owner_color if value == "player" else piece_color
+	return true
+
+
+## Updates the fixed component color from a CSS-style string.
+func set_color_string(value: String) -> bool:
+	var parsed := Color.from_string(value, Color.TRANSPARENT)
+	if parsed == Color.TRANSPARENT and value.to_lower() not in ["transparent", "#00000000"]:
+		return false
+	_configuration["color"] = value
+	if _color_source == "fixed":
+		piece_color = parsed
+	return true
+
+
+## Updates material roughness within the manifest range.
+func set_roughness(value: float) -> void:
+	material_roughness = value
+	_configuration["roughness"] = material_roughness
+
+
+## Updates material metallic response within the manifest range.
+func set_metallic(value: float) -> void:
+	material_metallic = value
+	_configuration["metallic"] = material_metallic
+
+
+## Updates material emission strength within the manifest range.
+func set_emission_strength(value: float) -> void:
+	emission_strength = value
+	_configuration["emission_strength"] = emission_strength
 
 
 ## Applies manifest-validated appearance configuration to this runtime piece.
@@ -86,15 +146,18 @@ func apply_configuration(config: Dictionary) -> void:
 	else:
 		piece_color = _owner_color
 	_apply_visuals()
-	component_event.emit(
-		"appearance_configured",
-		{
-			"entity_id": str(get_meta("entity_id", name)),
-			"shape": piece_shape,
-			"roughness": material_roughness,
-			"metallic": material_metallic,
-			"emission_strength": emission_strength,
-		}
+	(
+		component_event
+		. emit(
+			"appearance_configured",
+			{
+				"entity_id": str(get_meta("entity_id", name)),
+				"shape": piece_shape,
+				"roughness": material_roughness,
+				"metallic": material_metallic,
+				"emission_strength": emission_strength,
+			}
+		)
 	)
 
 
@@ -120,21 +183,41 @@ func _api_get_quantity() -> int:
 
 ## Returns the curated developer-console API for this logical piece.
 func console_api() -> Dictionary:
-	return {
-		"scope": "Match",
-		"entity": _api_get_name(),
-		"class": "BgoBasicCylinderPiece",
-		"description": "Curated logical view of a configurable geometric piece.",
-		"methods":
-		{
-			"getName": {"call": "_api_get_name", "returns": "String"},
-			"getDesc": {"call": "_api_get_desc", "returns": "String"},
-			"getOwner": {"call": "_api_get_owner", "returns": "String"},
-			"getHolder": {"call": "_api_get_holder", "returns": "String"},
-			"getQuantity": {"call": "_api_get_quantity", "returns": "int"},
-			"isStackable": {"call": "is_stackable", "returns": "bool"},
-		},
-	}
+	return (
+		BgoComponentApiDescriptor
+		. create(
+			self,
+			"bgo.piece.basic_cylinder",
+			"BgoBasicCylinderPiece",
+			"Curated logical view and appearance controls for a geometric piece.",
+			{
+				"getName": {"call": "_api_get_name", "returns": "String"},
+				"getDesc": {"call": "_api_get_desc", "returns": "String"},
+				"getOwner": {"call": "_api_get_owner", "returns": "String"},
+				"getHolder": {"call": "_api_get_holder", "returns": "String"},
+				"getQuantity": {"call": "_api_get_quantity", "returns": "int"},
+				"isStackable": {"call": "is_stackable", "returns": "bool"},
+				"setShape":
+				BgoComponentApiDescriptor.setter("set_shape", "shape", "string", "bool"),
+				"setRadius": BgoComponentApiDescriptor.setter("set_radius", "radius", "float"),
+				"setHeight": BgoComponentApiDescriptor.setter("set_height", "height", "float"),
+				"setColorSource":
+				BgoComponentApiDescriptor.setter(
+					"set_color_source", "color_source", "string", "bool"
+				),
+				"setColor":
+				BgoComponentApiDescriptor.setter("set_color_string", "color", "string", "bool"),
+				"setRoughness":
+				BgoComponentApiDescriptor.setter("set_roughness", "roughness", "float"),
+				"setMetallic":
+				BgoComponentApiDescriptor.setter("set_metallic", "metallic", "float"),
+				"setEmissionStrength":
+				BgoComponentApiDescriptor.setter(
+					"set_emission_strength", "emission_strength", "float"
+				),
+			},
+		)
+	)
 
 
 ## Configures identity, ownership, quantity, base color, and optional appearance.
@@ -171,6 +254,9 @@ func console_help() -> Dictionary:
 		"_summary": "Developer commands for a configurable geometric piece.",
 		"configure": "Updates identity, ownership metadata, quantity, color, and appearance.",
 		"apply_configuration": "Applies validated shape, size, color, and material configuration.",
+		"set_shape": "Updates the rendered primitive shape.",
+		"set_color_source": "Selects owner-derived or fixed color.",
+		"set_color_string": "Updates the fixed CSS-style color.",
 	}
 
 

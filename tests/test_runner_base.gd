@@ -280,7 +280,9 @@ func _test_component_validation() -> void:
 
 
 func _test_checkered_board_public_api() -> void:
-	var board := preload("res://src/components/boards/checkered_board/checkered_board.tscn").instantiate()
+	var board := (
+		preload("res://src/components/boards/checkered_board/checkered_board.tscn").instantiate()
+	)
 	get_root().add_child(board)
 	await process_frame
 	var typed_board := board as BgoCheckeredBoard
@@ -288,14 +290,27 @@ func _test_checkered_board_public_api() -> void:
 	if typed_board == null:
 		return
 	var texture_path := "res://assets/ambientcg/Extracted/Marble006_2K-JPG_Color.jpg"
-	_check(typed_board.set_light_texture_path(texture_path), "board accepts a project Texture2D path")
+	_check(
+		typed_board.set_light_texture_path(texture_path), "board accepts a project Texture2D path"
+	)
 	_check(typed_board.light_texture != null, "light texture is applied to the board")
-	_check(not typed_board.set_light_texture_path("res://missing_texture.png"), "board rejects missing textures")
+	_check(
+		not typed_board.set_light_texture_path("res://missing_texture.png"),
+		"board rejects missing textures"
+	)
 	_check(typed_board.set_light_color_string("#E24A3B"), "board accepts CSS light color")
-	_check(not typed_board.set_light_color_string("not-a-color"), "board rejects invalid light color")
-	_check(typed_board.console_api().get("methods", {}).has("setLightTexture"), "board exposes curated API")
+	_check(
+		not typed_board.set_light_color_string("not-a-color"), "board rejects invalid light color"
+	)
+	_check(
+		typed_board.console_api().get("methods", {}).has("setLightTexture"),
+		"board exposes curated API"
+	)
 	await process_frame
-	_check(typed_board.get_node_or_null("Cell_0_0") != null, "public setters rebuild the board representation")
+	_check(
+		typed_board.get_node_or_null("Cell_0_0") != null,
+		"public setters rebuild the board representation"
+	)
 	typed_board.queue_free()
 
 
@@ -366,9 +381,15 @@ func _test_declarative_component_composition() -> void:
 	live_instances[0] = live_board
 	live_table["instances"] = live_instances
 	live_definition["table"] = live_table
-	_check(composer.apply_definition(board, live_board), "composed component accepts a live definition update")
+	_check(
+		composer.apply_definition(board, live_board),
+		"composed component accepts a live definition update"
+	)
 	await process_frame
-	_check(board.columns == 8 and board.rows == 8, "live board configuration updates rows without changing columns")
+	_check(
+		board.columns == 8 and board.rows == 8,
+		"live board configuration updates rows without changing columns"
+	)
 	var fine_grid := board.get_node_or_null("TableGrid") as BgoTableGrid
 	_check(
 		fine_grid != null and fine_grid.point_columns == 40 and fine_grid.point_rows == 40,

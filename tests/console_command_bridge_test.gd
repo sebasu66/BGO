@@ -44,7 +44,10 @@ static func run(check: Callable) -> void:
 	var game_name_result: Dictionary = bridge.call(
 		"_invoke_python_namespace", "Game.definition.getName", []
 	)
-	check.call(activity != null and not activity.entries.is_empty(), "public API invocation is activity logged")
+	check.call(
+		activity != null and not activity.entries.is_empty(),
+		"public API invocation is activity logged"
+	)
 	check.call(
 		bool(game_name_result.get("ok", false)) and game_name_result.get("value") == "Fixture Game",
 		"Game definition methods execute with Python-like parentheses"
@@ -59,6 +62,7 @@ static func run(check: Callable) -> void:
 	var help_name := "game.console_test_object.help"
 	var curated_get_name := "Match.console_test_object.getName"
 	var curated_set_width := "Match.console_test_object.setWidth"
+	var curated_set_bound_width := "Match.console_test_object.setBoundWidth"
 	var curated_is_active := "Match.console_test_object.isActive"
 	check.call(
 		console.console_commands.has(command_name), "new game object method is auto-registered"
@@ -79,6 +83,8 @@ static func run(check: Callable) -> void:
 
 	console.call("_on_text_entered", "%s 24" % curated_set_width)
 	check.call(fixture.test_width == 24, "curated setter converts and applies its typed value")
+	console.call("_on_text_entered", "%s 27" % curated_set_bound_width)
+	check.call(fixture.test_width == 27, "curated setter appends descriptor-bound arguments")
 	console.call("_on_text_entered", "Match.console_test_object.setDesc G.ROLES.HOST")
 	check.call(fixture.test_desc == "host", "public constants resolve before typed invocation")
 	console.call("_on_text_entered", "Match.console_test_object.setWidth(31)")

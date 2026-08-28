@@ -29,12 +29,51 @@ func _ready() -> void:
 	_apply_state(_pending_state)
 
 
+## Returns the stable console, GUI, and MCP method surface for this component.
+func console_api() -> Dictionary:
+	return (
+		BgoComponentApiDescriptor
+		. create(
+			self,
+			"bgo.ui.session_header",
+			"BgoSessionHeader",
+			"Session identity, viewer profile, turn, and action presentation controls.",
+			{
+				"setState":
+				BgoComponentApiDescriptor.method(
+					"set_state", [{"name": "state", "type": "Dictionary"}]
+				),
+				"getState": BgoComponentApiDescriptor.method("get_state", [], "Dictionary"),
+				"configureActions":
+				BgoComponentApiDescriptor.method(
+					"configure_actions", [{"name": "actions", "type": "Array"}]
+				),
+			},
+		)
+	)
+
+
+## Describes the developer-facing methods exposed by this component.
+func console_help() -> Dictionary:
+	return {
+		"_summary": "Controls the projected session header without mutating session state.",
+		"set_state": "Updates the visible authorized session projection.",
+		"get_state": "Returns a copy of the currently projected header values.",
+		"configure_actions": "Replaces compact declarative header actions.",
+	}
+
+
 ## Updates visible session metadata without coupling the header to domain nodes.
 func set_state(state: Dictionary) -> void:
 	_pending_state = state.duplicate(true)
 	if not is_node_ready():
 		return
 	_apply_state(_pending_state)
+
+
+## Returns a copy of the currently projected header state.
+func get_state() -> Dictionary:
+	return _pending_state.duplicate(true)
 
 
 ## Defines compact header actions without coupling the header to scene methods.
@@ -65,7 +104,9 @@ func _apply_state(state: Dictionary) -> void:
 	var profile_label := str(state.get("profile_label", "SPECTATOR")).to_upper()
 	var profile_color: Color = state.get("profile_color", MUTED_COLOR)
 	_profile.text = "%s  ▾" % profile_label
-	_profile.icon = LucideTexture.new(str(state.get("profile_icon", "eye")), 22.0, profile_color, 2.0)
+	_profile.icon = LucideTexture.new(
+		str(state.get("profile_icon", "eye")), 22.0, profile_color, 2.0
+	)
 	_profile.expand_icon = false
 	_profile.add_theme_color_override("font_color", profile_color)
 	_profile.add_theme_color_override("font_hover_color", profile_color.lightened(0.16))

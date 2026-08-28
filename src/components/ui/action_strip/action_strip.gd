@@ -26,6 +26,68 @@ func _ready() -> void:
 	_rebuild()
 
 
+## Returns the stable console, GUI, and MCP method surface for this component.
+func console_api() -> Dictionary:
+	return (
+		BgoComponentApiDescriptor
+		. create(
+			self,
+			"bgo.ui.action_strip",
+			"BgoActionStrip",
+			"Declarative runtime action-strip presentation controls.",
+			{
+				"configure":
+				BgoComponentApiDescriptor.method(
+					"configure",
+					[
+						{"name": "title", "type": "string"},
+						{"name": "actions", "type": "Array"},
+						{"name": "edge", "type": "string"},
+						{"name": "expanded", "type": "bool"}
+					],
+					"void",
+					"",
+					2
+				),
+				"setExpanded":
+				BgoComponentApiDescriptor.method(
+					"set_expanded",
+					[{"name": "value", "type": "bool"}, {"name": "animate", "type": "bool"}],
+					"void",
+					"",
+					1
+				),
+				"setActionActive":
+				BgoComponentApiDescriptor.method(
+					"set_action_active",
+					[
+						{"name": "action_id", "type": "string"},
+						{"name": "active", "type": "bool"},
+						{"name": "exclusive", "type": "bool"}
+					],
+					"void",
+					"",
+					2
+				),
+				"isActionActive":
+				BgoComponentApiDescriptor.method(
+					"is_action_active", [{"name": "action_id", "type": "string"}], "bool"
+				),
+			},
+		)
+	)
+
+
+## Describes the developer-facing methods exposed by this component.
+func console_help() -> Dictionary:
+	return {
+		"_summary": "Controls declarative action-strip content and toggle state.",
+		"configure": "Replaces title, actions, edge, and expansion state.",
+		"set_expanded": "Expands or collapses action labels.",
+		"set_action_active": "Updates one toggle and its exclusive group.",
+	}
+
+
 ## Configures one reusable vertical strip from declarative action dictionaries.
 ## Each action accepts id, label, icon, tooltip, visible and enabled fields.
 func configure(title: String, actions: Array, edge := "left", expanded := false) -> void:
@@ -70,6 +132,7 @@ func set_action_active(action_id: String, active: bool, exclusive := true) -> vo
 		_rebuild()
 
 
+## Returns whether the requested toggle action is active.
 func is_action_active(action_id: String) -> bool:
 	return bool(_active_actions.get(action_id, false))
 

@@ -51,6 +51,104 @@ func _ready() -> void:
 	rebuild()
 
 
+## Updates the finite preview width without constraining an infinite logical grid.
+func set_point_columns(value: int) -> void:
+	point_columns = value
+
+
+## Updates the finite preview depth without constraining an infinite logical grid.
+func set_point_rows(value: int) -> void:
+	point_rows = value
+
+
+## Updates logical point spacing in centimetres.
+func set_point_spacing_cm(value: Vector2) -> void:
+	point_spacing_cm = value
+
+
+## Updates the visual scale used to represent one centimetre.
+func set_world_units_per_cm(value: float) -> void:
+	world_units_per_cm = value
+
+
+## Enables or disables signed logical coordinates beyond preview bounds.
+func set_virtual_infinite(value: bool) -> void:
+	virtual_infinite = value
+
+
+## Shows or hides point markers without changing logical placement.
+func set_show_points(value: bool) -> void:
+	show_points = value
+
+
+## Updates point-marker radius within safe rendering bounds.
+func set_point_radius(value: float) -> void:
+	point_radius = value
+
+
+## Updates point-marker color from a CSS-style color string.
+func set_point_color_string(value: String) -> bool:
+	var parsed := Color.from_string(value, Color.TRANSPARENT)
+	if parsed == Color.TRANSPARENT and value.to_lower() not in ["transparent", "#00000000"]:
+		return false
+	point_color = parsed
+	return true
+
+
+## Returns the stable console, GUI, and MCP method surface for this component.
+func console_api() -> Dictionary:
+	return (
+		BgoComponentApiDescriptor
+		. create(
+			self,
+			"bgo.table.grid",
+			"BgoTableGrid",
+			"Deterministic point-grid placement and visualization controls.",
+			{
+				"setPointColumns":
+				BgoComponentApiDescriptor.setter("set_point_columns", "point_columns", "int"),
+				"setPointRows":
+				BgoComponentApiDescriptor.setter("set_point_rows", "point_rows", "int"),
+				"setPointSpacingCm":
+				BgoComponentApiDescriptor.setter(
+					"set_point_spacing_cm", "point_spacing_cm", "Vector2"
+				),
+				"setWorldUnitsPerCm":
+				BgoComponentApiDescriptor.setter(
+					"set_world_units_per_cm", "world_units_per_cm", "float"
+				),
+				"setVirtualInfinite":
+				BgoComponentApiDescriptor.method(
+					"set_virtual_infinite", [{"name": "value", "type": "bool"}]
+				),
+				"setShowPoints":
+				BgoComponentApiDescriptor.method(
+					"set_show_points", [{"name": "value", "type": "bool"}]
+				),
+				"setPointRadius":
+				BgoComponentApiDescriptor.method(
+					"set_point_radius", [{"name": "value", "type": "float"}]
+				),
+				"setPointColor":
+				BgoComponentApiDescriptor.method(
+					"set_point_color_string", [{"name": "value", "type": "string"}], "bool"
+				),
+				"refresh": BgoComponentApiDescriptor.method("rebuild"),
+			},
+		)
+	)
+
+
+## Describes the developer-facing methods exposed by this component.
+func console_help() -> Dictionary:
+	return {
+		"_summary": "Controls table-grid dimensions, spacing, and visualization.",
+		"set_visual_anchors_world": "Updates sparse marker centres for an infinite grid.",
+		"resolve_magnetic_placement": "Resolves the nearest logical point.",
+		"rebuild": "Rebuilds point-marker presentation from current values.",
+	}
+
+
 ## Rebuilds the editor/runtime point markers from the logical grid contract.
 func rebuild() -> void:
 	_rebuild_queued = false
@@ -158,6 +256,7 @@ func placement_metadata(world_position: Vector3, footprint: Vector2i = Vector2i.
 	}
 
 
+## Converts a logical grid point into this component's local 3D coordinates.
 func point_local(point: Vector2i) -> Vector3:
 	return Vector3(
 		float(point.x) * point_spacing_cm.x * world_units_per_cm,

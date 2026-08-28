@@ -32,6 +32,40 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_resize_panel)
 
 
+## Returns the stable console, GUI, and MCP method surface for this component.
+func console_api() -> Dictionary:
+	return (
+		BgoComponentApiDescriptor
+		. create(
+			self,
+			"bgo.ui.settings_panel",
+			"BgoSettingsPanel",
+			"Client-local settings overlay presentation controls.",
+			{
+				"open":
+				BgoComponentApiDescriptor.method(
+					"open", [{"name": "values", "type": "Dictionary"}]
+				),
+				"close": BgoComponentApiDescriptor.method("close"),
+				"setMatchContext":
+				BgoComponentApiDescriptor.method(
+					"set_match_context", [{"name": "context", "type": "Dictionary"}]
+				),
+			},
+		)
+	)
+
+
+## Describes the developer-facing methods exposed by this component.
+func console_help() -> Dictionary:
+	return {
+		"_summary": "Controls the client-local settings overlay.",
+		"open": "Shows the overlay and synchronizes current setting values.",
+		"close": "Closes the overlay after its short fade.",
+		"set_match_context": "Updates visible match and bridge status context.",
+	}
+
+
 ## Opens the settings overlay and synchronizes every control with current values.
 func open(values: Dictionary) -> void:
 	_sync_controls(values)
@@ -159,6 +193,7 @@ func _build_lighting_section() -> Control:
 	return section
 
 
+## Updates match identity and transport status shown in the gameplay section.
 func set_match_context(context: Dictionary) -> void:
 	_match_context = context.duplicate(true)
 	_sync_match_context()
@@ -168,10 +203,14 @@ func _sync_match_context() -> void:
 	if _match_id_label != null:
 		_match_id_label.text = str(_match_context.get("session_id", "Not connected"))
 	if _bridge_status_label != null:
-		_bridge_status_label.text = str(_match_context.get("github_bridge_status", "disabled")).to_upper()
+		_bridge_status_label.text = (
+			str(_match_context.get("github_bridge_status", "disabled")).to_upper()
+		)
 	if _controls.has("github_jobs_enabled") and not _syncing:
 		_syncing = true
-		(_controls["github_jobs_enabled"] as CheckButton).button_pressed = bool(_match_context.get("github_jobs_enabled", false))
+		(_controls["github_jobs_enabled"] as CheckButton).button_pressed = bool(
+			_match_context.get("github_jobs_enabled", false)
+		)
 		_syncing = false
 
 
@@ -234,7 +273,9 @@ func _build_gameplay_section() -> Control:
 	bridge.text = "ENABLE GITHUB JOBS BRIDGE"
 	bridge.toggled.connect(func(value: bool) -> void: _emit_value("github_jobs_enabled", value))
 	_controls["github_jobs_enabled"] = bridge
-	content.add_child(_row("Allow this match to participate in the Phase 1 lease and polling bridge.", bridge))
+	content.add_child(
+		_row("Allow this match to participate in the Phase 1 lease and polling bridge.", bridge)
+	)
 	_bridge_status_label = Label.new()
 	_bridge_status_label.add_theme_color_override("font_color", MUTED_COLOR)
 	content.add_child(_row("BRIDGE STATUS", _bridge_status_label))

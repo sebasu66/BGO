@@ -67,6 +67,7 @@ func _invoke_registered(command_name: String, raw_args: Array) -> void:
 			)
 			return
 		typed_args.append(converted.get("value"))
+	typed_args.append_array(registration.get("bound_args", []))
 
 	var result: Variant = target.callv(StringName(registration.get("method", "")), typed_args)
 	if result != null:

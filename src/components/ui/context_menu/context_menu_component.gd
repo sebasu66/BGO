@@ -36,11 +36,77 @@ const PARENT_BACK_ARROW_COLOR := Color(1.0, 1.0, 1.0, 1.0)
 
 var reactive_root: ReactiveRootNode
 var _props: Dictionary = {}
+var _render_mode := "world_billboard"
+var _touch_target := 56.0
+
+
+## Selects screen-space or world-billboard composition for the hosting adapter.
+func set_render_mode(value: String) -> bool:
+	if value not in ["screen", "world_billboard"]:
+		return false
+	_render_mode = value
+	set_meta("bgo_render_mode", value)
+	_props["render_mode"] = value
+	_rerender_current()
+	return true
+
+
+## Updates the minimum interactive row height in logical pixels.
+func set_touch_target(value: float) -> void:
+	_touch_target = maxf(value, 44.0)
+	_props["touch_target"] = _touch_target
+	_rerender_current()
+
+
+## Returns the stable console, GUI, and MCP method surface for this component.
+func console_api() -> Dictionary:
+	return (
+		BgoComponentApiDescriptor
+		. create(
+			self,
+			"bgo.ui.context_menu",
+			"BgoContextMenuComponent",
+			"Role-aware declarative context-menu presentation controls.",
+			{
+				"setRenderMode":
+				BgoComponentApiDescriptor.setter(
+					"set_render_mode", "render_mode", "string", "bool"
+				),
+				"setTouchTarget":
+				BgoComponentApiDescriptor.setter("set_touch_target", "touch_target", "float"),
+				"setup":
+				BgoComponentApiDescriptor.method(
+					"setup",
+					[{"name": "menu_props", "type": "Dictionary"}],
+					"BgoContextMenuComponent",
+					"",
+					0
+				),
+				"rerender":
+				BgoComponentApiDescriptor.method(
+					"rerender", [{"name": "menu_props", "type": "Dictionary"}], "void", "", 0
+				),
+				"getActionIds": BgoComponentApiDescriptor.method("action_ids", [], "Array[String]"),
+			},
+		)
+	)
+
+
+## Describes the developer-facing methods exposed by this component.
+func console_help() -> Dictionary:
+	return {
+		"_summary": "Controls context-menu composition and declarative action rows.",
+		"setup": "Mounts the first reactive menu tree.",
+		"rerender": "Updates action state without replacing the component.",
+		"action_ids": "Lists the currently rendered logical action ids.",
+	}
 
 
 ## Mounts the reactive menu into this reusable Control component.
 func setup(menu_props: Dictionary = {}) -> BgoContextMenuComponent:
 	_props = menu_props.duplicate()
+	_props["render_mode"] = _props.get("render_mode", _render_mode)
+	_props["touch_target"] = _props.get("touch_target", _touch_target)
 	reactive_root = ReactiveRootNode.new()
 	reactive_root.name = "ReactiveContextMenuRoot"
 	reactive_root.position = Vector2.ZERO
@@ -62,6 +128,12 @@ func action_ids() -> Array[String]:
 ## Updates the menu state without replacing the component instance.
 func rerender(menu_props: Dictionary = {}) -> void:
 	_props = menu_props.duplicate()
+	_props["render_mode"] = _props.get("render_mode", _render_mode)
+	_props["touch_target"] = _props.get("touch_target", _touch_target)
+	_rerender_current()
+
+
+func _rerender_current() -> void:
 	if reactive_root != null:
 		reactive_root.rerender(render, _props)
 
@@ -71,6 +143,7 @@ static func render(props: Dictionary, _children: Array) -> RUIVNode:
 	var selected_id := String(props.get("selected_id", ""))
 	var on_toggle: Callable = props.get("on_toggle", Callable())
 	var on_action: Callable = props.get("on_action", Callable())
+	var touch_target := maxf(float(props.get("touch_target", 56.0)), 44.0)
 	var row_specs: Array = []
 	for action in props.get("actions", []):
 		if not action is Dictionary:
@@ -78,39 +151,55 @@ static func render(props: Dictionary, _children: Array) -> RUIVNode:
 		if bool(action.get("submenu", false)) and not expanded:
 			row_specs.append([str(action.get("label", action.get("id", ""))), 0, false, on_toggle])
 			continue
-		row_specs.append([
-			str(action.get("label", action.get("id", ""))),
-			int(action.get("depth", 0)),
-			selected_id == str(action.get("id", "")),
-			on_action.bind(str(action.get("id", ""))),
-		])
+		(
+			row_specs
+			. append(
+				[
+					str(action.get("label", action.get("id", ""))),
+					int(action.get("depth", 0)),
+					selected_id == str(action.get("id", "")),
+					on_action.bind(str(action.get("id", ""))),
+				]
+			)
+		)
 	if row_specs.is_empty():
 		row_specs.append(["SIN ACCIONES", 0, false, Callable()])
 	var rows: Array = []
 	for index in row_specs.size():
 		var spec: Array = row_specs[index]
 		var state := _state_for(spec[0], spec[1], selected_id, expanded)
-		rows.append(_row(spec[0], spec[1], state, spec[3], index < row_specs.size() - 1))
-	return V.h(
-		"VBoxContainer",
-		{
-			"position": CONTENT_POSITION,
-			"size": CONTENT_SIZE,
-			"theme_override_constants/separation": ROW_SEPARATION,
-		},
-		rows,
+		rows.append(
+			_row(spec[0], spec[1], state, spec[3], index < row_specs.size() - 1, touch_target)
+		)
+	return (
+		V
+		. h(
+			"VBoxContainer",
+			{
+				"position": CONTENT_POSITION,
+				"size": CONTENT_SIZE,
+				"theme_override_constants/separation": ROW_SEPARATION,
+			},
+			rows,
+		)
 	)
 
 
 static func _state_for(label: String, depth: int, selected_id: String, expanded: bool) -> int:
 	var item_id := ""
 	match label:
-		"TOMAR": item_id = "take"
-		"MOVER": item_id = "move"
-		"A CASILLA": item_id = "move_slot"
-		"A MANO": item_id = "move_hand"
-		"A ÁREA": item_id = "move_area"
-		"DEVOLVER": item_id = "return"
+		"TOMAR":
+			item_id = "take"
+		"MOVER":
+			item_id = "move"
+		"A CASILLA":
+			item_id = "move_slot"
+		"A MANO":
+			item_id = "move_hand"
+		"A ÁREA":
+			item_id = "move_area"
+		"DEVOLVER":
+			item_id = "return"
 	if selected_id == item_id:
 		return 3
 	if depth == 1:
@@ -125,7 +214,8 @@ static func _row(
 	depth: int,
 	state: int,
 	callback: Callable,
-	has_separator: bool
+	has_separator: bool,
+	touch_target: float,
 ) -> RUIVNode:
 	var text_color := COLOR_NORMAL_TEXT
 	var background_color := COLOR_NORMAL_BACKGROUND
@@ -139,7 +229,7 @@ static func _row(
 		3:
 			text_color = COLOR_ACTIVE_TEXT
 			background_color = COLOR_ACTIVE_BACKGROUND
-	var row_height := MAIN_ROW_HEIGHT if depth == 0 else CHILD_ROW_HEIGHT
+	var row_height := maxf(MAIN_ROW_HEIGHT if depth == 0 else CHILD_ROW_HEIGHT, touch_target)
 	var transparent := Color(0.0, 0.0, 0.0, 0.0)
 	var button_style := {
 		"bg_color": transparent,
@@ -148,7 +238,8 @@ static func _row(
 		"outline_size": TEXT_OUTLINE_SIZE,
 		"content_margin_left": SELECTED_RECT_INSET_X,
 		"content_margin_right": SELECTED_RECT_INSET_X,
-		"colors": {
+		"colors":
+		{
 			"font_hover_color": text_color,
 			"font_pressed_color": text_color,
 			"font_focus_color": text_color,
@@ -158,40 +249,42 @@ static func _row(
 		"pressed": {"bg_color": transparent},
 		"focus": {"bg_color": transparent},
 	}
-	return V.h(
-		"Panel",
-		{
-			"custom_minimum_size": Vector2(0, row_height),
-			"size_flags_horizontal": Control.SIZE_EXPAND_FILL,
-			"style": {"bg_color": background_color},
-			"draw_fn": _draw_row.bind(depth, state, background_color, has_separator),
-		},
-		[
-			V.h(
-				"Button",
-				{
-					"text": label,
-					"flat": true,
-					"alignment": HORIZONTAL_ALIGNMENT_CENTER,
-					"focus_mode": Control.FOCUS_ALL,
-					"mouse_default_cursor_shape": Control.CURSOR_POINTING_HAND,
-					"position": Vector2.ZERO,
-					"size": Vector2(CONTENT_SIZE.x, row_height),
-					"style": button_style,
-					"onPressed": callback,
-				},
-				[],
-			),
-		],
+	return (
+		V
+		. h(
+			"Panel",
+			{
+				"custom_minimum_size": Vector2(0, row_height),
+				"size_flags_horizontal": Control.SIZE_EXPAND_FILL,
+				"style": {"bg_color": background_color},
+				"draw_fn": _draw_row.bind(depth, state, background_color, has_separator),
+			},
+			[
+				(
+					V
+					. h(
+						"Button",
+						{
+							"text": label,
+							"flat": true,
+							"alignment": HORIZONTAL_ALIGNMENT_CENTER,
+							"focus_mode": Control.FOCUS_ALL,
+							"mouse_default_cursor_shape": Control.CURSOR_POINTING_HAND,
+							"position": Vector2.ZERO,
+							"size": Vector2(CONTENT_SIZE.x, row_height),
+							"style": button_style,
+							"onPressed": callback,
+						},
+						[],
+					)
+				),
+			],
+		)
 	)
 
 
 static func _draw_row(
-	canvas: CanvasItem,
-	depth: int,
-	state: int,
-	_background_color: Color,
-	has_separator: bool
+	canvas: CanvasItem, depth: int, state: int, _background_color: Color, has_separator: bool
 ) -> void:
 	var control := canvas as Control
 	if control == null:
@@ -199,13 +292,24 @@ static func _draw_row(
 	if state == 1:
 		var arrow_x := control.size.x - 34.0
 		var arrow_y := control.size.y * 0.5
-		control.draw_colored_polygon(
-			PackedVector2Array([
-				Vector2(arrow_x + PARENT_BACK_ARROW_SIZE * 0.5, arrow_y - PARENT_BACK_ARROW_SIZE * 0.7),
-				Vector2(arrow_x - PARENT_BACK_ARROW_SIZE * 0.5, arrow_y),
-				Vector2(arrow_x + PARENT_BACK_ARROW_SIZE * 0.5, arrow_y + PARENT_BACK_ARROW_SIZE * 0.7),
-			]),
-			PARENT_BACK_ARROW_COLOR,
+		(
+			control
+			. draw_colored_polygon(
+				PackedVector2Array(
+					[
+						Vector2(
+							arrow_x + PARENT_BACK_ARROW_SIZE * 0.5,
+							arrow_y - PARENT_BACK_ARROW_SIZE * 0.7
+						),
+						Vector2(arrow_x - PARENT_BACK_ARROW_SIZE * 0.5, arrow_y),
+						Vector2(
+							arrow_x + PARENT_BACK_ARROW_SIZE * 0.5,
+							arrow_y + PARENT_BACK_ARROW_SIZE * 0.7
+						),
+					]
+				),
+				PARENT_BACK_ARROW_COLOR,
+			)
 		)
 	if has_separator:
 		var inset := LINE_INSET + depth * CHILD_LINE_INSET
@@ -222,11 +326,7 @@ static func _draw_row(
 
 
 static func _draw_faded_line(
-	canvas: CanvasItem,
-	from: Vector2,
-	to: Vector2,
-	color: Color,
-	width: float
+	canvas: CanvasItem, from: Vector2, to: Vector2, color: Color, width: float
 ) -> void:
 	const SEGMENTS := 48
 	for index in SEGMENTS:

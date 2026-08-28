@@ -193,6 +193,13 @@ func _register_curated_method(
 		)
 		return
 	var args: Array = args_value
+	var bound_args_value: Variant = method.get("bound_args", [])
+	if not bound_args_value is Array:
+		Console.print_warning(
+			"Skipping invalid bound arguments for %s.%s." % [entity_name, api_name]
+		)
+		return
+	var bound_args: Array = bound_args_value
 	var required := int(method.get("required", args.size()))
 	if required < 0 or required > args.size():
 		Console.print_warning("Skipping invalid arity for %s.%s." % [entity_name, api_name])
@@ -214,6 +221,7 @@ func _register_curated_method(
 		"object_name": entity_name,
 		"class_name": entity_class,
 		"args": args,
+		"bound_args": bound_args,
 		"required": required,
 		"returns": str(method.get("returns", "Variant")),
 		"description": description,
