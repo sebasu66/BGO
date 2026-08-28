@@ -20,10 +20,6 @@ Thumbs.db
 /backend/functions/node_modules/
 /backend/functions/.env.local
 
-# Godot/editor generated metadata and imported artifacts
-*.uid
-*.import
-
 # Local tools, downloaded archives and native binaries
 *.zip
 *.exe
