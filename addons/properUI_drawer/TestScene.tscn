@@ -1,0 +1,294 @@
+[gd_scene load_steps=2 format=3 uid="uid://3qhkxxpnlv7u"]
+
+[ext_resource type="Script" uid="uid://ddy1m2mikmg12" path="res://addons/properUI_drawer/TestScene.gd" id="1_test"]
+
+[node name="TestScene" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_test")
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -109.0
+offset_top = -148.0
+offset_right = -109.0
+offset_bottom = -148.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Title" type="Label" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+theme_type_variation = &"HeaderLarge"
+text = "Drawer System Test"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Subtitle" type="Label" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "Test all four drawer directions:"
+horizontal_alignment = 1
+
+[node name="ButtonGrid" type="GridContainer" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+columns = 2
+
+[node name="RightDrawerButton" type="Button" parent="CenterContainer/VBoxContainer/ButtonGrid"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "Right Drawer →"
+
+[node name="LeftDrawerButton" type="Button" parent="CenterContainer/VBoxContainer/ButtonGrid"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "← Left Drawer"
+
+[node name="TopDrawerButton" type="Button" parent="CenterContainer/VBoxContainer/ButtonGrid"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "↑ Top Drawer"
+
+[node name="BottomDrawerButton" type="Button" parent="CenterContainer/VBoxContainer/ButtonGrid"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "↓ Bottom Drawer"
+
+[node name="HSeparator2" type="HSeparator" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="DynamicLabel" type="Label" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "Dynamic (via DrawerManager):"
+horizontal_alignment = 1
+
+[node name="DynamicDrawerButton" type="Button" parent="CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+text = "Open Dynamic Drawer"
+
+[node name="HSeparator3" type="HSeparator" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="ScopeToggle" type="CheckBox" parent="CenterContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+button_pressed = true
+text = "Screen-Wide Mode"
+
+[node name="ScopeHint" type="Label" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "(Test drawers use SCREEN_WIDE by default)"
+horizontal_alignment = 1
+
+[node name="StatusLabel" type="Label" parent="CenterContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Click a button to test..."
+horizontal_alignment = 1
+
+[node name="RightDrawer" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 400.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_type_variation = &"drawer"
+
+[node name="MarginContainer" type="MarginContainer" parent="RightDrawer"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="RightDrawer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="RightDrawer/MarginContainer/VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="RightDrawer/MarginContainer/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Right Drawer"
+
+[node name="CloseButton" type="Button" parent="RightDrawer/MarginContainer/VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "✕"
+
+[node name="HSeparator" type="HSeparator" parent="RightDrawer/MarginContainer/VBox"]
+layout_mode = 2
+
+[node name="Content" type="Label" parent="RightDrawer/MarginContainer/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+text = "This drawer slides in from the right side.
+
+Anchor configuration:
+• anchor_left = 1.0
+• anchor_right = 1.0
+• Full height
+
+Animation:
+• Start: offset (0, 400)
+• End: offset (-400, 0)"
+autowrap_mode = 3
+
+[node name="LeftDrawer" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_bottom = 1.0
+offset_left = -400.0
+grow_vertical = 2
+theme_type_variation = &"drawer"
+
+[node name="MarginContainer" type="MarginContainer" parent="LeftDrawer"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="LeftDrawer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="LeftDrawer/MarginContainer/VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="LeftDrawer/MarginContainer/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Left Drawer"
+
+[node name="CloseButton" type="Button" parent="LeftDrawer/MarginContainer/VBox/Header"]
+layout_mode = 2
+text = "✕"
+
+[node name="HSeparator" type="HSeparator" parent="LeftDrawer/MarginContainer/VBox"]
+layout_mode = 2
+
+[node name="Content" type="Label" parent="LeftDrawer/MarginContainer/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+text = "This drawer slides in from the left side.
+
+Anchor configuration:
+• anchor_left = 0.0
+• anchor_right = 0.0
+• Full height
+
+Animation:
+• Start: offset (-400, 0)
+• End: offset (0, 400)"
+autowrap_mode = 3
+
+[node name="TopDrawer" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+offset_top = -250.0
+grow_horizontal = 2
+theme_type_variation = &"drawer"
+
+[node name="MarginContainer" type="MarginContainer" parent="TopDrawer"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="TopDrawer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="TopDrawer/MarginContainer/VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="TopDrawer/MarginContainer/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Top Drawer"
+
+[node name="CloseButton" type="Button" parent="TopDrawer/MarginContainer/VBox/Header"]
+layout_mode = 2
+text = "✕"
+
+[node name="HSeparator" type="HSeparator" parent="TopDrawer/MarginContainer/VBox"]
+layout_mode = 2
+
+[node name="Content" type="Label" parent="TopDrawer/MarginContainer/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+text = "This drawer slides in from the top. Full width, 250px height."
+autowrap_mode = 3
+
+[node name="BottomDrawer" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_type_variation = &"drawer"
+
+[node name="MarginContainer" type="MarginContainer" parent="BottomDrawer"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="BottomDrawer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="BottomDrawer/MarginContainer/VBox"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="BottomDrawer/MarginContainer/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Bottom Drawer"
+
+[node name="CloseButton" type="Button" parent="BottomDrawer/MarginContainer/VBox/Header"]
+layout_mode = 2
+text = "✕"
+
+[node name="HSeparator" type="HSeparator" parent="BottomDrawer/MarginContainer/VBox"]
+layout_mode = 2
+
+[node name="Content" type="Label" parent="BottomDrawer/MarginContainer/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+text = "This drawer slides in from the bottom. Full width, 250px height."
+autowrap_mode = 3
