@@ -45,6 +45,17 @@ static func run(check: Callable) -> void:
 		"builder completion filters Player methods from a partial name"
 	)
 	check.call(
+		"Game.CheckeredBoard.create().setColumns(" in parser.complete("Game.CheckeredBoard."),
+		"component namespace completion includes chained builder methods"
+	)
+	check.call(
+		(
+			"Game.CheckeredBoard.create().setColumns("
+			in parser.complete("Game.CheckeredBoard.create()")
+		),
+		"completed factory expression continues into builder methods"
+	)
+	check.call(
 		(
 			"Game.current().setTable(Game.Table.create().setWidth("
 			in parser.complete("Game.current().setTable(Game.Table.create().setW")
@@ -58,6 +69,19 @@ static func run(check: Callable) -> void:
 		check.call(
 			console.line_edit.text.begins_with("Game."),
 			"pressing Tab after Game dot uses the fluent suggestions in the real console"
+		)
+		console.line_edit.text = ""
+		console.reset_autocomplete()
+		console.line_edit.text = "Game.CheckeredBoard."
+		console.autocomplete()
+		var first_component_suggestion: String = str(console.line_edit.text)
+		console.autocomplete()
+		check.call(
+			(
+				first_component_suggestion == "Game.CheckeredBoard.create()"
+				and console.line_edit.text.begins_with("Game.CheckeredBoard.create().")
+			),
+			"repeated Tab cycles from create into component builder methods"
 		)
 		console.line_edit.text = ""
 		console.reset_autocomplete()

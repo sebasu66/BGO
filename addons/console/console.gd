@@ -575,6 +575,7 @@ var suggestions := []
 var current_suggest := 0
 var suggesting := false
 var autocomplete_provider := Callable()
+var _applying_autocomplete := false
 
 
 func set_autocomplete_provider(provider: Callable) -> void:
@@ -585,8 +586,10 @@ func autocomplete() -> void:
 	if suggesting:
 		for i in range(suggestions.size()):
 			if current_suggest == i:
+				_applying_autocomplete = true
 				line_edit.text = str(suggestions[i])
 				line_edit.caret_column = line_edit.text.length()
+				_applying_autocomplete = false
 				if current_suggest == suggestions.size() - 1:
 					current_suggest = 0
 				else:
@@ -898,7 +901,8 @@ func _on_text_entered(new_text: String) -> void:
 
 
 func _on_line_edit_text_changed(new_text: String) -> void:
-	reset_autocomplete()
+	if not _applying_autocomplete:
+		reset_autocomplete()
 
 
 func quit() -> void:

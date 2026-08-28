@@ -39,25 +39,11 @@ func complete(source: String) -> Array[String]:
 	if "(" in method_prefix or ")" in method_prefix:
 		return result
 	var base := source.left(replacement_start)
+	if bool(context.get("insert_separator", false)):
+		base += "."
 	for method_name in _registry.describe(type_name).get("methods", []):
 		if str(method_name).to_lower().begins_with(method_prefix.to_lower()):
-			var suffix := (
-				"()"
-				if (
-					method_name
-					in [
-						"getDefinition",
-						"getJson",
-						"getWarnings",
-						"validate",
-						"isValid",
-						"build",
-						"migrateToCurrent",
-					]
-				)
-				else "("
-			)
-			result.append("%s%s%s" % [base, method_name, suffix])
+			result.append("%s%s%s" % [base, method_name, _method_suffix(str(method_name))])
 	return result
 
 
@@ -71,7 +57,10 @@ func _complete_game_namespace(source: String) -> Array[String]:
 		if type_name == "Game":
 			continue
 		var member := "%s." % type_name
-		if member.to_lower().begins_with(member_prefix.to_lower()):
+		if (
+			member.to_lower() != member_prefix.to_lower()
+			and member.to_lower().begins_with(member_prefix.to_lower())
+		):
 			result.append("Game.%s" % member)
 	if member_prefix.get_slice_count(".") == 2:
 		var type_name := member_prefix.get_slice(".", 0)
@@ -79,6 +68,14 @@ func _complete_game_namespace(source: String) -> Array[String]:
 		var canonical_type := _canonical_identifier(type_name, Array(_registry.get_types()))
 		if not canonical_type.is_empty() and "create()".begins_with(factory_prefix.to_lower()):
 			result.append("Game.%s.create()" % canonical_type)
+		if not canonical_type.is_empty() and factory_prefix.is_empty():
+			for method_name in _registry.describe(canonical_type).get("methods", []):
+				result.append(
+					(
+						"Game.%s.create().%s%s"
+						% [canonical_type, method_name, _method_suffix(str(method_name))]
+					)
+				)
 	return result
 
 
@@ -128,10 +125,40 @@ func _find_completion_context(source: String) -> Dictionary:
 				best_type = type_name
 	if best_start < 0:
 		return {}
+	var marker_end := best_start + _builder_marker(best_type).length()
+	if marker_end == source.length():
+		return {
+			"type": best_type,
+			"replacement_start": source.length(),
+			"insert_separator": true,
+		}
 	var method_separator := source.rfind(".")
 	if method_separator < best_start:
 		return {}
 	return {"type": best_type, "replacement_start": method_separator + 1}
+
+
+func _builder_marker(type_name: String) -> String:
+	return "Game.create()" if type_name == "Game" else "Game.%s.create()" % type_name
+
+
+func _method_suffix(method_name: String) -> String:
+	return (
+		"()"
+		if (
+			method_name
+			in [
+				"getDefinition",
+				"getJson",
+				"getWarnings",
+				"validate",
+				"isValid",
+				"build",
+				"migrateToCurrent",
+			]
+		)
+		else "("
+	)
 
 
 func execute(source: String) -> Dictionary:
