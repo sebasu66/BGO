@@ -19,16 +19,16 @@ func set_namespace_invoker(invoker: Callable) -> void:
 
 
 func recognizes(source: String) -> bool:
-	var first := source.strip_edges().get_slice(".", 0)
-	return first in PUBLIC_ROOTS
+	var first := source.strip_edges().get_slice(".", 0).to_lower()
+	return first in ["game", "match", "system"]
 
 
 func complete(source: String) -> Array[String]:
 	var result: Array[String] = []
 	var stripped := source.strip_edges()
-	if stripped.begins_with("Game.") and "(" not in stripped:
+	if stripped.to_lower().begins_with("game.") and "(" not in stripped:
 		return _complete_game_namespace(stripped)
-	if stripped.begins_with("System.") and "(" not in stripped:
+	if stripped.to_lower().begins_with("system.") and "(" not in stripped:
 		return _complete_system_namespace(stripped)
 	var context := _find_completion_context(source)
 	if context.is_empty():
@@ -40,7 +40,7 @@ func complete(source: String) -> Array[String]:
 		return result
 	var base := source.left(replacement_start)
 	for method_name in _registry.describe(type_name).get("methods", []):
-		if str(method_name).begins_with(method_prefix):
+		if str(method_name).to_lower().begins_with(method_prefix.to_lower()):
 			var suffix := (
 				"()"
 				if (
@@ -63,21 +63,22 @@ func complete(source: String) -> Array[String]:
 
 func _complete_game_namespace(source: String) -> Array[String]:
 	var result: Array[String] = []
-	var member_prefix := source.trim_prefix("Game.")
+	var member_prefix := source.substr("Game.".length())
 	for factory in ["create()", "current()", "load("]:
-		if factory.begins_with(member_prefix):
+		if factory.to_lower().begins_with(member_prefix.to_lower()):
 			result.append("Game.%s" % factory)
 	for type_name in _registry.get_types():
 		if type_name == "Game":
 			continue
 		var member := "%s." % type_name
-		if member.begins_with(member_prefix):
+		if member.to_lower().begins_with(member_prefix.to_lower()):
 			result.append("Game.%s" % member)
 	if member_prefix.get_slice_count(".") == 2:
 		var type_name := member_prefix.get_slice(".", 0)
 		var factory_prefix := member_prefix.get_slice(".", 1)
-		if type_name in _registry.get_types() and "create()".begins_with(factory_prefix):
-			result.append("Game.%s.create()" % type_name)
+		var canonical_type := _canonical_identifier(type_name, Array(_registry.get_types()))
+		if not canonical_type.is_empty() and "create()".begins_with(factory_prefix.to_lower()):
+			result.append("Game.%s.create()" % canonical_type)
 	return result
 
 
@@ -89,6 +90,7 @@ func _complete_system_namespace(source: String) -> Array[String]:
 		"System.api.getEntities()",
 		"System.api.getMethods(",
 		"System.api.describe(",
+		"System.api.audit()",
 		"System.builders.getTypes()",
 		"System.builders.describe(",
 		"System.constants.getAll()",
@@ -96,13 +98,16 @@ func _complete_system_namespace(source: String) -> Array[String]:
 	]
 	var result: Array[String] = []
 	for path in static_paths:
-		if path != source and path.begins_with(source):
+		if path.to_lower() != source.to_lower() and path.to_lower().begins_with(source.to_lower()):
 			result.append(path)
-	if source.begins_with("System.constants."):
-		var constant_prefix := source.trim_prefix("System.constants.")
+	if source.to_lower().begins_with("system.constants."):
+		var constant_prefix := source.substr("System.constants.".length())
 		for constant_name in BgoApiConstants.names():
 			var short_name := str(constant_name).trim_prefix("G.")
-			if "." not in short_name and short_name.begins_with(constant_prefix):
+			if (
+				"." not in short_name
+				and short_name.to_lower().begins_with(constant_prefix.to_lower())
+			):
 				result.append("System.constants.%s" % short_name)
 	return result
 
@@ -117,7 +122,7 @@ func _find_completion_context(source: String) -> Dictionary:
 		else:
 			markers = ["Game.%s.create()" % type_name]
 		for marker in markers:
-			var marker_start := source.rfind(marker)
+			var marker_start := source.to_lower().rfind(marker.to_lower())
 			if marker_start > best_start:
 				best_start = marker_start
 				best_type = type_name
@@ -154,16 +159,19 @@ func _parse_value() -> Dictionary:
 	var identifier := _parse_identifier()
 	if identifier.is_empty():
 		return _failure("Expected an identifier, string or number.", _position)
-	if identifier == "true":
+	var normalized_identifier := identifier.to_lower()
+	if normalized_identifier == "true":
 		return {"ok": true, "value": true}
-	if identifier == "false":
+	if normalized_identifier == "false":
 		return {"ok": true, "value": false}
-	if identifier == "null":
+	if normalized_identifier == "null":
 		return {"ok": true, "value": null}
-	if identifier == "Game":
+	if normalized_identifier == "game":
 		return _parse_game_expression()
-	if identifier in ["Match", "System"]:
-		return _parse_namespace_expression([identifier])
+	if normalized_identifier in ["match", "system"]:
+		return _parse_namespace_expression(
+			["Match" if normalized_identifier == "match" else "System"]
+		)
 	return _failure("Public expressions must begin with Game, Match or System.", _position)
 
 
@@ -171,47 +179,62 @@ func _parse_game_expression() -> Dictionary:
 	if not _consume("."):
 		return _failure("Expected a Game member.", _position)
 	var member := _parse_identifier()
-	if member in ["create", "current", "load"]:
-		return _start_builder("Game", member)
-	if member in _registry.get_types() and member != "Game":
+	var factory := _canonical_identifier(member, ["create", "current", "load"])
+	if not factory.is_empty():
+		return _start_builder("Game", factory)
+	var component_type := _canonical_identifier(member, Array(_registry.get_types()))
+	if not component_type.is_empty() and component_type != "Game":
 		if not _consume("."):
-			return _failure("Expected Game.%s.create()." % member, _position)
-		return _start_builder(member, _parse_identifier())
+			return _failure("Expected Game.%s.create()." % component_type, _position)
+		return _start_builder(component_type, _parse_identifier())
 	return _parse_namespace_expression(["Game", member])
 
 
 func _start_builder(type_name: String, factory: String) -> Dictionary:
-	var builder: BgoDefinitionBuilder
-	if factory == "create":
-		var arguments := _parse_arguments()
-		if not bool(arguments.get("ok", false)):
-			return arguments
-		if not (arguments.get("value", []) as Array).is_empty():
-			return _failure("create() takes no arguments.", _position)
-		builder = _registry.create(type_name)
-	elif type_name == "Game" and factory == "current":
-		var arguments := _parse_arguments()
-		if not bool(arguments.get("ok", false)):
-			return arguments
-		builder = _registry.current_game
-		if builder == null:
-			return _failure("Game.current() requires Game.create() first.", _position)
-	elif type_name == "Game" and factory == "load":
-		var arguments := _parse_arguments()
-		if not bool(arguments.get("ok", false)):
-			return arguments
-		if (arguments.get("value", []) as Array).size() != 1:
-			return _failure("Game.load(path) expects one argument.", _position)
-		var path := str(arguments.value[0])
-		if not path.begins_with("res://games/") and not path.begins_with("user://"):
-			return _failure("Game.load only accepts res://games/ or user:// paths.", _position)
-		var loaded := BgoGameDefinitionLoader.load_game(path)
-		if not bool(loaded.get("ok", false)):
-			return _failure("Could not load game: %s" % [loaded.get("errors", [])], _position)
-		builder = _registry.from_definition(loaded.get("data", {}))
-	else:
-		return _failure("Unknown factory Game.%s.%s()." % [type_name, factory], _position)
+	match factory.to_lower():
+		"create":
+			return _start_created_builder(type_name)
+		"current":
+			if type_name == "Game":
+				return _start_current_builder()
+		"load":
+			if type_name == "Game":
+				return _start_loaded_builder()
+	return _failure("Unknown factory Game.%s.%s()." % [type_name, factory], _position)
+
+
+func _start_created_builder(type_name: String) -> Dictionary:
+	var arguments := _parse_arguments()
+	if not bool(arguments.get("ok", false)):
+		return arguments
+	if not (arguments.get("value", []) as Array).is_empty():
+		return _failure("create() takes no arguments.", _position)
+	return _parse_builder_methods(_registry.create(type_name))
+
+
+func _start_current_builder() -> Dictionary:
+	var arguments := _parse_arguments()
+	if not bool(arguments.get("ok", false)):
+		return arguments
+	var builder: BgoDefinitionBuilder = _registry.current_game
+	if builder == null:
+		return _failure("Game.current() requires Game.create() first.", _position)
 	return _parse_builder_methods(builder)
+
+
+func _start_loaded_builder() -> Dictionary:
+	var arguments := _parse_arguments()
+	if not bool(arguments.get("ok", false)):
+		return arguments
+	if (arguments.get("value", []) as Array).size() != 1:
+		return _failure("Game.load(path) expects one argument.", _position)
+	var path := str(arguments.value[0])
+	if not path.begins_with("res://games/") and not path.begins_with("user://"):
+		return _failure("Game.load only accepts res://games/ or user:// paths.", _position)
+	var loaded := BgoGameDefinitionLoader.load_game(path)
+	if not bool(loaded.get("ok", false)):
+		return _failure("Could not load game: %s" % [loaded.get("errors", [])], _position)
+	return _parse_builder_methods(_registry.from_definition(loaded.get("data", {})))
 
 
 func _parse_builder_methods(builder: BgoDefinitionBuilder) -> Dictionary:
@@ -220,6 +243,12 @@ func _parse_builder_methods(builder: BgoDefinitionBuilder) -> Dictionary:
 		if not value is BgoDefinitionBuilder:
 			return _failure("Cannot chain after a terminal value.", _position)
 		var method_name := _parse_identifier()
+		var canonical_method := _canonical_identifier(
+			method_name,
+			Array(_registry.describe((value as BgoDefinitionBuilder).type_name).get("methods", []))
+		)
+		if not canonical_method.is_empty():
+			method_name = canonical_method
 		var arguments := _parse_arguments()
 		if not bool(arguments.get("ok", false)):
 			return arguments
@@ -245,7 +274,11 @@ func _parse_namespace_expression(initial_segments: Array[String]) -> Dictionary:
 			if not bool(arguments.get("ok", false)):
 				return arguments
 			return _invoke_namespace(".".join(segments), arguments.get("value", []))
-	if segments.size() == 3 and segments[0] == "System" and segments[1] == "constants":
+	if (
+		segments.size() == 3
+		and segments[0].to_lower() == "system"
+		and segments[1].to_lower() == "constants"
+	):
 		return _resolve_system_constant(segments[2])
 	return _failure("Expected a method call with parentheses.", _position)
 
@@ -332,6 +365,14 @@ func _parse_identifier() -> String:
 			break
 		_position += 1
 	return _source.substr(start, _position - start)
+
+
+func _canonical_identifier(requested: String, candidates: Array) -> String:
+	var normalized := requested.to_lower()
+	for candidate in candidates:
+		if str(candidate).to_lower() == normalized:
+			return str(candidate)
+	return ""
 
 
 func _peek() -> String:

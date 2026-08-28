@@ -33,6 +33,8 @@ func set_default_time_seconds(value: float) -> void:
 
 ## Returns the stable console, GUI, and MCP method surface for this component.
 func console_api() -> Dictionary:
+	var methods := _console_message_methods()
+	methods.merge(_console_loading_methods())
 	return (
 		BgoComponentApiDescriptor
 		. create(
@@ -40,79 +42,96 @@ func console_api() -> Dictionary:
 			"bgo.ui.toast",
 			"BgoToastComponent",
 			"Transient notification and loading-progress presentation controls.",
-			{
-				"setDefaultStyle":
-				BgoComponentApiDescriptor.setter(
-					"set_default_style", "default_style", "string", "bool"
-				),
-				"setDefaultTimeSeconds":
-				BgoComponentApiDescriptor.setter(
-					"set_default_time_seconds", "default_time_seconds", "float"
-				),
-				"show":
-				BgoComponentApiDescriptor.method(
-					"show_message",
-					[
-						{"name": "message", "type": "string"},
-						{"name": "style", "type": "string"},
-						{"name": "time", "type": "float"}
-					],
-					"string",
-					"",
-					1
-				),
-				"success":
-				BgoComponentApiDescriptor.method(
-					"success",
-					[{"name": "message", "type": "string"}, {"name": "time", "type": "float"}],
-					"string",
-					"",
-					1
-				),
-				"error":
-				BgoComponentApiDescriptor.method(
-					"error",
-					[{"name": "message", "type": "string"}, {"name": "time", "type": "float"}],
-					"string",
-					"",
-					1
-				),
-				"warning":
-				BgoComponentApiDescriptor.method(
-					"warning",
-					[{"name": "message", "type": "string"}, {"name": "time", "type": "float"}],
-					"string",
-					"",
-					1
-				),
-				"info":
-				BgoComponentApiDescriptor.method(
-					"info",
-					[{"name": "message", "type": "string"}, {"name": "time", "type": "float"}],
-					"string",
-					"",
-					1
-				),
-				"dismiss":
-				BgoComponentApiDescriptor.method(
-					"dismiss", [{"name": "toast_id", "type": "string"}], "bool"
-				),
-				"clearAll": BgoComponentApiDescriptor.method("clear_all"),
-			},
+			methods,
 		)
 	)
 
 
-## Describes the developer-facing methods exposed by this component.
-func console_help() -> Dictionary:
+func _console_message_methods() -> Dictionary:
+	var timed_args := [
+		{"name": "message", "type": "string"},
+		{"name": "time", "type": "float"},
+	]
 	return {
-		"_summary": "Controls transient client notifications through GodotX Toast.",
-		"show_message": "Shows a notification with optional style and duration.",
-		"show_loading": "Shows a loading notification and returns its id.",
-		"update_loading": "Updates loading progress and optional message.",
-		"complete_loading": "Completes a loading notification.",
-		"dismiss": "Dismisses one notification by id.",
-		"clear_all": "Dismisses all active notifications.",
+		"setDefaultStyle":
+		BgoComponentApiDescriptor.setter("set_default_style", "default_style", "string", "bool"),
+		"setDefaultTimeSeconds":
+		BgoComponentApiDescriptor.setter(
+			"set_default_time_seconds", "default_time_seconds", "float"
+		),
+		"show":
+		(
+			BgoComponentApiDescriptor
+			. method(
+				"show_message",
+				[
+					{"name": "message", "type": "string"},
+					{"name": "style", "type": "string"},
+					{"name": "time", "type": "float"},
+				],
+				"string",
+				"",
+				1
+			)
+		),
+		"success": BgoComponentApiDescriptor.method("success", timed_args, "string", "", 1),
+		"error": BgoComponentApiDescriptor.method("error", timed_args, "string", "", 1),
+		"warning": BgoComponentApiDescriptor.method("warning", timed_args, "string", "", 1),
+		"info": BgoComponentApiDescriptor.method("info", timed_args, "string", "", 1),
+		"dismiss":
+		BgoComponentApiDescriptor.method(
+			"dismiss", [{"name": "toast_id", "type": "string"}], "bool"
+		),
+		"clearAll": BgoComponentApiDescriptor.method("clear_all"),
+	}
+
+
+func _console_loading_methods() -> Dictionary:
+	return {
+		"showLoading":
+		(
+			BgoComponentApiDescriptor
+			. method(
+				"show_loading",
+				[
+					{"name": "message", "type": "string"},
+					{"name": "style", "type": "string"},
+				],
+				"string",
+				"",
+				1
+			)
+		),
+		"updateLoading":
+		(
+			BgoComponentApiDescriptor
+			. method(
+				"update_loading",
+				[
+					{"name": "toast_id", "type": "string"},
+					{"name": "progress", "type": "float"},
+					{"name": "message", "type": "string"},
+				],
+				"bool",
+				"",
+				2
+			)
+		),
+		"completeLoading":
+		(
+			BgoComponentApiDescriptor
+			. method(
+				"complete_loading",
+				[
+					{"name": "toast_id", "type": "string"},
+					{"name": "success", "type": "bool"},
+					{"name": "message", "type": "string"},
+				],
+				"bool",
+				"",
+				1
+			)
+		),
 	}
 
 

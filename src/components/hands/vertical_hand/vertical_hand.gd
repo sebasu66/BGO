@@ -103,16 +103,6 @@ func console_api() -> Dictionary:
 	)
 
 
-## Describes the developer-facing methods exposed by this component.
-func console_help() -> Dictionary:
-	return {
-		"_summary": "Controls a client-local vertical hand without bypassing logical privacy.",
-		"set_items": "Updates presented hand items in FILO order.",
-		"set_selected": "Selects a visible item by logical id.",
-		"set_mode": "Selects pickup, place, or neutral presentation mode.",
-	}
-
-
 ## The renderer supplies the real component representation; Hand owns only presentation.
 func set_preview_factory(factory: Callable) -> void:
 	_preview_factory = factory

@@ -107,13 +107,13 @@ func _write_game_console(event_name: String, payload: Dictionary, level: String)
 	var message := "[BGO] %s %s" % [event_name, JSON.stringify(payload)]
 	match level:
 		"error":
-			game_console.call("print_error", message, false)
+			game_console.call("print_log_error", message, false)
 		"warning":
-			game_console.call("print_warning", message, false)
+			game_console.call("print_log_warning", message, false)
 		"info":
-			game_console.call("print_info", message, false)
+			game_console.call("print_log_info", message, false)
 		_:
-			game_console.call("print_line", "[DEBUG] %s" % message, false)
+			game_console.call("print_log_line", "[DEBUG] %s" % message, false)
 
 
 ## Records a debug-level BGO log entry.

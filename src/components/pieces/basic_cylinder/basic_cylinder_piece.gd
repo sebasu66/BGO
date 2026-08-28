@@ -196,7 +196,7 @@ func console_api() -> Dictionary:
 				"getOwner": {"call": "_api_get_owner", "returns": "String"},
 				"getHolder": {"call": "_api_get_holder", "returns": "String"},
 				"getQuantity": {"call": "_api_get_quantity", "returns": "int"},
-				"isStackable": {"call": "is_stackable", "returns": "bool"},
+				"isStackable": BgoComponentApiDescriptor.method("is_stackable", [], "bool"),
 				"setShape":
 				BgoComponentApiDescriptor.setter("set_shape", "shape", "string", "bool"),
 				"setRadius": BgoComponentApiDescriptor.setter("set_radius", "radius", "float"),
@@ -214,6 +214,20 @@ func console_api() -> Dictionary:
 				"setEmissionStrength":
 				BgoComponentApiDescriptor.setter(
 					"set_emission_strength", "emission_strength", "float"
+				),
+				"getPlacementAnchor":
+				BgoComponentApiDescriptor.method("placement_anchor", [], "string"),
+				"getMenuActions":
+				(
+					BgoComponentApiDescriptor
+					. method(
+						"menu_actions",
+						[
+							{"name": "viewer_role", "type": "string"},
+							{"name": "viewer_id", "type": "string"},
+						],
+						"Array"
+					)
 				),
 			},
 		)
@@ -246,18 +260,6 @@ func configure(
 		"configured",
 		{"entity_id": entity_id, "owner_id": owner_id, "holder_id": holder_id, "quantity": quantity}
 	)
-
-
-## Optional developer-console help for this component's public methods.
-func console_help() -> Dictionary:
-	return {
-		"_summary": "Developer commands for a configurable geometric piece.",
-		"configure": "Updates identity, ownership metadata, quantity, color, and appearance.",
-		"apply_configuration": "Applies validated shape, size, color, and material configuration.",
-		"set_shape": "Updates the rendered primitive shape.",
-		"set_color_source": "Selects owner-derived or fixed color.",
-		"set_color_string": "Updates the fixed CSS-style color.",
-	}
 
 
 ## Returns context-menu actions allowed for the supplied viewer.

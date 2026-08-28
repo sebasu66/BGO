@@ -53,16 +53,6 @@ func console_api() -> Dictionary:
 	)
 
 
-## Describes the developer-facing methods exposed by this component.
-func console_help() -> Dictionary:
-	return {
-		"_summary": "Controls the projected session header without mutating session state.",
-		"set_state": "Updates the visible authorized session projection.",
-		"get_state": "Returns a copy of the currently projected header values.",
-		"configure_actions": "Replaces compact declarative header actions.",
-	}
-
-
 ## Updates visible session metadata without coupling the header to domain nodes.
 func set_state(state: Dictionary) -> void:
 	_pending_state = state.duplicate(true)

@@ -1,11 +1,14 @@
 extends RefCounted
 
+const PRESENTER_SCRIPT := preload("res://src/debug/bgo_console_api_presenter.gd")
+
 var _registered_commands: Dictionary
 var _api_entities: Dictionary
 var _builder_registry
 var _fluent_parser
 var _registry
 var _invocation
+var _presenter = PRESENTER_SCRIPT.new()
 
 
 func _configure(
@@ -22,6 +25,7 @@ func _configure(
 	_fluent_parser = fluent_parser
 	_registry = registry
 	_invocation = invocation
+	_presenter._configure(_api_entities, _builder_registry, _registry)
 
 
 func _execute_fluent_expression(source: String) -> bool:
@@ -70,21 +74,23 @@ func _complete_live_namespace(source: String) -> Array[String]:
 	var result: Array[String] = []
 	for root_name in ["Game", "Match"]:
 		var root_prefix := "%s." % root_name
-		if not source.begins_with(root_prefix) or "(" in source:
+		if not source.to_lower().begins_with(root_prefix.to_lower()) or "(" in source:
 			continue
-		var remainder := source.trim_prefix(root_prefix)
+		var remainder := source.substr(root_prefix.length())
 		if "." not in remainder:
 			for entity_path in _api_entities:
-				if str(entity_path).begins_with(root_prefix + remainder):
+				if str(entity_path).to_lower().begins_with((root_prefix + remainder).to_lower()):
 					result.append("%s." % entity_path)
 			return result
-		var entity_name := "%s.%s" % [root_name, remainder.get_slice(".", 0)]
+		var entity_name := _case_insensitive_key(
+			_api_entities, "%s.%s" % [root_name, remainder.get_slice(".", 0)]
+		)
 		if not _api_entities.has(entity_name):
 			return result
 		var method_prefix := remainder.get_slice(".", 1)
 		var methods: Dictionary = _api_entities[entity_name].get("methods", {})
 		for method_name in methods:
-			if str(method_name).begins_with(method_prefix):
+			if str(method_name).to_lower().begins_with(method_prefix.to_lower()):
 				var arguments: Array = methods[method_name].get("args", [])
 				var suffix := "()" if arguments.is_empty() else "("
 				result.append("%s.%s%s" % [entity_name, method_name, suffix])
@@ -93,11 +99,12 @@ func _complete_live_namespace(source: String) -> Array[String]:
 
 
 func _invoke_python_namespace(path: String, arguments: Array) -> Dictionary:
-	if path.begins_with("System."):
+	if path.to_lower().begins_with("system."):
 		return _invoke_python_system(path, arguments)
-	if not _registered_commands.has(path):
+	var canonical_path := _case_insensitive_key(_registered_commands, path)
+	if canonical_path.is_empty():
 		return {"ok": false, "error": "Unknown public API method: %s" % path}
-	var registration: Dictionary = _registered_commands[path]
+	var registration: Dictionary = _registered_commands[canonical_path]
 	var required := int(registration.get("required", 0))
 	var argument_specs: Array = registration.get("args", [])
 	if arguments.size() < required or arguments.size() > argument_specs.size():
@@ -135,50 +142,78 @@ func _invoke_python_namespace(path: String, arguments: Array) -> Dictionary:
 
 
 func _invoke_python_system(path: String, arguments: Array) -> Dictionary:
-	var result: Dictionary = {"ok": false, "error": "Unknown System API method: %s" % path}
-	match path:
-		"System.api.getEntities":
-			if not arguments.is_empty():
-				result = _python_arity_error(path, 0, arguments.size())
-			else:
-				result = {"ok": true, "value": _public_api_entities()}
-		"System.api.getMethods":
-			if arguments.size() != 1:
-				result = _python_arity_error(path, 1, arguments.size())
-			else:
-				result = _python_get_methods(str(arguments[0]))
-		"System.api.describe":
+	match path.to_lower().get_slice(".", 1):
+		"api":
+			return _invoke_system_api(path, arguments)
+		"builders":
+			return _invoke_system_builders(path, arguments)
+		"constants":
+			return _invoke_system_constants(path, arguments)
+	return {"ok": false, "error": "Unknown System API method: %s" % path}
+
+
+func _invoke_system_api(path: String, arguments: Array) -> Dictionary:
+	match path.to_lower():
+		"system.api.getentities":
+			return (
+				_python_arity_error(path, 0, arguments.size())
+				if not arguments.is_empty()
+				else {"ok": true, "value": _public_api_entities()}
+			)
+		"system.api.getmethods":
+			return (
+				_python_arity_error(path, 1, arguments.size())
+				if arguments.size() != 1
+				else _python_get_methods(str(arguments[0]))
+			)
+		"system.api.describe":
 			if arguments.size() not in [1, 2]:
-				result = {"ok": false, "error": "%s expects one or two arguments." % path}
-			else:
-				result = _python_describe(
-					str(arguments[0]), str(arguments[1]) if arguments.size() == 2 else ""
-				)
-		"System.builders.getTypes":
-			if not arguments.is_empty():
-				result = _python_arity_error(path, 0, arguments.size())
-			else:
-				result = {"ok": true, "value": Array(_builder_registry.get_public_types())}
-		"System.builders.describe":
-			if arguments.size() != 1:
-				result = _python_arity_error(path, 1, arguments.size())
-			else:
-				var type_name := _internal_builder_type(str(arguments[0]))
-				if type_name.is_empty():
-					result = {"ok": false, "error": "Unknown Game builder: %s" % arguments[0]}
-				else:
-					result = {"ok": true, "value": _builder_registry.describe(type_name)}
-		"System.constants.getAll":
-			if not arguments.is_empty():
-				result = _python_arity_error(path, 0, arguments.size())
-			else:
-				result = {"ok": true, "value": _system_constants()}
-		"System.constants.get":
-			if arguments.size() != 1:
-				result = _python_arity_error(path, 1, arguments.size())
-			else:
-				result = _resolve_system_constant(str(arguments[0]))
-	return result
+				return {"ok": false, "error": "%s expects one or two arguments." % path}
+			return _python_describe(
+				str(arguments[0]), str(arguments[1]) if arguments.size() == 2 else ""
+			)
+		"system.api.audit":
+			return (
+				_python_arity_error(path, 0, arguments.size())
+				if not arguments.is_empty()
+				else {"ok": true, "value": _api_audit_records()}
+			)
+	return {"ok": false, "error": "Unknown System API method: %s" % path}
+
+
+func _invoke_system_builders(path: String, arguments: Array) -> Dictionary:
+	if path.to_lower() == "system.builders.gettypes":
+		return (
+			_python_arity_error(path, 0, arguments.size())
+			if not arguments.is_empty()
+			else {"ok": true, "value": Array(_builder_registry.get_public_types())}
+		)
+	if path.to_lower() != "system.builders.describe":
+		return {"ok": false, "error": "Unknown System API method: %s" % path}
+	if arguments.size() != 1:
+		return _python_arity_error(path, 1, arguments.size())
+	var type_name := _internal_builder_type(str(arguments[0]))
+	return (
+		{"ok": false, "error": "Unknown Game builder: %s" % arguments[0]}
+		if type_name.is_empty()
+		else {"ok": true, "value": _builder_registry.describe(type_name)}
+	)
+
+
+func _invoke_system_constants(path: String, arguments: Array) -> Dictionary:
+	if path.to_lower() == "system.constants.getall":
+		return (
+			_python_arity_error(path, 0, arguments.size())
+			if not arguments.is_empty()
+			else {"ok": true, "value": _system_constants()}
+		)
+	if path.to_lower() == "system.constants.get":
+		return (
+			_python_arity_error(path, 1, arguments.size())
+			if arguments.size() != 1
+			else _resolve_system_constant(str(arguments[0]))
+		)
+	return {"ok": false, "error": "Unknown System API method: %s" % path}
 
 
 func _public_api_entities() -> Array[String]:
@@ -203,7 +238,8 @@ func _python_get_methods(entity_name: String) -> Dictionary:
 	if not system_methods.is_empty():
 		return {"ok": true, "value": system_methods}
 	var normalized: String = _registry._canonical_api_entity(entity_name)
-	if not _api_entities.has(normalized):
+	normalized = _case_insensitive_key(_api_entities, normalized)
+	if normalized.is_empty():
 		return {"ok": false, "error": "Unknown public API entity: %s" % entity_name}
 	return {
 		"ok": true, "value": (_api_entities[normalized].get("methods", {}) as Dictionary).keys()
@@ -217,14 +253,20 @@ func _python_describe(entity_name: String, method_name: String) -> Dictionary:
 		var descriptor: Dictionary = _builder_registry.describe(builder_type)
 		if method_name.is_empty():
 			result = {"ok": true, "value": descriptor}
-		elif method_name not in _builder_public_methods(builder_type):
+		elif (
+			_case_insensitive_array_value(_builder_public_methods(builder_type), method_name)
+			. is_empty()
+		):
 			result = {"ok": false, "error": "Unknown method %s.%s" % [entity_name, method_name]}
 		else:
 			result = {"ok": true, "value": {"entity": entity_name, "method": method_name}}
 	else:
 		var system_methods := _system_methods(entity_name)
 		if not system_methods.is_empty():
-			if not method_name.is_empty() and method_name not in system_methods:
+			if (
+				not method_name.is_empty()
+				and _case_insensitive_array_value(system_methods, method_name).is_empty()
+			):
 				result = {"ok": false, "error": "Unknown method %s.%s" % [entity_name, method_name]}
 			else:
 				result = {"ok": true, "value": {"entity": entity_name, "methods": system_methods}}
@@ -235,7 +277,8 @@ func _python_describe(entity_name: String, method_name: String) -> Dictionary:
 
 func _describe_live_entity(entity_name: String, method_name: String) -> Dictionary:
 	var normalized: String = _registry._canonical_api_entity(entity_name)
-	if not _api_entities.has(normalized):
+	normalized = _case_insensitive_key(_api_entities, normalized)
+	if normalized.is_empty():
 		return {"ok": false, "error": "Unknown public API entity: %s" % entity_name}
 	var entity: Dictionary = _api_entities[normalized]
 	if method_name.is_empty():
@@ -250,15 +293,16 @@ func _describe_live_entity(entity_name: String, method_name: String) -> Dictiona
 			}
 		}
 	var methods: Dictionary = entity.get("methods", {})
-	if not methods.has(method_name):
+	var canonical_method := _case_insensitive_key(methods, method_name)
+	if canonical_method.is_empty():
 		return {"ok": false, "error": "Unknown method %s.%s" % [normalized, method_name]}
-	var method: Dictionary = methods[method_name]
+	var method: Dictionary = methods[canonical_method]
 	return {
 		"ok": true,
 		"value":
 		{
 			"entity": normalized,
-			"method": method_name,
+			"method": canonical_method,
 			"arguments": method.get("args", []),
 			"returns": method.get("returns", "Variant"),
 			"description": method.get("description", "")
@@ -267,12 +311,12 @@ func _describe_live_entity(entity_name: String, method_name: String) -> Dictiona
 
 
 func _system_methods(entity_name: String) -> Array[String]:
-	match entity_name:
-		"System.api":
-			return ["getEntities", "getMethods", "describe"]
-		"System.builders":
+	match entity_name.to_lower():
+		"system.api":
+			return ["getEntities", "getMethods", "describe", "audit"]
+		"system.builders":
 			return ["getTypes", "describe"]
-		"System.constants":
+		"system.constants":
 			return ["getAll", "get"]
 	return []
 
@@ -286,12 +330,12 @@ func _builder_public_methods(type_name: String) -> Array:
 
 
 func _internal_builder_type(public_name: String) -> String:
-	if public_name == "Game":
+	if public_name.to_lower() == "game":
 		return "Game"
-	if not public_name.begins_with("Game."):
+	if not public_name.to_lower().begins_with("game."):
 		return ""
-	var type_name := public_name.trim_prefix("Game.")
-	return type_name if type_name in _builder_registry.get_types() else ""
+	var type_name := public_name.substr("Game.".length())
+	return _case_insensitive_array_value(Array(_builder_registry.get_types()), type_name)
 
 
 func _system_constants() -> Dictionary:
@@ -306,7 +350,11 @@ func _system_constants() -> Dictionary:
 
 
 func _resolve_system_constant(name: String) -> Dictionary:
-	var normalized: String = name.trim_prefix("System.constants.").trim_prefix("G.")
+	var normalized := name
+	if normalized.to_lower().begins_with("system.constants."):
+		normalized = normalized.substr("System.constants.".length())
+	if normalized.to_lower().begins_with("g."):
+		normalized = normalized.substr(2)
 	var resolved: Dictionary = BgoApiConstants.get_value("G.%s" % normalized)
 	return (
 		{"ok": true, "value": resolved.get("value")}
@@ -322,164 +370,90 @@ func _python_arity_error(path: String, expected: int, received: int) -> Dictiona
 
 
 func _list_builder_types() -> void:
-	Console.print_line("Definition builders: %s" % ", ".join(_builder_registry.get_public_types()))
+	_presenter._list_builder_types()
 
 
 func _describe_builder(type_name: String) -> void:
-	var internal_type := _internal_builder_type(type_name)
-	if internal_type.is_empty() and type_name in _builder_registry.get_types():
-		internal_type = type_name
-	if internal_type.is_empty():
-		Console.print_error("Unknown builder type: %s" % type_name)
-		return
-	var descriptor: Dictionary = _builder_registry.describe(internal_type)
-	for factory in descriptor.get("factories", []):
-		Console.print_line(str(factory))
-	for method_name in descriptor.get("methods", []):
-		Console.print_line("  .%s" % BgoConsoleSyntax.method(str(method_name)))
+	_presenter._describe_builder(type_name)
 
 
 func _list_api_entities() -> void:
-	var names := _api_entities.keys()
-	names.sort()
-	Console.print_line("Curated API entities (%d):" % names.size())
-	for entity_name_variant in names:
-		var entity_name := str(entity_name_variant)
-		var entity: Dictionary = _api_entities[entity_name_variant]
+	_presenter._list_api_entities()
+
+
+func _audit_api() -> void:
+	Console.print_line(JSON.stringify(_api_audit_records(), "  "))
+
+
+func _api_audit_records() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	var entity_names := _api_entities.keys()
+	entity_names.sort()
+	for entity_name in entity_names:
+		var entity: Dictionary = _api_entities[entity_name]
+		var exposed := (entity.get("methods", {}) as Dictionary).keys()
+		exposed.sort()
 		(
-			Console
-			. print_line(
-				(
-					"  %s %s %s"
-					% [
-						BgoConsoleSyntax.entity(entity_name),
-						BgoConsoleSyntax.type_name(str(entity.get("class", "Entity"))),
-						BgoConsoleSyntax.muted(str(entity.get("description", ""))),
-					]
-				)
+			result
+			. append(
+				{
+					"entity": entity_name,
+					"component_id": entity.get("component_id", ""),
+					"exposed": exposed,
+					"call_targets": _audit_call_targets(entity.get("methods", {})),
+				}
 			)
 		)
+	return result
+
+
+func _audit_call_targets(methods_value: Variant) -> Dictionary:
+	var result: Dictionary = {}
+	if not methods_value is Dictionary:
+		return result
+	for api_name in methods_value:
+		var registration: Dictionary = methods_value[api_name]
+		result[api_name] = registration.get("method", "")
+	return result
 
 
 func _list_api_methods(entity_name: String) -> void:
-	var normalized: String = _registry._canonical_api_entity(entity_name)
-	if not _api_entities.has(normalized):
-		Console.print_error("Unknown curated API entity: %s" % entity_name)
-		return
-	var entity: Dictionary = _api_entities[normalized]
-	var methods: Dictionary = entity.get("methods", {})
-	var names := methods.keys()
-	names.sort()
-	(
-		Console
-		. print_line(
-			(
-				"%s %s"
-				% [
-					BgoConsoleSyntax.type_name(str(entity.get("class", "Entity"))),
-					BgoConsoleSyntax.entity(normalized),
-				]
-			)
-		)
-	)
-	for method_name_variant in names:
-		_print_api_method(methods[method_name_variant])
+	_presenter._list_api_methods(entity_name)
 
 
 func _describe_api(entity_name: String, method_name: String = "") -> void:
-	var normalized: String = _registry._canonical_api_entity(entity_name)
-	if not _api_entities.has(normalized):
-		Console.print_error("Unknown curated API entity: %s" % entity_name)
-		return
-	var entity: Dictionary = _api_entities[normalized]
-	if method_name.is_empty():
-		(
-			Console
-			. print_line(
-				(
-					"%s %s"
-					% [
-						BgoConsoleSyntax.type_name(str(entity.get("class", "Entity"))),
-						BgoConsoleSyntax.entity(normalized),
-					]
-				)
-			)
-		)
-		var description := str(entity.get("description", ""))
-		if not description.is_empty():
-			Console.print_line("  %s" % BgoConsoleSyntax.muted(description))
-		_list_api_methods(normalized)
-		return
-	var methods: Dictionary = entity.get("methods", {})
-	if not methods.has(method_name):
-		Console.print_error("Unknown curated API method: %s.%s" % [normalized, method_name])
-		return
-	_print_api_method(methods[method_name])
+	_presenter._describe_api(entity_name, method_name)
+
+
+func _case_insensitive_key(values: Dictionary, requested: String) -> String:
+	if values.has(requested):
+		return requested
+	var normalized := requested.to_lower()
+	for candidate in values:
+		if str(candidate).to_lower() == normalized:
+			return str(candidate)
+	return ""
+
+
+func _case_insensitive_array_value(values: Array, requested: String) -> String:
+	var normalized := requested.to_lower()
+	for candidate in values:
+		if str(candidate).to_lower() == normalized:
+			return str(candidate)
+	return ""
 
 
 func _print_api_method(registration: Dictionary) -> void:
-	Console.print_line(
-		(
-			"  %s"
-			% BgoConsoleSyntax.signature(
-				str(registration.get("object_name", "entity")),
-				str(registration.get("api_name", "method")),
-				registration.get("args", []),
-				str(registration.get("returns", "Variant"))
-			)
-		)
-	)
-	var description := str(registration.get("description", ""))
-	if not description.is_empty():
-		Console.print_line("      %s" % BgoConsoleSyntax.muted(description))
+	_presenter._print_api_method(registration)
 
 
 func _format_value(value: Variant) -> String:
-	match typeof(value):
-		TYPE_STRING, TYPE_STRING_NAME, TYPE_NODE_PATH:
-			return BgoConsoleSyntax.literal_name('"%s"' % str(value))
-		TYPE_INT, TYPE_FLOAT:
-			return "[color=#d19a66]%s[/color]" % str(value)
-		TYPE_BOOL, TYPE_NIL:
-			return "[color=#56b6c2]%s[/color]" % str(value)
-		_:
-			return BgoConsoleSyntax.literal_name(str(value))
+	return _presenter._format_value(value)
 
 
 func _list_constants() -> void:
-	Console.print_line("Public constants:")
-	for constant_name in BgoApiConstants.names():
-		var resolved := BgoApiConstants.get_value(constant_name)
-		(
-			Console
-			. print_line(
-				(
-					"  [color=#c678dd]%s[/color] %s %s"
-					% [
-						constant_name,
-						BgoConsoleSyntax.punctuation("="),
-						_format_value(resolved.get("value")),
-					]
-				)
-			)
-		)
+	_presenter._list_constants()
 
 
 func _get_constant(constant_name: String) -> void:
-	var resolved := BgoApiConstants.get_value(constant_name)
-	if not bool(resolved.get("ok", false)):
-		Console.print_error("Unknown BGO constant: %s" % constant_name)
-		return
-	(
-		Console
-		. print_line(
-			(
-				"[color=#c678dd]%s[/color] %s %s"
-				% [
-					constant_name,
-					BgoConsoleSyntax.punctuation("="),
-					_format_value(resolved.get("value")),
-				]
-			)
-		)
-	)
+	_presenter._get_constant(constant_name)

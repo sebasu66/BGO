@@ -139,20 +139,14 @@ func console_api() -> Dictionary:
 				BgoComponentApiDescriptor.method(
 					"set_grid_color_string", [{"name": "value", "type": "string"}], "bool"
 				),
+				"getPointWorld":
+				BgoComponentApiDescriptor.method(
+					"point_world", [{"name": "point", "type": "Vector2i"}], "Vector3"
+				),
 				"refresh": BgoComponentApiDescriptor.method("rebuild"),
 			},
 		)
 	)
-
-
-## Describes the developer-facing methods exposed by this component.
-func console_help() -> Dictionary:
-	return {
-		"_summary": "Controls the Asset Box authoring representation.",
-		"configure": "Updates dimensions, point spacing, and visual scale.",
-		"set_open": "Shows or hides the box without changing logical contents.",
-		"rebuild": "Rebuilds the box floor and authoring grid.",
-	}
 
 
 ## Returns the world position of a logical box point.

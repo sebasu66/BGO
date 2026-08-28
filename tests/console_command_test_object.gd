@@ -110,11 +110,3 @@ func console_api() -> Dictionary:
 			},
 		},
 	}
-
-
-## Describes the fixture commands shown by console help discovery.
-func console_help() -> Dictionary:
-	return {
-		"_summary": "Fixture used to verify dynamic console command discovery.",
-		"set_test_value": "Sets an integer value through the developer console.",
-	}

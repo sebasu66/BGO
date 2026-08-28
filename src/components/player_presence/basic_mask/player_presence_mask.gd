@@ -67,15 +67,6 @@ func console_api() -> Dictionary:
 	)
 
 
-## Describes the developer-facing methods exposed by this component.
-func console_help() -> Dictionary:
-	return {
-		"_summary": "Controls an already-authorized seated-player presence mask.",
-		"configure": "Updates player name and color.",
-		"set_pose": "Updates the published pose and viewing direction.",
-	}
-
-
 func _apply_appearance() -> void:
 	name = "Presence_%s" % _player_name.replace(" ", "_")
 	if head == null or nose == null or name_label == null:

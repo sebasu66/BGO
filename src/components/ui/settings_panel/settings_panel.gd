@@ -56,16 +56,6 @@ func console_api() -> Dictionary:
 	)
 
 
-## Describes the developer-facing methods exposed by this component.
-func console_help() -> Dictionary:
-	return {
-		"_summary": "Controls the client-local settings overlay.",
-		"open": "Shows the overlay and synchronizes current setting values.",
-		"close": "Closes the overlay after its short fade.",
-		"set_match_context": "Updates visible match and bridge status context.",
-	}
-
-
 ## Opens the settings overlay and synchronizes every control with current values.
 func open(values: Dictionary) -> void:
 	_sync_controls(values)

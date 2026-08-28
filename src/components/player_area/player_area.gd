@@ -103,16 +103,6 @@ func console_api() -> Dictionary:
 	)
 
 
-## Describes the developer-facing methods exposed by this component.
-func console_help() -> Dictionary:
-	return {
-		"_summary": "Controls player-area identity and visual representation.",
-		"set_player_id": "Associates the presentation with a logical player id.",
-		"set_area_size": "Updates positive world-space dimensions.",
-		"area_slot_world": "Returns a stable presentation slot position.",
-	}
-
-
 ## Returns the world-space position of a player-area slot.
 func area_slot_world(slot: int) -> Vector3:
 	return global_position + Vector3(0.0, area_size.y * 0.5, -2.3 + float(slot) * 0.85)

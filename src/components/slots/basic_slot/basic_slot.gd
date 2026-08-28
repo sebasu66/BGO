@@ -110,16 +110,6 @@ func console_api() -> Dictionary:
 	)
 
 
-## Describes the developer-facing methods exposed by this component.
-func console_help() -> Dictionary:
-	return {
-		"_summary": "Controls slot identity, capacity, acceptance, and marker presentation.",
-		"set_capacity": "Updates logical capacity and published metadata.",
-		"set_accepted_kinds": "Updates the component-kind allowlist.",
-		"accepts": "Queries whether a component kind is accepted.",
-	}
-
-
 ## Returns whether this slot accepts the supplied logical object.
 func accepts(component_kind: String) -> bool:
 	return accepted_kinds.is_empty() or accepted_kinds.has(component_kind)

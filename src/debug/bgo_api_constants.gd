@@ -36,9 +36,20 @@ const VALUES := {
 
 
 static func get_value(constant_name: String) -> Dictionary:
-	if not VALUES.has(constant_name):
+	var canonical_name := _canonical_name(constant_name)
+	if canonical_name.is_empty():
 		return {"ok": false, "reason": "unknown_constant"}
-	return {"ok": true, "value": VALUES[constant_name]}
+	return {"ok": true, "value": VALUES[canonical_name]}
+
+
+static func _canonical_name(constant_name: String) -> String:
+	if VALUES.has(constant_name):
+		return constant_name
+	var normalized := constant_name.to_lower()
+	for candidate in VALUES:
+		if str(candidate).to_lower() == normalized:
+			return str(candidate)
+	return ""
 
 
 static func names() -> PackedStringArray:

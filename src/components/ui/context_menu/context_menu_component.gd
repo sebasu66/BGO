@@ -92,16 +92,6 @@ func console_api() -> Dictionary:
 	)
 
 
-## Describes the developer-facing methods exposed by this component.
-func console_help() -> Dictionary:
-	return {
-		"_summary": "Controls context-menu composition and declarative action rows.",
-		"setup": "Mounts the first reactive menu tree.",
-		"rerender": "Updates action state without replacing the component.",
-		"action_ids": "Lists the currently rendered logical action ids.",
-	}
-
-
 ## Mounts the reactive menu into this reusable Control component.
 func setup(menu_props: Dictionary = {}) -> BgoContextMenuComponent:
 	_props = menu_props.duplicate()

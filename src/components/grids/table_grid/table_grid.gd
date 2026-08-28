@@ -97,6 +97,9 @@ func set_point_color_string(value: String) -> bool:
 
 ## Returns the stable console, GUI, and MCP method surface for this component.
 func console_api() -> Dictionary:
+	var methods := _console_config_methods()
+	methods.merge(_console_placement_methods())
+	methods["refresh"] = BgoComponentApiDescriptor.method("rebuild")
 	return (
 		BgoComponentApiDescriptor
 		. create(
@@ -104,48 +107,77 @@ func console_api() -> Dictionary:
 			"bgo.table.grid",
 			"BgoTableGrid",
 			"Deterministic point-grid placement and visualization controls.",
-			{
-				"setPointColumns":
-				BgoComponentApiDescriptor.setter("set_point_columns", "point_columns", "int"),
-				"setPointRows":
-				BgoComponentApiDescriptor.setter("set_point_rows", "point_rows", "int"),
-				"setPointSpacingCm":
-				BgoComponentApiDescriptor.setter(
-					"set_point_spacing_cm", "point_spacing_cm", "Vector2"
-				),
-				"setWorldUnitsPerCm":
-				BgoComponentApiDescriptor.setter(
-					"set_world_units_per_cm", "world_units_per_cm", "float"
-				),
-				"setVirtualInfinite":
-				BgoComponentApiDescriptor.method(
-					"set_virtual_infinite", [{"name": "value", "type": "bool"}]
-				),
-				"setShowPoints":
-				BgoComponentApiDescriptor.method(
-					"set_show_points", [{"name": "value", "type": "bool"}]
-				),
-				"setPointRadius":
-				BgoComponentApiDescriptor.method(
-					"set_point_radius", [{"name": "value", "type": "float"}]
-				),
-				"setPointColor":
-				BgoComponentApiDescriptor.method(
-					"set_point_color_string", [{"name": "value", "type": "string"}], "bool"
-				),
-				"refresh": BgoComponentApiDescriptor.method("rebuild"),
-			},
+			methods,
 		)
 	)
 
 
-## Describes the developer-facing methods exposed by this component.
-func console_help() -> Dictionary:
+func _console_config_methods() -> Dictionary:
 	return {
-		"_summary": "Controls table-grid dimensions, spacing, and visualization.",
-		"set_visual_anchors_world": "Updates sparse marker centres for an infinite grid.",
-		"resolve_magnetic_placement": "Resolves the nearest logical point.",
-		"rebuild": "Rebuilds point-marker presentation from current values.",
+		"setPointColumns":
+		BgoComponentApiDescriptor.setter("set_point_columns", "point_columns", "int"),
+		"setPointRows": BgoComponentApiDescriptor.setter("set_point_rows", "point_rows", "int"),
+		"setPointSpacingCm":
+		BgoComponentApiDescriptor.setter("set_point_spacing_cm", "point_spacing_cm", "Vector2"),
+		"setWorldUnitsPerCm":
+		BgoComponentApiDescriptor.setter("set_world_units_per_cm", "world_units_per_cm", "float"),
+		"setVirtualInfinite":
+		BgoComponentApiDescriptor.method(
+			"set_virtual_infinite", [{"name": "value", "type": "bool"}]
+		),
+		"setShowPoints":
+		BgoComponentApiDescriptor.method("set_show_points", [{"name": "value", "type": "bool"}]),
+		"setPointRadius":
+		BgoComponentApiDescriptor.method("set_point_radius", [{"name": "value", "type": "float"}]),
+		"setPointColor":
+		BgoComponentApiDescriptor.method(
+			"set_point_color_string", [{"name": "value", "type": "string"}], "bool"
+		),
+	}
+
+
+func _console_placement_methods() -> Dictionary:
+	return {
+		"getPointWorld":
+		BgoComponentApiDescriptor.method(
+			"point_world", [{"name": "point", "type": "Vector2i"}], "Vector3"
+		),
+		"worldToPoint":
+		BgoComponentApiDescriptor.method(
+			"world_to_point", [{"name": "world_position", "type": "Vector3"}], "Vector2i"
+		),
+		"clampWorldToPoint":
+		BgoComponentApiDescriptor.method(
+			"clamped_world_to_point", [{"name": "world_position", "type": "Vector3"}], "Vector2i"
+		),
+		"resolvePlacement":
+		BgoComponentApiDescriptor.method(
+			"resolve_magnetic_placement",
+			[{"name": "world_position", "type": "Vector3"}],
+			"Dictionary"
+		),
+		"snapWorldPosition":
+		BgoComponentApiDescriptor.method(
+			"snap_world_position", [{"name": "world_position", "type": "Vector3"}], "Vector3"
+		),
+		"isValidPoint":
+		BgoComponentApiDescriptor.method(
+			"is_valid_point", [{"name": "point", "type": "Vector2i"}], "bool"
+		),
+		"getPlacementMetadata":
+		(
+			BgoComponentApiDescriptor
+			. method(
+				"placement_metadata",
+				[
+					{"name": "world_position", "type": "Vector3"},
+					{"name": "footprint", "type": "Vector2i"},
+				],
+				"Dictionary",
+				"",
+				1
+			)
+		),
 	}
 
 

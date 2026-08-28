@@ -78,16 +78,6 @@ func console_api() -> Dictionary:
 	)
 
 
-## Describes the developer-facing methods exposed by this component.
-func console_help() -> Dictionary:
-	return {
-		"_summary": "Controls declarative action-strip content and toggle state.",
-		"configure": "Replaces title, actions, edge, and expansion state.",
-		"set_expanded": "Expands or collapses action labels.",
-		"set_action_active": "Updates one toggle and its exclusive group.",
-	}
-
-
 ## Configures one reusable vertical strip from declarative action dictionaries.
 ## Each action accepts id, label, icon, tooltip, visible and enabled fields.
 func configure(title: String, actions: Array, edge := "left", expanded := false) -> void:

@@ -17,7 +17,6 @@ static func run(check: Callable) -> void:
 		tree.root.add_child(component)
 		await tree.process_frame
 		check.call(component.has_method("console_api"), "%s exposes console_api" % component_id)
-		check.call(component.has_method("console_help"), "%s exposes console_help" % component_id)
 		if not component.has_method("console_api"):
 			component.queue_free()
 			continue
@@ -43,6 +42,14 @@ static func _test_methods(
 	for api_name in methods:
 		var method: Dictionary = methods[api_name]
 		var call_name := str(method.get("call", ""))
+		check.call(
+			(
+				not str(api_name).begins_with("_")
+				and "@" not in str(api_name)
+				and str(api_name).is_valid_identifier()
+			),
+			"%s.%s uses a safe explicit API name" % [component_id, api_name]
+		)
 		(
 			check
 			. call(

@@ -6,11 +6,11 @@ extends Node
 ## delegated to focused debug services. Gameplay authority remains in the
 ## domain command/state layer; this is a developer convenience.
 
-const CONTROL_COMMANDS := ["game.commands", "game.objects", "game.refresh", "game.call"]
 const API_CONTROL_COMMANDS := [
 	"System.api.getEntities",
 	"System.api.getMethods",
 	"System.api.describe",
+	"System.api.audit",
 	"System.constants.getAll",
 	"System.constants.get",
 	"System.builders.getTypes",
@@ -35,7 +35,6 @@ var _initialized := false
 var _refresh_queued := false
 var _registered_commands: Dictionary = {}
 var _commands_by_node: Dictionary = {}
-var _help_by_node: Dictionary = {}
 var _registered_console_commands: Array[String] = []
 var _api_entities: Dictionary = {}
 var _builder_registry := BgoBuilderRegistry.new()
@@ -61,7 +60,6 @@ func _initialize() -> void:
 		. _configure(
 			_registered_commands,
 			_commands_by_node,
-			_help_by_node,
 			_registered_console_commands,
 			_api_entities,
 			Callable(self, "_adapter_for_argument_count"),
@@ -71,9 +69,6 @@ func _initialize() -> void:
 		_invocation
 		. _configure(
 			_registered_commands,
-			_commands_by_node,
-			_help_by_node,
-			_registry,
 			Callable(self, "_queue_refresh"),
 			Callable(self, "_format_value"),
 			Callable(self, "_record_console_invocation"),
@@ -102,30 +97,6 @@ func _initialize() -> void:
 
 func _register_control_commands() -> void:
 	Console.add_command(
-		"game.commands",
-		_list_commands,
-		0,
-		0,
-		"Lists auto-registered public commands for live game objects."
-	)
-	Console.add_command(
-		"game.objects",
-		_list_objects,
-		0,
-		0,
-		"Lists live objects that provide auto-registered commands."
-	)
-	Console.add_command(
-		"game.refresh", _refresh_registry, 0, 0, "Rebuilds the live game-object command registry."
-	)
-	Console.add_command(
-		"game.call",
-		_call_from_console,
-		["object", "method", "arguments"],
-		2,
-		"Calls game.<object>.<method>; quote arguments as one string."
-	)
-	Console.add_command(
 		"System.api.getEntities", _list_api_entities, 0, 0, "Lists curated API entities."
 	)
 	Console.add_command(
@@ -141,6 +112,9 @@ func _register_control_commands() -> void:
 		["entity", "method"],
 		1,
 		"Describes a curated entity or one of its methods."
+	)
+	Console.add_command(
+		"System.api.audit", _audit_api, 0, 0, "Shows each exposed method and its call target."
 	)
 	Console.add_command(
 		"System.constants.getAll", _list_constants, 0, 0, "Lists public BGO constants."
@@ -162,7 +136,7 @@ func _register_control_commands() -> void:
 		1,
 		"Lists the curated methods for one fluent builder."
 	)
-	_registered_console_commands.append_array(CONTROL_COMMANDS + API_CONTROL_COMMANDS)
+	_registered_console_commands.append_array(API_CONTROL_COMMANDS)
 
 
 func _on_tree_node_added(_node: Node) -> void:
@@ -191,18 +165,11 @@ func _refresh_registry() -> void:
 	_registered_console_commands.clear()
 	_registered_commands.clear()
 	_commands_by_node.clear()
-	_help_by_node.clear()
 	_api_entities.clear()
 	_register_control_commands()
 
 	_registry._scan_node(get_tree().root)
 
-	var object_names := PackedStringArray()
-	for registration in _registered_commands.values():
-		var object_name := str(registration.get("object_name", ""))
-		if not object_name.is_empty() and object_name not in object_names:
-			object_names.append(object_name)
-	Console.add_command_autocomplete_list("game.call", object_names)
 	Console.add_command_autocomplete_list(
 		"System.api.getMethods", PackedStringArray(_api_entities.keys())
 	)
@@ -246,6 +213,10 @@ func _describe_api(entity_name: String, method_name: String = "") -> void:
 	_api_service._describe_api(entity_name, method_name)
 
 
+func _audit_api() -> void:
+	_api_service._audit_api()
+
+
 func _format_value(value: Variant) -> String:
 	return _api_service._format_value(value)
 
@@ -262,18 +233,6 @@ func _list_constants() -> void:
 
 func _get_constant(constant_name: String) -> void:
 	_api_service._get_constant(constant_name)
-
-
-func _list_commands() -> void:
-	_invocation._list_commands()
-
-
-func _list_objects() -> void:
-	_invocation._list_objects()
-
-
-func _call_from_console(object_name: String, method_name: String, arguments: String = "") -> void:
-	_invocation._call_from_console(object_name, method_name, arguments)
 
 
 func _adapter_for_argument_count(argument_count: int) -> Callable:

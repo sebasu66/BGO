@@ -120,6 +120,9 @@ func set_grid_point_color_string(value: String) -> bool:
 
 ## Returns the stable console/MCP method surface for this component.
 func console_api() -> Dictionary:
+	var methods := _console_config_methods()
+	methods.merge(_console_query_methods())
+	methods["refresh"] = BgoComponentApiDescriptor.method("rebuild")
 	return (
 		BgoComponentApiDescriptor
 		. create(
@@ -127,57 +130,92 @@ func console_api() -> Dictionary:
 			"bgo.board.checkered",
 			"BgoCheckeredBoard",
 			"Configurable checkered board preview and runtime controls.",
-			{
-				"setColumns":
-				BgoComponentApiDescriptor.bound_setter("_set_config_value", "columns", "int"),
-				"setRows":
-				BgoComponentApiDescriptor.bound_setter("_set_config_value", "rows", "int"),
-				"setCellSize":
-				BgoComponentApiDescriptor.bound_setter("_set_config_value", "cell_size", "float"),
-				"setGridCellSizeCm":
-				BgoComponentApiDescriptor.bound_setter(
-					"_set_config_value", "grid_cell_size_cm", "float"
-				),
-				"setGridPointsPerUnit":
-				BgoComponentApiDescriptor.bound_setter(
-					"_set_config_value", "grid_points_per_unit", "int"
-				),
-				"setGridVirtualInfinite":
-				BgoComponentApiDescriptor.bound_setter(
-					"_set_config_value", "grid_virtual_infinite", "bool"
-				),
-				"setSlotsEnabled":
-				BgoComponentApiDescriptor.bound_setter(
-					"_set_config_value", "slots_enabled", "bool"
-				),
-				"setLightTexture":
-				BgoComponentApiDescriptor.setter(
-					"set_light_texture_path", "light_texture", "string", "bool"
-				),
-				"setDarkTexture":
-				BgoComponentApiDescriptor.setter(
-					"set_dark_texture_path", "dark_texture", "string", "bool"
-				),
-				"setLightColor":
-				BgoComponentApiDescriptor.setter(
-					"set_light_color_string", "light_color", "string", "bool"
-				),
-				"setDarkColor":
-				BgoComponentApiDescriptor.setter(
-					"set_dark_color_string", "dark_color", "string", "bool"
-				),
-				"setShowGridPoints":
-				BgoComponentApiDescriptor.bound_setter(
-					"_set_config_value", "show_grid_points", "bool"
-				),
-				"setGridPointColor":
-				BgoComponentApiDescriptor.setter(
-					"set_grid_point_color_string", "grid_point_color", "string", "bool"
-				),
-				"refresh": BgoComponentApiDescriptor.method("rebuild"),
-			},
+			methods,
 		)
 	)
+
+
+func _console_config_methods() -> Dictionary:
+	return {
+		"setColumns": BgoComponentApiDescriptor.bound_setter("_set_config_value", "columns", "int"),
+		"setRows": BgoComponentApiDescriptor.bound_setter("_set_config_value", "rows", "int"),
+		"setCellSize":
+		BgoComponentApiDescriptor.bound_setter("_set_config_value", "cell_size", "float"),
+		"setGridCellSizeCm":
+		BgoComponentApiDescriptor.bound_setter("_set_config_value", "grid_cell_size_cm", "float"),
+		"setGridPointsPerUnit":
+		BgoComponentApiDescriptor.bound_setter("_set_config_value", "grid_points_per_unit", "int"),
+		"setGridVirtualInfinite":
+		BgoComponentApiDescriptor.bound_setter(
+			"_set_config_value", "grid_virtual_infinite", "bool"
+		),
+		"setSlotsEnabled":
+		BgoComponentApiDescriptor.bound_setter("_set_config_value", "slots_enabled", "bool"),
+		"setLightTexture":
+		BgoComponentApiDescriptor.setter(
+			"set_light_texture_path", "light_texture", "string", "bool"
+		),
+		"setDarkTexture":
+		BgoComponentApiDescriptor.setter("set_dark_texture_path", "dark_texture", "string", "bool"),
+		"setLightColor":
+		BgoComponentApiDescriptor.setter("set_light_color_string", "light_color", "string", "bool"),
+		"setDarkColor":
+		BgoComponentApiDescriptor.setter("set_dark_color_string", "dark_color", "string", "bool"),
+		"setShowGridPoints":
+		BgoComponentApiDescriptor.bound_setter("_set_config_value", "show_grid_points", "bool"),
+		"setGridPointColor":
+		BgoComponentApiDescriptor.setter(
+			"set_grid_point_color_string", "grid_point_color", "string", "bool"
+		),
+	}
+
+
+func _console_query_methods() -> Dictionary:
+	return {
+		"getSlotId":
+		BgoComponentApiDescriptor.method(
+			"slot_id", [{"name": "cell", "type": "Vector2i"}], "string"
+		),
+		"parseSlotId":
+		BgoComponentApiDescriptor.method(
+			"parse_slot_id", [{"name": "slot_id", "type": "string"}], "Vector2i"
+		),
+		"isValidCell":
+		BgoComponentApiDescriptor.method(
+			"is_valid_cell", [{"name": "cell", "type": "Vector2i"}], "bool"
+		),
+		"isValidSlot":
+		BgoComponentApiDescriptor.method(
+			"is_valid_slot", [{"name": "slot_id", "type": "string"}], "bool"
+		),
+		"getSlotWorld":
+		BgoComponentApiDescriptor.method(
+			"slot_world", [{"name": "slot_id", "type": "string"}], "Vector3"
+		),
+		"getSurfaceHeight": BgoComponentApiDescriptor.method("surface_height", [], "float"),
+		"getCellWorld":
+		BgoComponentApiDescriptor.method(
+			"cell_world", [{"name": "cell", "type": "Vector2i"}], "Vector3"
+		),
+		"getGridPointWorld":
+		BgoComponentApiDescriptor.method(
+			"grid_point_world", [{"name": "point", "type": "Vector2i"}], "Vector3"
+		),
+		"cellToGridPoint":
+		BgoComponentApiDescriptor.method(
+			"cell_to_grid_point", [{"name": "cell", "type": "Vector2i"}], "Vector2i"
+		),
+		"gridPointToCell":
+		BgoComponentApiDescriptor.method(
+			"grid_point_to_cell", [{"name": "point", "type": "Vector2i"}], "Vector2i"
+		),
+		"resolvePlacement":
+		BgoComponentApiDescriptor.method(
+			"resolve_magnetic_placement",
+			[{"name": "world_position", "type": "Vector3"}],
+			"Dictionary"
+		),
+	}
 
 
 func _set_config_value(value: Variant, property_name: String) -> void:
@@ -198,19 +236,6 @@ func _set_config_value(value: Variant, property_name: String) -> void:
 			slots_enabled = bool(value)
 		"show_grid_points":
 			show_grid_points = bool(value)
-
-
-## Describes the developer-facing methods exposed by this component.
-func console_help() -> Dictionary:
-	return {
-		"_summary": "Controls the checkered board visual representation.",
-		"set_light_texture_path": "Loads a Texture2D from a res:// project path for light cells.",
-		"set_dark_texture_path": "Loads a Texture2D from a res:// project path for dark cells.",
-		"set_light_color_string": "Sets the light-cell color from a CSS-style string.",
-		"set_dark_color_string": "Sets the dark-cell color from a CSS-style string.",
-		"set_grid_point_color_string": "Sets the fine-grid marker color.",
-		"rebuild": "Rebuilds cells, materials and the logical grid projection.",
-	}
 
 
 func _load_texture(resource_path: String) -> Texture2D:

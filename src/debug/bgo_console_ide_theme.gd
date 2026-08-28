@@ -21,9 +21,18 @@ static func apply_to(console: Node) -> bool:
 		return false
 	var shell := console.get("v_box_container") as VBoxContainer
 	var output := console.get("rich_label") as RichTextLabel
+	var logs := console.get("log_label") as RichTextLabel
+	var output_tabs := console.get("output_tabs") as TabContainer
 	var panel := console.get("panel") as Panel
 	var input := console.get("line_edit") as LineEdit
-	if shell == null or output == null or panel == null or input == null:
+	if (
+		shell == null
+		or output == null
+		or logs == null
+		or output_tabs == null
+		or panel == null
+		or input == null
+	):
 		return false
 
 	shell.theme = build()
@@ -32,7 +41,13 @@ static func apply_to(console: Node) -> bool:
 	output.add_theme_color_override("font_shadow_color", Color("#00000080"))
 	output.add_theme_constant_override("shadow_offset_x", 1)
 	output.add_theme_constant_override("shadow_offset_y", 1)
-	input.placeholder_text = "Type a command — help, game.commands, game.objects"
+	logs.add_theme_color_override("default_color", MUTED)
+	logs.add_theme_color_override("font_shadow_color", Color("#00000080"))
+	logs.add_theme_constant_override("shadow_offset_x", 1)
+	logs.add_theme_constant_override("shadow_offset_y", 1)
+	output_tabs.current_tab = 0
+	output_tabs.tabs_position = TabContainer.POSITION_TOP
+	input.placeholder_text = "Type a command — help, System.api.getEntities, System.api.audit"
 	input.caret_blink = true
 	input.caret_blink_interval = 0.55
 	input.clear_button_enabled = true
@@ -61,6 +76,11 @@ static func build() -> Theme:
 	theme.set_color("default_color", "RichTextLabel", TEXT)
 	theme.set_color("font_selected_color", "RichTextLabel", Color.WHITE)
 	theme.set_color("selection_color", "RichTextLabel", Color("#264f78cc"))
+	theme.set_stylebox("panel", "TabContainer", _style(BACKGROUND, 0, 0, 0))
+	theme.set_stylebox("tab_selected", "TabBar", _style(SURFACE_RAISED, 0, 10, 0))
+	theme.set_stylebox("tab_unselected", "TabBar", _style(SURFACE, 0, 10, 0))
+	theme.set_color("font_selected_color", "TabBar", ACCENT)
+	theme.set_color("font_unselected_color", "TabBar", MUTED)
 
 	var input_style := _style(SURFACE, 0, 12, 0)
 	input_style.border_color = BORDER

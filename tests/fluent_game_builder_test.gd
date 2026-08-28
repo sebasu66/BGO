@@ -68,6 +68,13 @@ static func run(check: Callable) -> void:
 		)
 	)
 	check.call(bool(created.get("ok", false)), "fluent parser executes a typed Player chain")
+	var lowercase_created := parser.execute(
+		'game.player.create().setname("Lowercase").setcolor(system.constants.player_color_blue)'
+	)
+	check.call(
+		bool(lowercase_created.get("ok", false)),
+		"fluent parser accepts lowercase roots, types, methods, and constants"
+	)
 	var player: BgoDefinitionBuilder = created.get("value")
 	check.call(
 		player != null and player.values.position == {"x": 2, "y": 0, "z": -2},
