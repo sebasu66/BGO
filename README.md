@@ -96,6 +96,16 @@ It excludes generated output, docs, examples, source/authoring assets, backend f
 
 Sandbox is part of the Web runtime. Authoring/editor tooling is not.
 
+## Component public API
+
+Registered BGO components expose a validated public control surface for the existing Developer Console, editor workbench GUI and MCP projection. Components keep their native Godot inheritance (`Node3D`, `Control`, `Area3D`, `RefCounted`, and so on); the shared contract is structural rather than a forced base class.
+
+The common surface is `console_api()`, `console_help()`, configuration methods and a visual refresh method where the component has a rendered representation. Component-specific setters validate input, update the representation and emit an update signal when applicable. Callers use these methods instead of changing exported properties directly.
+
+For example, `BgoCheckeredBoard` exposes `set_light_texture_path(res://...)`, `set_dark_texture_path(res://...)`, `set_light_color_string(...)` and `rebuild()`. Texture setters resolve only project resources and accept only `Texture2D` assets. Invalid paths or values return failure without changing the component.
+
+The console, GUI and MCP adapters consume the same declared method metadata and validation path. Adding a component requires its manifest, implementation API and focused public-API test to remain aligned.
+
 JSON/JSONH files loaded with `FileAccess` must be explicitly covered by the export preset and verified in the generated `index.pck`.
 
 ## Networking and MCP boundary
@@ -105,10 +115,10 @@ Realtime gameplay transport and external AI commands are separate concerns:
 ```text
 RealtimeTransport          SessionCommandBridge
 (peer gameplay)            (HTTPS/MCP ingress)
-        \                    /
-         -> host/domain command authority
-                    |
-             canonical logical state
+		\                    /
+		 -> host/domain command authority
+					|
+			 canonical logical state
 ```
 
 MCP tools operate on domain concepts such as `piece.move`, `deck.shuffle` and `game.get_state`; they never directly mutate Firebase rows, WebRTC/MQTT peers or Godot scene nodes. The host validates accepted commands and broadcasts resulting state/events.
@@ -121,11 +131,11 @@ The current full-session Firebase REST polling is a prototype mechanism, not the
 
 ```text
 feature branch
-      |
-      v
+	  |
+	  v
    develop
-      |
-      v
+	  |
+	  v
 Firebase DEV + remote E2E
 
 main = PROD only by explicit owner promotion

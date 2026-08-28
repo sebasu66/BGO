@@ -279,6 +279,26 @@ func _test_component_validation() -> void:
 	)
 
 
+func _test_checkered_board_public_api() -> void:
+	var board := preload("res://src/components/boards/checkered_board/checkered_board.tscn").instantiate()
+	get_root().add_child(board)
+	await process_frame
+	var typed_board := board as BgoCheckeredBoard
+	_check(typed_board != null, "checkered board public API instantiates")
+	if typed_board == null:
+		return
+	var texture_path := "res://assets/ambientcg/Extracted/Marble006_2K-JPG_Color.jpg"
+	_check(typed_board.set_light_texture_path(texture_path), "board accepts a project Texture2D path")
+	_check(typed_board.light_texture != null, "light texture is applied to the board")
+	_check(not typed_board.set_light_texture_path("res://missing_texture.png"), "board rejects missing textures")
+	_check(typed_board.set_light_color_string("#E24A3B"), "board accepts CSS light color")
+	_check(not typed_board.set_light_color_string("not-a-color"), "board rejects invalid light color")
+	_check(typed_board.console_api().get("methods", {}).has("setLightTexture"), "board exposes curated API")
+	await process_frame
+	_check(typed_board.get_node_or_null("Cell_0_0") != null, "public setters rebuild the board representation")
+	typed_board.queue_free()
+
+
 func _test_ui_theme_profiles() -> void:
 	var boardroom: Theme = UI_THEME_PROFILES.build("boardroom")
 	var contrast: Theme = UI_THEME_PROFILES.build("high_contrast", {"font_scale": 1.2})

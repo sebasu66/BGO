@@ -70,6 +70,69 @@ func _ready() -> void:
 	component_event.emit("ready", {"columns": columns, "rows": rows})
 
 
+## Applies a project Texture2D to light cells and rebuilds the visual board.
+func set_light_texture_path(resource_path: String) -> bool:
+	var texture := _load_texture(resource_path)
+	if texture == null:
+		return false
+	light_texture = texture
+	rebuild()
+	return true
+
+
+## Applies a project Texture2D to dark cells and rebuilds the visual board.
+func set_dark_texture_path(resource_path: String) -> bool:
+	var texture := _load_texture(resource_path)
+	if texture == null:
+		return false
+	dark_texture = texture
+	rebuild()
+	return true
+
+
+## Updates the light-cell color from a CSS-style color string.
+func set_light_color_string(value: String) -> bool:
+	var color := Color.from_string(value, Color.TRANSPARENT)
+	if color == Color.TRANSPARENT and value.to_lower() not in ["transparent", "#00000000"]:
+		return false
+	light_color = color
+	rebuild()
+	return true
+
+
+## Returns the stable console/MCP method surface for this component.
+func console_api() -> Dictionary:
+	return {
+		"scope": "Match",
+		"entity": str(get_meta("entity_id", name)),
+		"class": "BgoCheckeredBoard",
+		"description": "Configurable checkered board preview and runtime controls.",
+		"methods": {
+			"setLightTexture": {"call": "set_light_texture_path", "args": [{"name": "resource_path", "type": "string"}], "returns": "bool"},
+			"setDarkTexture": {"call": "set_dark_texture_path", "args": [{"name": "resource_path", "type": "string"}], "returns": "bool"},
+			"setLightColor": {"call": "set_light_color_string", "args": [{"name": "value", "type": "string"}], "returns": "bool"},
+			"refresh": {"call": "rebuild", "returns": "void"},
+		},
+	}
+
+
+## Describes the developer-facing methods exposed by this component.
+func console_help() -> Dictionary:
+	return {
+		"_summary": "Controls the checkered board visual representation.",
+		"set_light_texture_path": "Loads a Texture2D from a res:// project path for light cells.",
+		"set_dark_texture_path": "Loads a Texture2D from a res:// project path for dark cells.",
+		"set_light_color_string": "Sets the light-cell color from a CSS-style string.",
+		"rebuild": "Rebuilds cells, materials and the logical grid projection.",
+	}
+
+
+func _load_texture(resource_path: String) -> Texture2D:
+	if not resource_path.begins_with("res://") or not ResourceLoader.exists(resource_path):
+		return null
+	return ResourceLoader.load(resource_path, "Texture2D") as Texture2D
+
+
 ## Configures this object from the supplied project data.
 func configure(
 	new_columns: int,

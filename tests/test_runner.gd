@@ -9,6 +9,7 @@ func _run() -> void:
 	_test_component_registry()
 	_test_capability_contracts()
 	_test_component_validation()
+	_test_checkered_board_public_api()
 	_test_game_definition()
 	_test_debug_game_api()
 	await _test_declarative_component_composition()
