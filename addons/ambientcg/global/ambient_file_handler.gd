@@ -120,9 +120,9 @@ func save_buffer(path: String, buffer: PackedByteArray) -> void:
 
 
 func check_dirs() -> void:
-	var extract_path: String = ProjectSettings.get_setting("ambientcg/extract_path", "res://AmbientCG/Extracted")
-	var material_file_directory: String = ProjectSettings.get_setting("ambientcg/material_file_directory", "res://AmbientCG/Materials")
-	var environment_file_directory: String = ProjectSettings.get_setting("ambientcg/environment_file_directory", "res://AmbientCG/Environments")
+	var extract_path: String = ProjectSettings.get_setting("ambientcg/extract_path", "res://assets/ambientcg/Extracted")
+	var material_file_directory: String = ProjectSettings.get_setting("ambientcg/material_file_directory", "res://assets/ambientcg/Materials")
+	var environment_file_directory: String = ProjectSettings.get_setting("ambientcg/environment_file_directory", "res://assets/ambientcg/Environments")
 	
 	for i in [extract_path, material_file_directory, environment_file_directory]:
 		if not DirAccess.dir_exists_absolute(i):

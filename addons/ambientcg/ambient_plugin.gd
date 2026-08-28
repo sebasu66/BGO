@@ -57,11 +57,11 @@ func _get_plugin_icon():
 
 func add_default_settings():
 	if not ProjectSettings.has_setting("ambientcg/extract_path"):
-		ProjectSettings.set_setting("ambientcg/extract_path", "res://AmbientCG/Extracted")
+		ProjectSettings.set_setting("ambientcg/extract_path", "res://assets/ambientcg/Extracted")
 	
 	if not ProjectSettings.has_setting("ambientcg/material_file_directory"):
-		ProjectSettings.set_setting("ambientcg/material_file_directory", "res://AmbientCG/Materials")
+		ProjectSettings.set_setting("ambientcg/material_file_directory", "res://assets/ambientcg/Materials")
 	
 	if not ProjectSettings.has_setting("ambientcg/environment_file_directory"):
-		ProjectSettings.set_setting("ambientcg/environment_file_directory", "res://AmbientCG/Environments")
+		ProjectSettings.set_setting("ambientcg/environment_file_directory", "res://assets/ambientcg/Environments")
 	

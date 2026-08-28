@@ -10,9 +10,9 @@ config_version=5
 
 [ambientcg]
 
-extract_path="res://AmbientCG/Extracted"
-material_file_directory="res://AmbientCG/Materials"
-environment_file_directory="res://AmbientCG/Environments"
+extract_path="res://assets/ambientcg/Extracted"
+material_file_directory="res://assets/ambientcg/Materials"
+environment_file_directory="res://assets/ambientcg/Environments"
 
 [application]
 
