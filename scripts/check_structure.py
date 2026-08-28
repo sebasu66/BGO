@@ -48,6 +48,24 @@ ui_plugins = {
     "addons/godotx_toast/plugin.cfg": "2.0.0",
 }
 project_config = (ROOT / "project.godot").read_text(encoding="utf-8")
+required_autoloads = {
+    "GodotxToast": "res://addons/godotx_toast/runtime/godotx_toast.gd",
+    "GdssRuntime": "res://addons/gdss/runtime.gd",
+    "Console": "res://addons/console/console.gd",
+    "AmbientAPI": "res://addons/ambientcg/global/ambient_api.gd",
+    "AmbientParser": "res://addons/ambientcg/global/ambient_parser.gd",
+    "AmbientFileHandler": "res://addons/ambientcg/global/ambient_file_handler.gd",
+    "AmbientMaterialMaker": "res://addons/ambientcg/global/ambient_material_maker.gd",
+}
+for autoload_name, resource_path in required_autoloads.items():
+    if f'{autoload_name}="*{resource_path}"' not in project_config:
+        fail(
+            f"project.godot: {autoload_name} must use explicit {resource_path}; "
+            "UID-only addon autoloads fail before the first clean-checkout scan"
+        )
+    if not (ROOT / resource_path.removeprefix("res://")).exists():
+        fail(f"Missing required autoload source: {resource_path}")
+
 for plugin_path, expected_version in ui_plugins.items():
     descriptor = require(plugin_path)
     if descriptor.exists():
@@ -57,7 +75,19 @@ for plugin_path, expected_version in ui_plugins.items():
     if f'res://{plugin_path}' not in project_config:
         fail(f"{plugin_path}: plugin is not enabled in project.godot")
 
-require("addons/reactive_ui_analyzer/gdscript_analyzer.gdextension")
+gdextension_descriptor = require("addons/reactive_ui_analyzer/gdscript_analyzer.gdextension")
+if gdextension_descriptor.exists():
+    descriptor_text = gdextension_descriptor.read_text(encoding="utf-8")
+    library_paths = sorted(set(re.findall(r'=\s*"([^"]+\.(?:dll|so|dylib))"', descriptor_text)))
+    if not library_paths:
+        fail(f"{gdextension_descriptor.relative_to(ROOT)}: no native libraries declared")
+    for library_path in library_paths:
+        native_library = gdextension_descriptor.parent / library_path
+        if not native_library.exists():
+            fail(
+                f"{gdextension_descriptor.relative_to(ROOT)} references missing native library "
+                f"{native_library.relative_to(ROOT)}"
+            )
 export_config = (ROOT / "export_presets.cfg").read_text(encoding="utf-8")
 for excluded_path in ("addons/reactive_ui_editor/*", "addons/reactive_ui_analyzer/*"):
     if excluded_path not in export_config:

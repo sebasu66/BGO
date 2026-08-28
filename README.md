@@ -100,11 +100,11 @@ Sandbox is part of the Web runtime. Authoring/editor tooling is not.
 
 Registered BGO components expose a validated public control surface for the existing Developer Console, editor workbench GUI and MCP projection. Components keep their native Godot inheritance (`Node3D`, `Control`, `Area3D`, `RefCounted`, and so on); the shared contract is structural rather than a forced base class.
 
-The common surface is `console_api()`, `console_help()`, configuration methods and a visual refresh method where the component has a rendered representation. Component-specific setters validate input, update the representation and emit an update signal when applicable. Callers use these methods instead of changing exported properties directly.
+The common surface is `console_api()`, `console_help()`, configuration methods and a visual refresh method where the component has a rendered representation. All 13 registered `bgo.*` components implement this surface. `console_api()` preserves the stable component ID, exposes adapter-ready Godot argument types and maps every manifest `config` property to a curated setter. Component-specific setters validate input, update the representation and emit an update signal when applicable. Callers use these methods instead of changing exported properties directly.
 
 For example, `BgoCheckeredBoard` exposes `set_light_texture_path(res://...)`, `set_dark_texture_path(res://...)`, `set_light_color_string(...)` and `rebuild()`. Texture setters resolve only project resources and accept only `Texture2D` assets. Invalid paths or values return failure without changing the component.
 
-The console, GUI and MCP adapters consume the same declared method metadata and validation path. Adding a component requires its manifest, implementation API and focused public-API test to remain aligned.
+The console, GUI and MCP adapters consume the same declared method metadata and validation path. Descriptor-bound arguments let concise methods such as `setColumns(value)` route to a shared internal property applicator without inflating the public GDScript surface. They are applied identically by command-line and Python-like console invocation. Adding a component requires its manifest, implementation API and focused public-API test to remain aligned.
 
 JSON/JSONH files loaded with `FileAccess` must be explicitly covered by the export preset and verified in the generated `index.pck`.
 
@@ -142,6 +142,29 @@ main = PROD only by explicit owner promotion
 ```
 
 The integration Quality Gate covers protected project policy, structure, GDScript format/lint, Godot import/parse, core tests, validated Web export, browser E2E and DEV deployment checks.
+
+### Clean-checkout bootstrap
+
+A portable checkout contains every referenced addon script/config/scene, runtime asset and native library declared by a tracked `.gdextension`. Root-local Godot executables, logs, `.godot/`, imported cache payloads and build outputs are generated local state and are not repository dependencies. Install Godot separately and expose its absolute executable path as `GODOT_BIN`; a clean clone intentionally does not contain `godot_console.exe`. Tracked `.import` descriptors and `.gd.uid` sidecars never replace the first Godot filesystem scan.
+
+Addon autoloads in `project.godot` must use explicit `*res://...` paths. UID-only addon autoloads can be evaluated before the UID cache exists and resolve to an empty path on the first clean launch. Godot may normalize known paths back to UIDs after import; do not commit that rewrite. `scripts/check_structure.py` rejects UID-only required autoloads and missing GDExtension libraries.
+
+From a new checkout, run:
+
+```powershell
+$env:GODOT_BIN = 'C:\path\to\Godot_v4.7.1-stable_win64_console.exe'
+& $env:GODOT_BIN --headless --path . --import --log-file clean_import.log
+& $env:GODOT_BIN --headless --path . --script res://tests/test_runner.gd --log-file clean_tests.log
+python scripts/check_structure.py
+```
+
+Success requires process exit code `0` and no `SCRIPT ERROR`, `Parse Error`, `Failed to load script`, `Failed to instantiate` or `Unrecognized UID` entries in the logs. After adding or moving a `class_name`, remove only the checkout's generated `.godot/` cache and repeat the full import.
+
+Use the checked-in export wrapper for Web. It creates the ignored output directories, scans Godot logs, synchronizes `project-status`, and validates the complete export:
+
+```powershell
+./scripts/export_web.ps1
+```
 
 Godot can return process exit code 0 while its log still contains SCRIPT ERROR: Parse Error: or Failed to load script. Project import/export checks must scan for those signatures instead of trusting only the process code. Execution errors emitted solely by explicitly editor-only add-ons such as asset_placer are classified separately and do not justify widening the Web PCK.
 

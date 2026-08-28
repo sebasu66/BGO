@@ -96,6 +96,8 @@ A public component should eventually have:
 
 Adding a component should not require large `match component_id` switches throughout the core. Extend the registry/contract instead.
 
+Every registered `bgo.*` scene exposes `console_api()` and `console_help()` while retaining its native Godot inheritance. The curated descriptor must preserve its stable component ID, resolve every declared call to a real component method, use adapter-ready Godot argument types and map each manifest `config` property to a validated setter that refreshes presentation when applicable. Console, game GUI and MCP adapters consume this descriptor; MCP still routes authoritative mutations through validated domain commands.
+
 ## Assets and rendering
 
 Game logic references logical asset IDs rather than scattered URLs.
@@ -175,6 +177,8 @@ Before considering a change complete, preserve a clean quality gate:
 - relevant conformance fixture tests
 - Web export smoke test
 - web-platform tests for important session flows; auth tests once auth exists
+
+Clean-checkout portability is part of this gate. Required addon source/config/scene files, runtime assets and every native library referenced by a tracked `.gdextension` must be versioned. Generated `.godot/`, imported cache payloads, logs and root-local executables are not dependencies. The engine executable is an external prerequisite: use an explicit `GODOT_BIN` path and never assume a clean clone contains `godot_console.exe`. Required addon autoloads in `project.godot` use explicit `*res://...` paths because UID-only entries may resolve before the first UID scan. Run a first `--import`, scan its log for parse/load/UID failures, then run the test suite. Use `scripts/export_web.ps1` or `.sh` for Web export: the wrapper creates ignored output directories, synchronizes project status, and validates the result. Do not commit Godot's post-import normalization of those required autoload paths back to UIDs.
 
 Objective violations may block CI. Heuristic smells may initially warn rather than fail.
 

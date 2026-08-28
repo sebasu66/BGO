@@ -64,6 +64,8 @@ Logical quantity and rendering are separate. Useful representation classes inclu
 
 Components progressively describe what they provide, require and permit. Validation should eventually produce both errors/warnings and a derived capability report.
 
+Every registered `bgo.*` scene exposes `console_api()` and `console_help()` without forcing unrelated node types under one base class. The descriptor preserves the component ID, maps every manifest configuration property to a validated setter, uses adapter-ready Godot argument types and may bind stable internal property names. Console, game GUI and MCP projections consume the same descriptor; authoritative gameplay mutations still use validated domain commands rather than raw node writes.
+
 ### Dice
 
 A die's logical definition is separate from random resolution and presentation:
@@ -125,6 +127,10 @@ This is a migration seam. **Do not extend this chain with another orchestration 
 A runtime parent may call only methods declared by itself or an ancestor. Never make a parent depend on a method introduced by a later child; reorder responsibilities or extract a composed controller/service.
 
 After GDScript moves/renames or class_name/inheritance changes, remove the generated .godot cache and perform one full project import. A warm cache can preserve stale class metadata and mask invalid dependency direction.
+
+A clean checkout must carry every referenced addon source/config/scene, runtime asset and native library declared by a tracked `.gdextension`. Generated `.godot/`, imported cache payloads, logs and root-local engine executables are not source dependencies. Treat Godot itself as an external prerequisite, pass its absolute path through `GODOT_BIN`, and never assume `godot_console.exe` is present in a new clone. Required addon autoloads in `project.godot` use explicit `*res://...` paths: UID-only addon autoloads can run before the first UID scan and resolve to an empty path. Godot may normalize known paths back to UIDs after import; never commit that rewrite. `scripts/check_structure.py` enforces the required paths and native libraries.
+
+Use the repository's Web-export wrapper when available. It must create ignored output parents before invoking Godot, scan logs, synchronize auxiliary content, and validate the export.
 
 Godot may return exit 0 while logging SCRIPT ERROR: Parse Error: or Failed to load script. Build/check scripts must inspect logs for those signatures. Errors solely from explicitly editor-only add-ons do not justify widening the Web PCK.
 
