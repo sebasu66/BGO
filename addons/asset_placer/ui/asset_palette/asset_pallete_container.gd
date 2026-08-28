@@ -21,6 +21,8 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	var repo := AssetPlacerSettingsRepository.instance
+	if not is_instance_valid(repo):
+		return
 	if repo.settings_changed.is_connected(_on_placer_settings_changed):
 		repo.settings_changed.disconnect(_on_placer_settings_changed)
 

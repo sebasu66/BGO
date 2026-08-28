@@ -212,6 +212,14 @@ func _react_to_settings_change(settings: AssetPlacerSettings):
 
 
 func _react_to_reimorted_files(_files: PackedStringArray):
+	# A full filesystem import reloads scripts and clears static references while
+	# the plugin instance itself remains alive. Restore the async singleton before
+	# scheduling the synchronization job.
+	if not is_instance_valid(AssetPlacerAsync.instance):
+		if is_instance_valid(_async):
+			AssetPlacerAsync.instance = _async
+		else:
+			_async = AssetPlacerAsync.new()
 	synchronizer.sync_all()
 
 
