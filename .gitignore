@@ -19,3 +19,22 @@ Thumbs.db
 /backend/functions/lib/
 /backend/functions/node_modules/
 /backend/functions/.env.local
+
+# Godot/editor generated metadata and imported artifacts
+*.uid
+*.import
+
+# Local tools, downloaded archives and native binaries
+*.zip
+*.exe
+*.dll
+*.pdb
+*.so
+*.dylib
+~*
+.godot_ai_fix_probe.py
+
+# Firebase Functions local build/install output
+/functions/node_modules/
+/functions/lib/
+/functions/.env.local
