@@ -20,17 +20,18 @@ Thumbs.db
 /backend/functions/node_modules/
 /backend/functions/.env.local
 
-# Local tools, downloaded archives and native binaries
-*.uid
-*.import
+# Local tools and downloaded archives
 *.zip
-*.exe
-*.dll
-*.pdb
-*.so
-*.dylib
+/*.exe
+/*.dll
+/*.pdb
+/*.so
+/*.dylib
 ~*
 .godot_ai_fix_probe.py
+
+# Local logs
+*.log
 
 # Firebase Functions local build/install output
 /functions/node_modules/
