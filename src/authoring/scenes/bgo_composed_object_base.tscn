@@ -1,11 +1,12 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://c4ha4sy7ohcu3"]
 
-[ext_resource type="Script" path="res://src/authoring/nodes/bgo_game_object_3d.gd" id="1_root"]
-[ext_resource type="Script" path="res://src/authoring/nodes/bgo_pivot.gd" id="2_pivot"]
+[ext_resource type="Script" uid="uid://bdka0g0a0tncc" path="res://src/authoring/nodes/bgo_game_object_3d.gd" id="1_root"]
+[ext_resource type="Script" uid="uid://dq3kfr88nb671" path="res://src/authoring/nodes/bgo_pivot.gd" id="2_pivot"]
 
-[node name="BgoComposedObject" type="Node3D"]
+[node name="BgoComposedObject" type="Node3D" unique_id=1443518052]
 script = ExtResource("1_root")
 component_id = "bgo.authoring.composed_object"
+metadata/bgo_composed_game_object = true
 
-[node name="Pivot" type="Marker3D" parent="."]
+[node name="Pivot" type="Marker3D" parent="." unique_id=1836388833]
 script = ExtResource("2_pivot")
