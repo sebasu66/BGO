@@ -1,0 +1,20 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://dqu717723bafi"]
+
+[ext_resource type="Texture2D" uid="uid://baa7bxj2sy7vm" path="res://FabricMaterialPack/Textures/Fabric_Craft_02/Fabric_Craft_02_basecolor.jpg" id="1_xnjxt"]
+[ext_resource type="Texture2D" uid="uid://c0v1sysw3032u" path="res://FabricMaterialPack/Textures/Fabric_Craft_02/Fabric_Craft_02_ambientocclusion.jpg" id="2_w53vw"]
+[ext_resource type="Texture2D" uid="uid://csh00m6qvbi2l" path="res://FabricMaterialPack/Textures/Fabric_Craft_02/Fabric_Craft_02_height.jpg" id="3_ofww7"]
+[ext_resource type="Texture2D" uid="uid://d0n47hxus7rbm" path="res://FabricMaterialPack/Textures/Fabric_Craft_02/Fabric_Craft_02_normalogl.jpg" id="4_l2eas"]
+[ext_resource type="Texture2D" uid="uid://diqayslmm5gok" path="res://FabricMaterialPack/Textures/Fabric_Craft_02/Fabric_Craft_02_roughness.jpg" id="5_ncyyw"]
+
+[resource]
+albedo_texture = ExtResource("1_xnjxt")
+roughness_texture = ExtResource("5_ncyyw")
+normal_enabled = true
+normal_scale = 0.9
+normal_texture = ExtResource("4_l2eas")
+ao_enabled = true
+ao_light_affect = 0.27
+ao_texture = ExtResource("2_w53vw")
+heightmap_enabled = true
+heightmap_scale = 0.676
+heightmap_texture = ExtResource("3_ofww7")

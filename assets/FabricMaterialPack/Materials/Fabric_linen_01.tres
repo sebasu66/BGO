@@ -1,0 +1,13 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://d2j54pfcjtpqd"]
+
+[ext_resource type="Texture2D" uid="uid://ckah0dcq52tt5" path="res://FabricMaterialPack/Textures/Fabric_linen_01/Fabric_linen_01_basecolor.jpg" id="1_qae2d"]
+[ext_resource type="Texture2D" uid="uid://bogfn8vg676bm" path="res://FabricMaterialPack/Textures/Fabric_linen_01/Fabric_linen_01_normalogl.jpg" id="2_1w5pb"]
+[ext_resource type="Texture2D" uid="uid://dutkm8ii2vpn4" path="res://FabricMaterialPack/Textures/Fabric_linen_01/Fabric_linen_01_roughness.jpg" id="3_7gsfw"]
+
+[resource]
+albedo_texture = ExtResource("1_qae2d")
+roughness_texture = ExtResource("3_7gsfw")
+normal_enabled = true
+normal_scale = 0.9
+normal_texture = ExtResource("2_1w5pb")
+uv1_scale = Vector3(3, 3, 3)

@@ -1,0 +1,13 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://5q5ntrc76nxv"]
+
+[ext_resource type="Texture2D" uid="uid://c8k4ecudvmdr3" path="res://FabricMaterialPack/Textures/Fabric_valvet_01/Fabric_valvet_01_basecolor.jpg" id="1_6bgqg"]
+[ext_resource type="Texture2D" uid="uid://cnf36dldi1f84" path="res://FabricMaterialPack/Textures/Fabric_valvet_01/Fabric_valvet_01_normalogl.jpg" id="3_f80l6"]
+[ext_resource type="Texture2D" uid="uid://dqffdbiyjxpqi" path="res://FabricMaterialPack/Textures/Fabric_valvet_01/Fabric_valvet_01_roughness.jpg" id="4_mj2kf"]
+
+[resource]
+albedo_texture = ExtResource("1_6bgqg")
+roughness_texture = ExtResource("4_mj2kf")
+normal_enabled = true
+normal_scale = 0.9
+normal_texture = ExtResource("3_f80l6")
+heightmap_enabled = true

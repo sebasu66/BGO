@@ -1,0 +1,12 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://cveh2l3i3kq8w"]
+
+[ext_resource type="Texture2D" uid="uid://crs02qn4ge2l0" path="res://FabricMaterialPack/Textures/Fabric_wool_02/Fabric_wool_02_basecolor.jpg" id="1_x1eh4"]
+[ext_resource type="Texture2D" uid="uid://ir2dyaheegrj" path="res://FabricMaterialPack/Textures/Fabric_wool_02/Fabric_wool_02_normalogl.jpg" id="2_1lwoq"]
+[ext_resource type="Texture2D" uid="uid://b0ptfhsxpbuq0" path="res://FabricMaterialPack/Textures/Fabric_wool_02/Fabric_wool_02_roughness.jpg" id="3_6d6mu"]
+
+[resource]
+albedo_texture = ExtResource("1_x1eh4")
+roughness_texture = ExtResource("3_6d6mu")
+normal_enabled = true
+normal_scale = 0.9
+normal_texture = ExtResource("2_1lwoq")

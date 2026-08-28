@@ -1,0 +1,13 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://bvkidd2tgsk4c"]
+
+[ext_resource type="Texture2D" uid="uid://cv5jg5426awc4" path="res://FabricMaterialPack/Textures/Fabric_denim_01/Fabric_denim_01_basecolor.jpg" id="1_miurm"]
+[ext_resource type="Texture2D" uid="uid://br1xs4d7w3bc7" path="res://FabricMaterialPack/Textures/Fabric_denim_01/Fabric_denim_01_normalogl.jpg" id="2_pjogc"]
+[ext_resource type="Texture2D" uid="uid://bdps3yya7hjnw" path="res://FabricMaterialPack/Textures/Fabric_denim_01/Fabric_denim_01_roughness.jpg" id="3_apt3b"]
+
+[resource]
+albedo_texture = ExtResource("1_miurm")
+roughness_texture = ExtResource("3_apt3b")
+normal_enabled = true
+normal_scale = 0.9
+normal_texture = ExtResource("2_pjogc")
+heightmap_enabled = true

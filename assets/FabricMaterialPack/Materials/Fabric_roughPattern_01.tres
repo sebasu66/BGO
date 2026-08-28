@@ -1,0 +1,13 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://bbxw58ev37j5o"]
+
+[ext_resource type="Texture2D" uid="uid://q86yp6vrkxal" path="res://FabricMaterialPack/Textures/Fabric_roughPattern_01/Fabric_roughPattern_01_basecolor.jpg" id="1_apa7p"]
+[ext_resource type="Texture2D" uid="uid://c50pitebkrwqj" path="res://FabricMaterialPack/Textures/Fabric_roughPattern_01/Fabric_roughPattern_01_normalogl.jpg" id="2_uqqnh"]
+[ext_resource type="Texture2D" uid="uid://cyt6hmlyq2am" path="res://FabricMaterialPack/Textures/Fabric_roughPattern_01/Fabric_roughPattern_01_roughness.jpg" id="3_q0ivg"]
+
+[resource]
+albedo_texture = ExtResource("1_apa7p")
+roughness_texture = ExtResource("3_q0ivg")
+normal_enabled = true
+normal_scale = 0.9
+normal_texture = ExtResource("2_uqqnh")
+uv1_scale = Vector3(2, 2, 2)

@@ -1,0 +1,20 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://cd8enag8qo4fk"]
+
+[ext_resource type="Texture2D" uid="uid://xrtnpnj3tn4l" path="res://FabricMaterialPack/Textures/Fabric_laces_01/Fabric_laces_01_basecolor.jpg" id="1_wfh4h"]
+[ext_resource type="Texture2D" uid="uid://cta0803fyhi5y" path="res://FabricMaterialPack/Textures/Fabric_laces_01/Fabric_laces_01_ambientocclusion.jpg" id="2_tqr14"]
+[ext_resource type="Texture2D" uid="uid://doh16o2c1ogkd" path="res://FabricMaterialPack/Textures/Fabric_laces_01/Fabric_laces_01_height.jpg" id="3_5m5u8"]
+[ext_resource type="Texture2D" uid="uid://c5v2btyrvovs" path="res://FabricMaterialPack/Textures/Fabric_laces_01/Fabric_laces_01_normalogl.jpg" id="4_iom0v"]
+[ext_resource type="Texture2D" uid="uid://cdr8hkesvt5e8" path="res://FabricMaterialPack/Textures/Fabric_laces_01/Fabric_laces_01_roughness.jpg" id="5_jru5t"]
+
+[resource]
+albedo_texture = ExtResource("1_wfh4h")
+roughness_texture = ExtResource("5_jru5t")
+normal_enabled = true
+normal_scale = 0.9
+normal_texture = ExtResource("4_iom0v")
+ao_enabled = true
+ao_light_affect = 0.27
+ao_texture = ExtResource("2_tqr14")
+heightmap_enabled = true
+heightmap_scale = 0.676
+heightmap_texture = ExtResource("3_5m5u8")

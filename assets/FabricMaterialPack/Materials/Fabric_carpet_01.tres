@@ -1,0 +1,19 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://djo3ayepqt783"]
+
+[ext_resource type="Texture2D" uid="uid://g2rbedl6k47x" path="res://FabricMaterialPack/Textures/Fabric_carpet_01/Fabric_carpet_01_basecolor.jpg" id="1_c051d"]
+[ext_resource type="Texture2D" uid="uid://toqnrw27our5" path="res://FabricMaterialPack/Textures/Fabric_carpet_01/Fabric_carpet_01_ambientocclusion.jpg" id="2_r4gs8"]
+[ext_resource type="Texture2D" uid="uid://bn5rvnsy8v1se" path="res://FabricMaterialPack/Textures/Fabric_carpet_01/Fabric_carpet_01_height.jpg" id="3_ffvi4"]
+[ext_resource type="Texture2D" uid="uid://bfe3avvkmm30a" path="res://FabricMaterialPack/Textures/Fabric_carpet_01/Fabric_carpet_01_normalogl.jpg" id="4_4awbc"]
+[ext_resource type="Texture2D" uid="uid://bayty0elwi0ad" path="res://FabricMaterialPack/Textures/Fabric_carpet_01/Fabric_carpet_01_roughness.jpg" id="5_caveb"]
+
+[resource]
+albedo_texture = ExtResource("1_c051d")
+roughness_texture = ExtResource("5_caveb")
+normal_enabled = true
+normal_scale = 0.5
+normal_texture = ExtResource("4_4awbc")
+ao_enabled = true
+ao_light_affect = 0.16
+ao_texture = ExtResource("2_r4gs8")
+heightmap_scale = 0.46
+heightmap_texture = ExtResource("3_ffvi4")

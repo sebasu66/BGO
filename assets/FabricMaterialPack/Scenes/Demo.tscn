@@ -1,0 +1,93 @@
+[gd_scene format=3 uid="uid://tnpr3il7iy0b"]
+
+[ext_resource type="Material" uid="uid://djo3ayepqt783" path="res://FabricMaterialPack/Materials/Fabric_carpet_01.tres" id="1_rcgqe"]
+[ext_resource type="Material" uid="uid://cd8enag8qo4fk" path="res://FabricMaterialPack/Materials/Fabric_laces_01.tres" id="2_fs5gr"]
+[ext_resource type="Material" uid="uid://bbxw58ev37j5o" path="res://FabricMaterialPack/Materials/Fabric_roughPattern_01.tres" id="2_mxsdt"]
+[ext_resource type="Material" uid="uid://dvqnoc0d2fsee" path="res://FabricMaterialPack/Materials/Fabric_carpet_02.tres" id="3_gxdw1"]
+[ext_resource type="Material" uid="uid://5q5ntrc76nxv" path="res://FabricMaterialPack/Materials/Fabric_valvet_01.tres" id="3_ogw2o"]
+[ext_resource type="Material" uid="uid://b71dc030pl1rx" path="res://FabricMaterialPack/Materials/Fabric_Craft_01.tres" id="4_603ol"]
+[ext_resource type="Material" uid="uid://bvkidd2tgsk4c" path="res://FabricMaterialPack/Materials/Fabric_denim_01.tres" id="4_pluon"]
+[ext_resource type="Material" uid="uid://8l3xuafpf3fc" path="res://FabricMaterialPack/Materials/Fabric_wool_01.tres" id="6_bvxw8"]
+[ext_resource type="Material" uid="uid://d2j54pfcjtpqd" path="res://FabricMaterialPack/Materials/Fabric_linen_01.tres" id="8_fpbsk"]
+[ext_resource type="Material" uid="uid://dqu717723bafi" path="res://FabricMaterialPack/Materials/Fabric_Craft_02.tres" id="9_ycna2"]
+[ext_resource type="Material" uid="uid://du0jwgfxg14ad" path="res://FabricMaterialPack/Materials/Fabric_Pattern_01.tres" id="10_b0yo0"]
+[ext_resource type="Material" uid="uid://cveh2l3i3kq8w" path="res://FabricMaterialPack/Materials/Fabric_wool_02.tres" id="11_nu0if"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_1uqyw"]
+
+[node name="Node3D" type="Node3D" unique_id=1306551584]
+
+[node name="Sphere" type="MeshInstance3D" parent="." unique_id=534690785]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.47145456, 0)
+mesh = SubResource("SphereMesh_1uqyw")
+surface_material_override/0 = ExtResource("1_rcgqe")
+
+[node name="Sphere2" type="MeshInstance3D" parent="." unique_id=1756366704]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.47145456, -2)
+material_override = ExtResource("2_mxsdt")
+mesh = SubResource("SphereMesh_1uqyw")
+surface_material_override/0 = ExtResource("1_rcgqe")
+
+[node name="Sphere3" type="MeshInstance3D" parent="." unique_id=1563383679]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0.47145456, -2)
+material_override = ExtResource("3_ogw2o")
+mesh = SubResource("SphereMesh_1uqyw")
+surface_material_override/0 = ExtResource("1_rcgqe")
+
+[node name="Sphere4" type="MeshInstance3D" parent="." unique_id=1918161260]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0.47145456, 0)
+material_override = ExtResource("4_pluon")
+mesh = SubResource("SphereMesh_1uqyw")
+surface_material_override/0 = ExtResource("1_rcgqe")
+
+[node name="Sphere5" type="MeshInstance3D" parent="." unique_id=1306283385]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.47145456, 0)
+material_override = ExtResource("3_gxdw1")
+mesh = SubResource("SphereMesh_1uqyw")
+surface_material_override/0 = ExtResource("1_rcgqe")
+
+[node name="Sphere6" type="MeshInstance3D" parent="." unique_id=420047966]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0.47145456, -2)
+material_override = ExtResource("6_bvxw8")
+mesh = SubResource("SphereMesh_1uqyw")
+surface_material_override/0 = ExtResource("1_rcgqe")
+
+[node name="Sphere7" type="MeshInstance3D" parent="." unique_id=352865898]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.47145456, 0)
+material_override = ExtResource("2_fs5gr")
+mesh = SubResource("SphereMesh_1uqyw")
+surface_material_override/0 = ExtResource("1_rcgqe")
+
+[node name="Sphere8" type="MeshInstance3D" parent="." unique_id=896145904]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.47145456, -2)
+material_override = ExtResource("8_fpbsk")
+mesh = SubResource("SphereMesh_1uqyw")
+surface_material_override/0 = ExtResource("1_rcgqe")
+
+[node name="Sphere9" type="MeshInstance3D" parent="." unique_id=138654178]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0.47145456, 0)
+material_override = ExtResource("9_ycna2")
+mesh = SubResource("SphereMesh_1uqyw")
+surface_material_override/0 = ExtResource("1_rcgqe")
+
+[node name="Sphere10" type="MeshInstance3D" parent="." unique_id=1840728559]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.47145456, -2)
+material_override = ExtResource("10_b0yo0")
+mesh = SubResource("SphereMesh_1uqyw")
+surface_material_override/0 = ExtResource("1_rcgqe")
+
+[node name="Sphere11" type="MeshInstance3D" parent="." unique_id=957641840]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.47145456, -2)
+material_override = ExtResource("11_nu0if")
+mesh = SubResource("SphereMesh_1uqyw")
+surface_material_override/0 = ExtResource("1_rcgqe")
+
+[node name="Sphere12" type="MeshInstance3D" parent="." unique_id=756450915]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.47145456, 0)
+material_override = ExtResource("4_603ol")
+mesh = SubResource("SphereMesh_1uqyw")
+surface_material_override/0 = ExtResource("1_rcgqe")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=80347290]
+transform = Transform3D(0.42373988, 0.7743835, 0.4698672, -0.6933073, -0.05653595, 0.718421, 0.5828977, -0.63018584, 0.51292914, 0, 0, 0)
+light_energy = 0.75

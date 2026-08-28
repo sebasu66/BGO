@@ -1,0 +1,16 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://b71dc030pl1rx"]
+
+[ext_resource type="Texture2D" uid="uid://di71kq0wlaaic" path="res://FabricMaterialPack/Textures/Fabric_Craft_01/Fabric_Craft_01_basecolorA.png" id="1_f8gnp"]
+[ext_resource type="Texture2D" uid="uid://cqd4iso0iq5b" path="res://FabricMaterialPack/Textures/Fabric_Craft_01/Fabric_Craft_01_roughness.jpg" id="3_f8gnp"]
+[ext_resource type="Texture2D" uid="uid://w1p3a1bsjmwd" path="res://FabricMaterialPack/Textures/Fabric_Craft_01/Fabric_Craft_01_normalogl.jpg" id="4_txp8m"]
+
+[resource]
+transparency = 2
+alpha_scissor_threshold = 0.5
+alpha_antialiasing_mode = 0
+albedo_texture = ExtResource("1_f8gnp")
+roughness_texture = ExtResource("3_f8gnp")
+normal_enabled = true
+normal_scale = 0.9
+normal_texture = ExtResource("4_txp8m")
+uv1_scale = Vector3(4, 4, 4)
