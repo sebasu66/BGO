@@ -103,6 +103,8 @@ func configure(
 func rebuild() -> void:
 	_rebuild_queued = false
 	for child in get_children():
+		if child is BgoPbrMaterial:
+			continue
 		child.free()
 
 	for y in rows:
