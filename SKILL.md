@@ -64,7 +64,7 @@ Logical quantity and rendering are separate. Useful representation classes inclu
 
 Components progressively describe what they provide, require and permit. Validation should eventually produce both errors/warnings and a derived capability report.
 
-Every registered `bgo.*` scene exposes `console_api()` and `console_help()` without forcing unrelated node types under one base class. The descriptor preserves the component ID, maps every manifest configuration property to a validated setter, uses adapter-ready Godot argument types and may bind stable internal property names. Console, game GUI and MCP projections consume the same descriptor; authoritative gameplay mutations still use validated domain commands rather than raw node writes.
+Every registered `bgo.*` scene exposes one `console_api()` descriptor without forcing unrelated node types under one base class. The descriptor preserves the component ID, embeds method descriptions, maps every manifest configuration property to a validated setter, uses adapter-ready Godot argument types and may bind stable internal property names. Console, game GUI and MCP projections consume the same descriptor; authoritative gameplay mutations still use validated domain commands rather than raw node writes. `console_api()` is the sole runtime exposure and help contract: do not retain reflection-based fallback registration, compatibility aliases, duplicate `console_help()` methods, or automatic publication of undeclared script methods.
 
 ### Dice
 

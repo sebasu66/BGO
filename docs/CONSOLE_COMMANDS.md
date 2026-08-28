@@ -11,11 +11,11 @@ Integrated in the current development branch:
 - `addons/console` is enabled as the `Console` autoload.
 - `src/debug/bgo_game_command_console.gd` is the autoload facade; focused `bgo_console_*` services own discovery, API projection, invocation/conversion and
   lifecycle cleanup.
-- `BGOGameObject`, `GameSessionRepository`, and component scripts are the
-  supported command hosts.
+- Nodes with an explicit `console_api()` descriptor are the only supported
+  command hosts. Runtime reflection is not an exposure mechanism.
 - `tests/console_command_bridge_test.gd` runs as part of the headless test
-  runner and covers discovery, invocation, type conversion, help, both arity
-  errors, and unregistering freed objects.
+  runner and covers descriptor discovery, invocation, type conversion, both
+  arity errors, case-insensitive input, log isolation, and lifecycle cleanup.
 
 The bridge is intentionally a developer tool. It does not replace or bypass
 the logical command validation layer and remains disabled for release builds.
@@ -85,17 +85,6 @@ public parser. This surface
 authors and serializes package definitions; it does not bypass validated
 `Match.*` commands or silently replace the active match.
 
-## Built-in BGO commands
-
-- `game.objects` lists live command hosts.
-- `game.commands` lists the public commands currently registered.
-- `game.refresh` rescans the scene tree.
-- `game.call <object> <method> "arg 1 arg 2"` calls a discovered command when
-  the direct command form is inconvenient.
-
-The `game.*` reflection bridge is retained temporarily for DEV compatibility.
-New public API work must use the curated contract below.
-
 ## Curated public API
 
 Public entities are deliberately declared through `console_api()`. The
@@ -133,6 +122,7 @@ Discovery commands are themselves part of `System.*`:
 System.api.getEntities()
 System.api.getMethods("Match.piece_1")
 System.api.describe("Game.definition", "getWidth")
+System.api.audit()
 System.constants.getAll()
 System.constants.get("LOCATION_PLAYER_AREA")
 ```
@@ -146,48 +136,21 @@ System.constants.LOCATION_PLAYER_AREA
 System.constants.ROLE_HOST
 ```
 
-The older `G.*` spelling is confined to the legacy whitespace-command adapter;
-the public expression parser rejects it and canonical discovery omits it. The
-console resolves constants to stable string IDs before typed method invocation.
-Unknown constants are rejected. The IDE preview and API
-descriptions color entity/class names, methods, strings, numbers, booleans and
-constants independently.
+Command and expression lookup is case-insensitive. Discovery and autocomplete
+still return the canonical camelCase spelling. `System.api.audit()` reports
+every declared entity, exposed API name, and explicit GDScript call target;
+names containing `@`, private helpers, and undeclared methods cannot enter the
+runtime registry.
 
-## Automatic commands
+The older `G.*` root is rejected by the public expression parser. Constants
+under `System.constants` are resolved case-insensitively to stable IDs before
+typed method invocation. Unknown constants are rejected.
 
-Public methods declared by a `BGOGameObject`, the live
-`GameSessionRepository`, or a component script under `res://src/components/`,
-are registered automatically as:
-
-```text
-game.<object>.<method> [arguments...]
-```
-
-The object name comes from `entity_id`, `entity_id` metadata, or the node name.
-Methods beginning with `_` and inherited Godot engine methods are excluded.
-Argument values are converted from console strings for common Godot scalar and
-math types (`bool`, `int`, `float`, vectors, colors, arrays, and dictionaries).
-
-## Per-object help
-
-An object may define either `consoleHelp()` or the idiomatic GDScript
-`console_help()` with no arguments. It can return a summary string or a
-dictionary whose keys are method names and whose values are descriptions:
-
-```gdscript
-func consoleHelp() -> Dictionary:
-	return {
-		"_summary": "Developer actions for this piece.",
-		"configure": "Updates the logical identity and visual setup.",
-	}
-```
-
-The bridge uses those descriptions in `commands_list` and adds
-`game.<object>.help`. A command with too few or too many parameters is rejected
-with an explicit error; extra parameters are never silently discarded.
-
-New game-object instances are discovered when they enter or leave the scene
-tree. Use `game.refresh` after a script reload or an explicit scene mutation.
+The console presents `Commands` and `Logs` separately. Runtime BGO logging goes
+only to `Logs`, where the toolbar provides minimum-level filtering, live text
+search, and Clear. Equivalent commands are `logs.level <debug|info|warning|error>`,
+`logs.search [query]`, and `logs.clear`. Filtering is visual and does not disable
+the structured file/backend logging sinks.
 
 This bridge is debug-only. Commands still call the target object's public API;
 they do not bypass domain validation or authorize production gameplay actions.

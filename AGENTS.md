@@ -96,7 +96,7 @@ A public component should eventually have:
 
 Adding a component should not require large `match component_id` switches throughout the core. Extend the registry/contract instead.
 
-Every registered `bgo.*` scene exposes `console_api()` and `console_help()` while retaining its native Godot inheritance. The curated descriptor must preserve its stable component ID, resolve every declared call to a real component method, use adapter-ready Godot argument types and map each manifest `config` property to a validated setter that refreshes presentation when applicable. Console, game GUI and MCP adapters consume this descriptor; MCP still routes authoritative mutations through validated domain commands.
+Every registered `bgo.*` scene exposes one explicit `console_api()` descriptor while retaining its native Godot inheritance. The descriptor must preserve its stable component ID, carry method descriptions, resolve every declared call to a real component method, use adapter-ready Godot argument types and map each manifest `config` property to a validated setter that refreshes presentation when applicable. Console, game GUI and MCP adapters consume this descriptor; MCP still routes authoritative mutations through validated domain commands. Do not add reflection fallback, aliases, or a second help contract.
 
 ## Assets and rendering
 

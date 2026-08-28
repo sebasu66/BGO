@@ -22,7 +22,7 @@ second authoritative game state or couple domain rules to rendering or Firebase.
 
 The Developer Console is a separate DEV tooling surface. Its BGO bridge
 registers public methods from approved game-object/component hosts, supports
-typed arguments and per-object `consoleHelp()`/`console_help()`, and removes
+typed arguments and descriptor-owned method help, and removes
 commands when objects leave the scene tree. It must not be used as a production
 gameplay authority or as a way to bypass permissions and domain validation.
 
