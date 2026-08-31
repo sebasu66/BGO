@@ -15,6 +15,16 @@
 - [ ] Remove or conditionalize the debug console autoload before excluding `src/debug/` from Web builds.
 - [ ] Validate the `assets/source`, `assets/authoring`, and `assets/runtime` workflow with real authoring assets.
 
+## Miniature import and rendering profiles
+
+- [ ] Complete the Dracula source pipeline from `assets/MINIS/dracula.fbx`; keep FBX as authoring/source input and do not treat the derived GLB as the source of truth.
+- [ ] Verify FBX import/processing produces an optimized high-quality GLB plus an explicit desktop-standard LOD GLB, with measurable validation results and clear failure reporting.
+- [ ] Verify base-pivot placement and billboard calibration from the turntable frames, including scale, bottom alignment, facing direction and per-frame offsets.
+- [ ] Verify TEST002 loads Dracula through the miniature component and its representation manifest in a live Godot runtime; local file/import checks alone are insufficient.
+- [ ] Define the client profile contract after the miniature slice is verified: Windows native selects configurable high-quality 3D/free camera; Web and Mobile select responsive constrained billboard/2D representations with fixed-height/fixed-pitch perspective cameras; every platform exposes orthographic tactical pan/zoom/top-down rendering.
+- [ ] Keep generated portrait avatars in the later authoring/import output contract; do not add them to gameplay state.
+- [ ] After the runtime evidence gate passes, prepare the focused PR to `develop`; do not promote to PROD.
+
 ## Realtime networking
 
 Architecture and rationale: [`docs/REALTIME_TRANSPORT_SPIKE.md`](docs/REALTIME_TRANSPORT_SPIKE.md).

@@ -235,6 +235,8 @@ Periodic polling may remain for a transport that inherently requires it (for exa
 
 `RealtimeTransport` and external AI command transport are separate interfaces.
 
+Any later high-quality board snapshot service is also a separate asynchronous product service: its request/notification path must not become gameplay transport or alter command/state authority. Generated snapshots are stored in shared object storage with an explicit expiry policy.
+
 ```text
 peer/player traffic ---> RealtimeTransport ---+
                                              |

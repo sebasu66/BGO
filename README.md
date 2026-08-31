@@ -4,6 +4,14 @@ BGO is a reusable virtual tabletop runtime built with Godot 4.7.1. BGO Core is n
 
 The same logical session can be viewed from a shared display/TV, a player phone/browser, desktop clients and future agent/MCP clients. Rendering is a projection of authoritative logical state; it is not the source of truth.
 
+## Agreed rendering and authoring sequence
+
+The current priority is to finish and runtime-verify the existing 3D miniature import slice before broadening the rendering surface. That slice includes FBX-to-optimized-GLB/LOD processing, base/billboard calibration, validation and precise error reporting, plus the TEST002 Dracula configuration; only after that evidence is complete should the work be prepared as a PR to `develop`.
+
+The later platform direction is: configurable high-quality 3D with free camera on native Windows; responsive constrained graphics with fixed-height/fixed-pitch perspective cameras on Web and Mobile; and an orthographic tactical pan/zoom view on every platform. Portrait avatars are generated during authoring/import. The Web entry point is a PWA with Mobile, TV/Display and browser-desktop modes; Windows has a separate download and may expose optional companion-enhanced capabilities.
+
+Arbitrary mod assets remain externally hosted and are resolved only through validated URL/hash/cache contracts. Windows authoring may perform untrusted heavy model processing, but runtime clients must consume validated outputs and must not execute arbitrary remote scripts. Later product work may add an assisted Tabletop Simulator JSON migration wizard (not universal compatibility) and an optional PC-generated high-quality board snapshot service. Snapshot request notification is separate from gameplay transport; generated images use expiring shared object storage.
+
 ## Current project truth
 
 Keep current project state deliberately small:

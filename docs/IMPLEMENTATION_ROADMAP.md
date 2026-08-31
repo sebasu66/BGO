@@ -1,5 +1,20 @@
 # BGO — Implementation Roadmap & Checkpoints
 
+## Agreed execution order for the rendering slice
+
+This decision record refines sequencing without declaring later phases complete or replacing the numbered roadmap below:
+
+1. Finish and runtime-verify the current 3D miniature import vertical slice: FBX-to-optimized-GLB/LOD processing, billboard calibration, validation/error reporting, and the TEST002 Dracula configuration. Then prepare a PR to `develop`.
+2. Define platform rendering profiles: Windows native supports configurable high-quality 3D and free camera; Web and Mobile use responsive constrained graphics with fixed-height/fixed-pitch perspective cameras.
+3. Provide an orthographic tactical pan/zoom view on every platform.
+4. Generate portrait avatars during authoring/import.
+5. Use a PWA as the Web entry point with Mobile, TV/Display, and browser-desktop device modes; provide a separate Windows download with optional companion-enhanced capabilities.
+6. Keep arbitrary mod assets externally hosted and resolve them through validated URL/hash/cache contracts. Windows authoring may perform untrusted heavy model processing; runtime clients consume validated outputs and never execute remote scripts.
+7. Record a later assisted Tabletop Simulator JSON migration wizard. This is explicitly not a universal compatibility promise.
+8. Record the later optional PC-generated high-quality board snapshot service. Request notification is separate from gameplay transport, and images expire in shared object storage.
+
+The sequence is a planning decision only. It does not promote unfinished implementation, create a PR, change deployment targets, or authorize PROD work. The numbered phases remain the authoritative dependency order; the current miniature slice must clear its runtime evidence gate before profile work is pulled forward.
+
 This document turns the project vision into an incremental implementation plan.
 
 The goal is deliberately **not** to implement every planned feature at once. BGO should advance through small vertical slices, with a working build and explicit validation checkpoint between slices.

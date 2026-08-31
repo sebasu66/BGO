@@ -1,18 +1,18 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-24T04:30:00-03:00",
+  "updated_at": "2026-08-29T12:00:00-03:00",
   "overall": {
     "status": "warning",
     "label": "EN DESARROLLO"
   },
   "current_checkpoint": {
-    "id": "C0",
-    "title": "Estabilizar el PoC componentizado",
+    "id": "R3D-MINIATURE-SLICE",
+    "title": "Cerrar y verificar el slice 3D de miniaturas",
     "status": "active",
     "status_label": "ACTIVO",
-    "progress_percent": 92,
-    "description": "TEST001 ya tiene build Web reproducible, CI headless, Playwright E2E con evidencia, roles Display/P1/P2, gestos de cámara y diagnóstico de errores. El deploy DEV automático ya está preparado y aislado del canal live; falta únicamente configurar las credenciales/ID de Firebase DEV en GitHub.",
-    "next_action": "Configurar FIREBASE_DEV_SERVICE_ACCOUNT y FIREBASE_DEV_PROJECT_ID en GitHub; después validar el primer deploy automático al canal DEV y continuar con SessionState/turnos/resultado + mesa/secciones/slots para el fixture abstracto."
+    "progress_percent": 60,
+    "description": "La importación/estructura de miniaturas y TEST002 están en desarrollo, pero la evidencia de render 3D en runtime, procesamiento FBX a GLB/LOD, calibración de billboards y validación remota todavía no cierra el checkpoint.",
+    "next_action": "Completar y verificar el slice 3D de miniaturas; después preparar un PR a develop. No iniciar perfiles gráficos ni snapshot service hasta cerrar esta evidencia."
   },
   "health_checks": [
     {
@@ -112,6 +112,12 @@
       "status": "warning",
       "label": "CHECKPOINT",
       "detail": "Los cambios recientes de cámara, UI, presence, Hand/PlayerArea y filtros deben pasar nuevamente Display + P1 + P2 antes de cerrar C0."
+    },
+    {
+      "title": "Slice 3D de miniaturas sin verificación runtime completa",
+      "status": "warning",
+      "label": "ORDEN DE IMPLEMENTACIÓN",
+      "detail": "FBX a GLB/LOD, calibración de billboard, validación/error reporting, TEST002 Dracula y carga remota/hash/cache deben verificarse en runtime antes del PR a develop."
     }
   ],
   "core_roadmap": [

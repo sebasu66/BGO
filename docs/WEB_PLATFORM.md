@@ -24,6 +24,12 @@ The web platform owns product workflows that are better served by a normal web a
 
 The Godot runtime owns gameplay rendering and interaction. It should not become the primary implementation for account management, marketing pages, or other normal web/product flows.
 
+## Device modes and rendering direction
+
+The Web entry point is a Progressive Web App (PWA) with explicit Mobile, TV/Display, and browser-desktop modes. Windows native is a separate downloadable client and may offer optional companion-enhanced capabilities. Rendering profiles remain client projections of the same logical session: native Windows may select configurable high-quality 3D and a free camera; Web and Mobile use responsive constrained graphics and fixed-height/fixed-pitch perspective cameras; every platform also exposes an orthographic tactical pan/zoom view.
+
+Portrait avatars are generated during authoring/import. Arbitrary mod assets are not bundled implicitly into the PWA: they remain externally hosted and are selected through validated package URL/hash/cache contracts. A later optional PC-generated high-quality board snapshot service may serve expiring images; its request notification is separate from gameplay transport.
+
 ## Current prototype access policy
 
 The current implementation stage intentionally optimizes for rapid testing.
