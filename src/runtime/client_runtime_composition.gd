@@ -5,6 +5,7 @@ const ASSET_BOX_SCENE = preload("res://src/components/containers/asset_box/asset
 const VERTICAL_HAND_SCENE = preload("res://src/components/hands/vertical_hand/vertical_hand.tscn")
 const SEQUENTIAL_DROP_ANIMATOR = preload("res://src/runtime/sequential_drop_animator.gd")
 const SANDBOX_RUNTIME_CONTROLLER = preload("res://src/runtime/sandbox_runtime_controller.gd")
+const TOAST_SCENE = preload("res://src/components/ui/toast/toast_component.tscn")
 
 var game_definition: Dictionary = {}
 var game_definition_path := ""
@@ -22,6 +23,7 @@ var _player_areas: Dictionary = {}
 var _primary_board: BgoCheckeredBoard
 var _load_drop_animator: BgoSequentialDropAnimator
 var _sandbox_runtime_controller
+var _toast_component: BgoToastComponent
 
 
 func _load_game_definition() -> void:
@@ -505,3 +507,18 @@ func _on_runtime_component_event(
 	enriched["instance_id"] = instance_id
 	enriched["component_id"] = component_id
 	logger.info("COMPONENT_%s" % event_name.to_upper(), enriched)
+	if event_name.ends_with("_failed") or event_name.ends_with("_error"):
+		_show_component_error(instance_id, payload)
+
+
+func _show_component_error(instance_id: String, payload: Dictionary) -> void:
+	if _toast_component == null or not is_instance_valid(_toast_component):
+		_toast_component = TOAST_SCENE.instantiate() as BgoToastComponent
+		if _toast_component == null:
+			return
+		$UI.add_child(_toast_component)
+	var detail := str(payload.get("reason", payload.get("message", "")))
+	var message := "Error en %s" % instance_id
+	if not detail.is_empty():
+		message += ": %s" % detail
+	_toast_component.error(message, 6.0)
