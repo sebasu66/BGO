@@ -11,7 +11,8 @@
     "area_color": { "type": "string", "default": "#735012" },
     "area_size": { "type": "vector3", "default": { "x": 1.55, "y": 0.06, "z": 7.2 } },
     "visible": { "type": "bool", "default": true },
-    "public_objects": { "type": "bool", "default": true }
+    "public_objects": { "type": "bool", "default": true },
+    "seat_side": { "type": "float", "default": 0.0 }
   },
   "capabilities": ["player_zone", "public_storage"],
   "verbs": {}

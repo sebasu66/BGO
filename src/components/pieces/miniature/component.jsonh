@@ -23,6 +23,9 @@
   "verbs": {
     "object.move": { "parameters": { "slot_id": { "type": "slot_reference", "required": true } } },
     "object.move_to_collection": { "parameters": { "collection": { "type": "enum", "values": ["hand", "player_area"] } } },
-    "object.set_state": { "parameters": { "state": { "type": "string", "required": true } } }
+    "object.set_state": { "parameters": { "state": { "type": "string", "required": true } } },
+    "object.reorder_in_hand": { "parameters": { "index": { "type": "int", "min": 0, "required": true } } },
+    "object.take_from_box": { "parameters": { "origin_x": { "type": "int" }, "origin_y": { "type": "int" }, "footprint_x": { "type": "int", "min": 1 }, "footprint_y": { "type": "int", "min": 1 }, "allow_overlap": { "type": "bool" }, "acquire_neutral": { "type": "bool" } } },
+    "object.return_to_box": { "parameters": { "acquire_neutral": { "type": "bool" } } }
   }
 }

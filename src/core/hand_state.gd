@@ -30,6 +30,17 @@ func remove_object(object_id: String) -> bool:
 	return true
 
 
+## Moves one object to a position in the hand (0 is the top/front).
+## Returns false when the object is not in the hand or the index is out of range.
+func move_to_index(object_id: String, index: int) -> bool:
+	var current := object_ids.find(object_id)
+	if current < 0 or index < 0 or index >= object_ids.size():
+		return false
+	object_ids.remove_at(current)
+	object_ids.insert(index, object_id)
+	return true
+
+
 func contains(object_id: String) -> bool:
 	return object_ids.has(object_id)
 

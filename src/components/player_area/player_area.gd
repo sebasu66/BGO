@@ -4,8 +4,13 @@ extends Node3D
 
 signal component_event(event_name: String, payload: Dictionary)
 
+const SLOT_SPACING := 0.85
+
 @export var player_id := "player_1"
 @export var public_objects := true
+## Side (local X) the grid grows toward, where the player is seated: -1 or 1.
+## 0 means automatic: away from the table center.
+@export var seat_side := 0.0
 @export var label_text := "PLAYER 1":
 	set(value):
 		label_text = value
@@ -70,6 +75,18 @@ func set_public_objects(value: bool) -> void:
 	set_meta("bgo_public_objects", value)
 
 
+## Chooses which side the object grid grows toward (-1, 0 automatic, or 1).
+func set_seat_side(value: float) -> bool:
+	if (
+		not is_equal_approx(value, -1.0)
+		and not is_zero_approx(value)
+		and not is_equal_approx(value, 1.0)
+	):
+		return false
+	seat_side = value
+	return true
+
+
 ## Returns the stable console, GUI, and MCP method surface for this component.
 func console_api() -> Dictionary:
 	return (
@@ -94,6 +111,8 @@ func console_api() -> Dictionary:
 				BgoComponentApiDescriptor.setter("set_area_visible", "visible", "bool"),
 				"setPublicObjects":
 				BgoComponentApiDescriptor.setter("set_public_objects", "public_objects", "bool"),
+				"setSeatSide":
+				BgoComponentApiDescriptor.setter("set_seat_side", "seat_side", "float", "bool"),
 				"getSlotWorld":
 				BgoComponentApiDescriptor.method(
 					"area_slot_world", [{"name": "slot", "type": "int"}], "Vector3"
@@ -103,9 +122,40 @@ func console_api() -> Dictionary:
 	)
 
 
+## Objects in an area sit side by side in a grid: they fill a row along the
+## length of the area, then new rows grow toward the seated player.
+static func slot_columns(area_length: float) -> int:
+	return maxi(1, int(area_length / SLOT_SPACING))
+
+
+## Grid cell (column, row) of the Nth object kept in an area.
+static func slot_cell(slot: int, area_length: float) -> Vector2i:
+	var columns := slot_columns(area_length)
+	var index := maxi(0, slot)
+	return Vector2i(index % columns, floori(float(index) / float(columns)))
+
+
+## Offset of the Nth object from the area center: X grows toward the seat, Z runs along the area.
+static func slot_offset(slot: int, area_length: float, seat_sign: float) -> Vector3:
+	var cell := slot_cell(slot, area_length)
+	var columns := slot_columns(area_length)
+	return Vector3(
+		seat_sign * float(cell.y) * SLOT_SPACING,
+		0.0,
+		(float(cell.x) - float(columns - 1) * 0.5) * SLOT_SPACING
+	)
+
+
 ## Returns the world-space position of a player-area slot.
 func area_slot_world(slot: int) -> Vector3:
-	return global_position + Vector3(0.0, area_size.y * 0.5, -2.3 + float(slot) * 0.85)
+	var offset := slot_offset(slot, area_size.z, _seat_sign())
+	return global_position + Vector3(offset.x, area_size.y * 0.5, offset.z)
+
+
+func _seat_sign() -> float:
+	if not is_zero_approx(seat_side):
+		return signf(seat_side)
+	return -1.0 if global_position.x < 0.0 else 1.0
 
 
 func _apply_visuals() -> void:

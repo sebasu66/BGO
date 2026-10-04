@@ -1,7 +1,9 @@
 class_name GameplayState
 extends RefCounted
+# gdlint: disable=max-returns
 
 const HAND_STATE = preload("res://src/core/hand_state.gd")
+const COLLECTION_VERBS = preload("res://src/core/gameplay_collection_verbs.gd")
 const EVENT_LIMIT := 256
 
 ## Active logical session governing permissions and turn state.
@@ -151,7 +153,8 @@ func pickup_object_to_hand(
 		return _rejected("hand_add_rejected")
 	return {
 		"ok": true,
-		"event": {
+		"event":
+		{
 			"type": "object_picked_up",
 			"object_id": object_id,
 			"participant_id": requesting_participant_id,
@@ -181,7 +184,8 @@ func place_object_from_hand(
 	object.set_location("slot", target_slot_id)
 	return {
 		"ok": true,
-		"event": {
+		"event":
+		{
 			"type": "object_placed_from_hand",
 			"object_id": object_id,
 			"participant_id": requesting_participant_id,
@@ -232,17 +236,20 @@ func add_object_to_box(
 ) -> bool:
 	if object == null or object.object_id.is_empty() or objects.has(object.object_id):
 		return false
-	if asset_box == null or not asset_box.add_asset(
-		object.object_id,
-		component_id,
-		config,
-		quantity,
-		origin,
-		footprint,
-		allow_overlap,
-		object.availability_mode,
-		object.owner_id,
-		object.available_quantity
+	if (
+		asset_box == null
+		or not asset_box.add_asset(
+			object.object_id,
+			component_id,
+			config,
+			quantity,
+			origin,
+			footprint,
+			allow_overlap,
+			object.availability_mode,
+			object.owner_id,
+			object.available_quantity
+		)
 	):
 		return false
 	object.component_id = component_id
@@ -279,7 +286,9 @@ func take_object_from_box(
 	var asset_definition: Dictionary = asset_box.get_asset(object_id)
 	var resolved_origin: Vector2i = validation["origin"]
 	var resolved_footprint: Vector2i = validation["footprint"]
-	if not tabletop.place_object_at_grid(object_id, resolved_origin, resolved_footprint, allow_overlap):
+	if not tabletop.place_object_at_grid(
+		object_id, resolved_origin, resolved_footprint, allow_overlap
+	):
 		return _rejected("table_grid_destination_unavailable")
 	var removed: Dictionary = asset_box.remove_asset(object_id)
 	if removed.is_empty():
@@ -304,7 +313,8 @@ func take_object_from_box(
 		object.set_holder(requesting_participant_id)
 	return {
 		"ok": true,
-		"event": {
+		"event":
+		{
 			"type": "object_taken_from_asset_box",
 			"object_id": object_id,
 			"participant_id": requesting_participant_id,
@@ -356,7 +366,8 @@ func store_object_in_box(
 		return _rejected("object_asset_box_placement_rejected")
 	return {
 		"ok": true,
-		"event": {
+		"event":
+		{
 			"type": "object_stored_in_asset_box",
 			"object_id": object_id,
 			"participant_id": requesting_participant_id,
@@ -379,18 +390,26 @@ func move_object(
 	if not bool(validation.get("ok", false)):
 		return validation
 	var object: LogicalObjectState = objects[object_id]
-	var source_slot_id := object.location_id
-	if not tabletop.move_object(object_id, target_slot_id):
-		return _rejected("table_move_rejected")
-	if object.is_neutral() and object.holder_id.is_empty() and allow_neutral_acquire:
-		object.set_holder(requesting_participant_id)
+	var source_type := object.location_type
+	var source_slot_id := object.location_id if source_type == "slot" else ""
+	if source_type == "slot":
+		if not tabletop.move_object(object_id, target_slot_id):
+			return _rejected("table_move_rejected")
+		if object.is_neutral() and object.holder_id.is_empty() and allow_neutral_acquire:
+			object.set_holder(requesting_participant_id)
+	else:
+		# Leaving a hand or a player area puts the object back on the table and
+		# releases the holder, exactly like place_object_from_hand.
+		if not tabletop.place_object(object_id, target_slot_id):
+			return _rejected("destination_unavailable")
+		if source_type == "hand":
+			(hands[object.location_id] as HandState).remove_object(object_id)
+		object.set_holder("")
 	object.set_location("slot", target_slot_id)
 	object.clear_grid_placement()
 	return {
 		"ok": true,
-		"event": _move_event(
-			requesting_participant_id, object_id, source_slot_id, target_slot_id
-		),
+		"event": _move_event(requesting_participant_id, object_id, source_slot_id, target_slot_id),
 	}
 
 
@@ -424,7 +443,8 @@ func move_object_at_grid(
 		object.set_holder(requesting_participant_id)
 	return {
 		"ok": true,
-		"event": {
+		"event":
+		{
 			"type": "object_grid_moved",
 			"object_id": object_id,
 			"participant_id": requesting_participant_id,
@@ -452,12 +472,14 @@ func move_and_end_turn(
 		return _rejected("turn_advance_rejected")
 	return {
 		"ok": true,
-		"events": [
+		"events":
+		[
 			move_result.get("event", {}),
 			{
 				"type": "turn_advanced",
 				"turn_number": flow.turn_number,
-				"active_participant_id": (
+				"active_participant_id":
+				(
 					flow.active_participant_ids[0]
 					if not flow.active_participant_ids.is_empty()
 					else ""
@@ -536,9 +558,14 @@ func _first_free_table_origin(footprint: Vector2i) -> Vector2i:
 	for y in tabletop.grid.point_rows:
 		for x in tabletop.grid.point_columns:
 			var origin := Vector2i(x, y)
-			if tabletop.grid.is_valid_footprint(origin, footprint) and tabletop.objects_in_grid_area(
-				origin, origin + footprint - Vector2i.ONE
-			).is_empty():
+			if (
+				tabletop.grid.is_valid_footprint(origin, footprint)
+				and (
+					tabletop
+					. objects_in_grid_area(origin, origin + footprint - Vector2i.ONE)
+					. is_empty()
+				)
+			):
 				return origin
 	return Vector2i(-1, -1)
 
@@ -556,8 +583,13 @@ func _validate_move(
 	if not objects.has(object_id):
 		return _rejected("unknown_object")
 	var object: LogicalObjectState = objects[object_id]
-	if object.location_type != "slot" or object.location_id.is_empty():
+	# A table slot, a hand or a player area can all be left through object.move.
+	if object.location_type not in ["slot", "hand", "player_area"] or object.location_id.is_empty():
 		return _rejected("object_not_in_slot")
+	if object.location_type == "hand":
+		var source_hand: HandState = hands.get(object.location_id)
+		if source_hand == null or not source_hand.contains(object_id):
+			return _rejected("object_not_in_hand")
 	if not tabletop.can_accept(target_slot_id):
 		return _rejected("destination_unavailable")
 	if not _can_control(object, requesting_participant_id, allow_neutral_acquire):
@@ -604,6 +636,9 @@ func _dispatch(command: Dictionary) -> Dictionary:
 func _register_core_verbs() -> void:
 	register_verb("object.move", _move_object)
 	register_verb("object.move_to_collection", _move_to_collection)
+	register_verb("object.reorder_in_hand", COLLECTION_VERBS.reorder_in_hand.bind(self))
+	register_verb("object.take_from_box", COLLECTION_VERBS.take_from_box.bind(self))
+	register_verb("object.return_to_box", COLLECTION_VERBS.return_to_box.bind(self))
 	register_verb("object.set_quantity", _set_quantity)
 	register_verb("object.set_state", _set_state)
 	register_verb("turn.end", _end_turn)
@@ -621,25 +656,25 @@ func _move_object(command: Dictionary) -> Dictionary:
 		source_type = object.location_type
 		source_id = object.location_id
 	var result := move_object(
-		actor_id,
-		object_id,
-		str(args.get("slot_id", "")),
-		bool(args.get("acquire_neutral", false))
+		actor_id, object_id, str(args.get("slot_id", "")), bool(args.get("acquire_neutral", false))
 	)
 	if not bool(result.get("ok", false)):
 		return result
 	return _events(
-		[{
-			"type": "object.moved",
-			"source_id": object_id,
-			"actor_id": actor_id,
-			"data": {
-				"from_type": source_type,
-				"from_id": source_id,
-				"to_type": "slot",
-				"to_id": str(args.get("slot_id", "")),
-			},
-		}]
+		[
+			{
+				"type": "object.moved",
+				"source_id": object_id,
+				"actor_id": actor_id,
+				"data":
+				{
+					"from_type": source_type,
+					"from_id": source_id,
+					"to_type": "slot",
+					"to_id": str(args.get("slot_id", "")),
+				},
+			}
+		]
 	)
 
 
@@ -673,17 +708,20 @@ func _move_to_collection(command: Dictionary) -> Dictionary:
 		object.set_holder(actor_id)
 		object.set_location(collection, actor_id)
 	return _events(
-		[{
-			"type": "object.moved",
-			"source_id": object_id,
-			"actor_id": actor_id,
-			"data": {
-				"from_type": source_type,
-				"from_id": source_id,
-				"to_type": collection,
-				"to_id": actor_id,
-			},
-		}]
+		[
+			{
+				"type": "object.moved",
+				"source_id": object_id,
+				"actor_id": actor_id,
+				"data":
+				{
+					"from_type": source_type,
+					"from_id": source_id,
+					"to_type": collection,
+					"to_id": actor_id,
+				},
+			}
+		]
 	)
 
 
@@ -696,12 +734,16 @@ func _set_quantity(command: Dictionary) -> Dictionary:
 	var value := int((command.get("args", {}) as Dictionary).get("value", -1))
 	if not object.set_quantity(value):
 		return _rejected("invalid_quantity")
-	return _events([{
-		"type": "object.quantity_changed",
-		"source_id": object.object_id,
-		"actor_id": actor_id,
-		"data": {"from": previous, "to": value},
-	}])
+	return _events(
+		[
+			{
+				"type": "object.quantity_changed",
+				"source_id": object.object_id,
+				"actor_id": actor_id,
+				"data": {"from": previous, "to": value},
+			}
+		]
+	)
 
 
 func _set_state(command: Dictionary) -> Dictionary:
@@ -713,12 +755,16 @@ func _set_state(command: Dictionary) -> Dictionary:
 	var value := str((command.get("args", {}) as Dictionary).get("state", ""))
 	if not object.set_state(value):
 		return _rejected("invalid_state")
-	return _events([{
-		"type": "object.state_changed",
-		"source_id": object.object_id,
-		"actor_id": actor_id,
-		"data": {"from": previous, "to": value},
-	}])
+	return _events(
+		[
+			{
+				"type": "object.state_changed",
+				"source_id": object.object_id,
+				"actor_id": actor_id,
+				"data": {"from": previous, "to": value},
+			}
+		]
+	)
 
 
 func _end_turn(command: Dictionary) -> Dictionary:
@@ -728,23 +774,26 @@ func _end_turn(command: Dictionary) -> Dictionary:
 	var previous_turn := flow.turn_number
 	if not flow.end_turn(actor_id):
 		return _rejected("turn_end_rejected")
-	return _events([
-		{
-			"type": "turn.ended",
-			"source_id": "flow",
-			"actor_id": actor_id,
-			"data": {"turn_number": previous_turn},
-		},
-		{
-			"type": "turn.started",
-			"source_id": "flow",
-			"actor_id": "system",
-			"data": {
-				"turn_number": flow.turn_number,
-				"active_participant_ids": flow.active_participant_ids.duplicate(),
+	return _events(
+		[
+			{
+				"type": "turn.ended",
+				"source_id": "flow",
+				"actor_id": actor_id,
+				"data": {"turn_number": previous_turn},
 			},
-		},
-	])
+			{
+				"type": "turn.started",
+				"source_id": "flow",
+				"actor_id": "system",
+				"data":
+				{
+					"turn_number": flow.turn_number,
+					"active_participant_ids": flow.active_participant_ids.duplicate(),
+				},
+			},
+		]
+	)
 
 
 func _finish_match(command: Dictionary) -> Dictionary:
@@ -756,12 +805,16 @@ func _finish_match(command: Dictionary) -> Dictionary:
 		str(args.get("outcome", "")), args.get("winner_participant_ids", [])
 	):
 		return _rejected("invalid_match_result")
-	return _events([{
-		"type": "match.finished",
-		"source_id": session.session_id,
-		"actor_id": actor_id,
-		"data": session.result.duplicate(true),
-	}])
+	return _events(
+		[
+			{
+				"type": "match.finished",
+				"source_id": session.session_id,
+				"actor_id": actor_id,
+				"data": session.result.duplicate(true),
+			}
+		]
+	)
 
 
 func _authorized_object(

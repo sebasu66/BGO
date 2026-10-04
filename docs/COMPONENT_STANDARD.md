@@ -50,6 +50,8 @@ All authoritative mutation uses the same command path. Commands use imperative d
 
 - `object.move`
 - `object.move_to_collection`
+- `object.reorder_in_hand`
+- `object.take_from_box`
 - `object.set_quantity`
 - `object.spawn`
 - `object.despawn`
