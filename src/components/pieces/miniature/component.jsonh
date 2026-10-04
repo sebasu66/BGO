@@ -1,0 +1,28 @@
+{
+  "schema": "bgo.component",
+  "id": "bgo.piece.miniature",
+  "kind": "piece",
+  "description": "Unique non-stackable character miniature using the shared piece presentation.",
+  "state": {},
+  "scene": "res://src/components/pieces/miniature/miniature.tscn",
+  "config": {
+    "shape": { "type": "enum", "values": ["cylinder", "cube", "cone", "sphere"], "default": "cylinder", "description": "Primitive shape used by the temporary miniature representation.", "example": "cylinder", "agent_visible": true },
+    "radius": { "type": "float", "min": 0.1, "max": 2.0, "default": 0.38, "description": "Horizontal radius or half-width of the miniature.", "example": 0.42, "agent_visible": true },
+    "height": { "type": "float", "min": 0.05, "max": 2.0, "default": 0.32, "description": "Height of the miniature representation.", "example": 0.5, "agent_visible": true },
+    "color_source": { "type": "enum", "values": ["player", "fixed"], "default": "player", "description": "Use the owning player's color or an explicit fixed color.", "example": "player", "agent_visible": true },
+    "color": { "type": "string", "default": "#ffffff", "description": "Fixed CSS-style color when color_source is fixed.", "example": "#E24A3B", "agent_visible": true },
+    "roughness": { "type": "float", "min": 0.0, "max": 1.0, "default": 0.38, "description": "Surface roughness.", "example": 0.15, "agent_visible": true },
+    "metallic": { "type": "float", "min": 0.0, "max": 1.0, "default": 0.08, "description": "Metallic response.", "example": 0.2, "agent_visible": true },
+    "emission_strength": { "type": "float", "min": 0.0, "max": 5.0, "default": 0.0, "description": "Optional self-illumination strength.", "example": 0.8, "agent_visible": true }
+    ,"model_path": { "type": "asset", "asset_kind": "scene_or_model", "default": "", "description": "Project-local optimized GLB/GLTF model loaded under the base pivot.", "example": "assets/runtime/miniatures/dracula/dracula.normal.glb", "agent_visible": true }
+    ,"model_scale": { "type": "float", "min": 0.001, "max": 1000.0, "default": 1.0, "description": "Scale applied to the model under the base pivot.", "example": 0.4, "agent_visible": true }
+    ,"model_sha256": { "type": "string", "default": "", "description": "Optional SHA-256 integrity hash for a remote GLB.", "example": "0123456789abcdef", "agent_visible": true }
+    ,"representation_manifest": { "type": "asset", "asset_kind": "data", "default": "", "description": "Multi-profile visual representation manifest used for platform and distance selection.", "example": "assets/runtime/miniatures/dracula/representation.json", "agent_visible": true }
+  },
+  "capabilities": ["movable", "ownable", "holdable", "placeable", "stateful"],
+  "verbs": {
+    "object.move": { "parameters": { "slot_id": { "type": "slot_reference", "required": true } } },
+    "object.move_to_collection": { "parameters": { "collection": { "type": "enum", "values": ["hand", "player_area"] } } },
+    "object.set_state": { "parameters": { "state": { "type": "string", "required": true } } }
+  }
+}

@@ -1,6 +1,7 @@
 extends "res://src/runtime/client_runtime_gameplay.gd"
 
 const UI_THEME_PROFILES = preload("res://src/components/ui/theme_profiles/ui_theme_profiles.gd")
+const RENDER_PROFILE = preload("res://src/runtime/client_render_profile.gd")
 
 const PLAYER_CAMERA_MIN_DISTANCE := 4.8
 const PLAYER_CAMERA_MAX_DISTANCE := 18.0
@@ -36,6 +37,8 @@ var _session_header: BgoSessionHeader
 var _game_strip: BgoActionStrip
 var _profile_popup: PopupPanel
 var _context_controller: BgoObjectContextMenuController
+var _render_profile: Dictionary = {}
+var _tactical_view := false
 
 
 func _read_launch_options() -> void:
@@ -61,6 +64,9 @@ func _set_mode(mode: String) -> void:
 
 func _configure_camera() -> void:
 	super._configure_camera()
+	_render_profile = RENDER_PROFILE.current()
+	if RENDER_PROFILE.tactical_requested(OS.get_cmdline_user_args()):
+		call_deferred("set_tactical_view", true)
 	if client_role != ROLE_PLAYER:
 		return
 	_camera_home_focus = _camera_focus
@@ -79,6 +85,8 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventMouse and _is_mouse_over_dev_console():
+		return
 	if (
 		event is InputEventScreenTouch
 		and _context_controller != null
@@ -94,18 +102,25 @@ func _input(event: InputEvent) -> void:
 		return
 	if event is InputEventScreenTouch:
 		_handle_screen_touch(event)
-		return
-	if event is InputEventScreenDrag:
+	elif event is InputEventScreenDrag:
 		_handle_screen_drag(event)
-		return
-	if event is InputEventMouseButton:
+	elif event is InputEventMouseButton:
 		_handle_player_mouse_button(event)
-		return
-	if event is InputEventMouseMotion:
+	elif event is InputEventMouseMotion:
 		_handle_player_mouse_motion(event)
-		return
-	if event is InputEventKey:
+	elif event is InputEventKey:
 		_handle_player_camera_key(event)
+
+
+func _is_mouse_over_dev_console() -> bool:
+	var console := get_node_or_null("/root/Console")
+	if console == null:
+		return false
+	var container := console.get("v_box_container") as Control
+	if container == null or not container.visible:
+		return false
+	var hovered := get_viewport().gui_get_hovered_control()
+	return hovered == container or container.is_ancestor_of(hovered)
 
 
 func _handle_player_mouse_button(event: InputEventMouseButton) -> void:
@@ -150,6 +165,8 @@ func _handle_player_camera_key(event: InputEventKey) -> void:
 	if not event.pressed or event.echo or _camera_keyboard_input_blocked():
 		return
 	match event.physical_keycode:
+		KEY_T:
+			set_tactical_view(not _tactical_view)
 		KEY_R, KEY_HOME:
 			reset_player_camera()
 		KEY_EQUAL, KEY_KP_ADD:
@@ -199,9 +216,12 @@ func _move_player_camera(horizontal: float, forward_amount: float, delta_scale: 
 
 func _orbit_player_camera(relative: Vector2) -> void:
 	_camera_yaw -= relative.x * PLAYER_CAMERA_ROTATE_SPEED
-	_camera_pitch = clampf(
-		_camera_pitch + relative.y * PLAYER_CAMERA_ROTATE_SPEED, deg_to_rad(28.0), deg_to_rad(72.0)
-	)
+	if RENDER_PROFILE.allows_pitch(_render_profile):
+		_camera_pitch = clampf(
+			_camera_pitch + relative.y * PLAYER_CAMERA_ROTATE_SPEED,
+			deg_to_rad(28.0),
+			deg_to_rad(72.0)
+		)
 	_update_camera_transform()
 
 
@@ -311,6 +331,8 @@ func _pan_player_camera(relative: Vector2) -> void:
 
 
 func _zoom_player_camera(multiplier: float, anchor := Vector2(-1.0, -1.0)) -> void:
+	if bool(_render_profile.get("fixed_height", false)) and not _tactical_view:
+		return
 	var before: Variant = _table_point_under_cursor(anchor)
 	_camera_distance = clampf(
 		_camera_distance * multiplier, PLAYER_CAMERA_MIN_DISTANCE, PLAYER_CAMERA_MAX_DISTANCE
@@ -383,6 +405,22 @@ func reset_player_camera() -> void:
 			)
 		)
 	_set_status("Camera reset")
+
+
+## Switches every supported client between perspective and tactical top-down presentation.
+func set_tactical_view(enabled: bool) -> void:
+	_tactical_view = enabled
+	var state := RENDER_PROFILE.apply_tactical_view(
+		camera,
+		enabled,
+		_camera_home_pitch,
+		_camera_home_distance,
+		find_children("*", "BgoAdaptiveRepresentation", true, false)
+	)
+	_camera_pitch = state.x
+	_camera_distance = state.y
+	_update_camera_transform()
+	_set_status("Tactical view" if enabled else "Perspective view")
 
 
 func _pointer_is_over_controls(position: Vector2) -> bool:

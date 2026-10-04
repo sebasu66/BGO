@@ -1,0 +1,459 @@
+{
+  "schema": "bgo.asset-representations",
+  "version": 1,
+  "asset_id": "dracula",
+  "physical_size_cm": {
+    "height": 7.0,
+    "base_diameter": 4.0
+  },
+  "world_units_per_cm_fallback": 0.24,
+  "source": {
+    "model": "res://assets/runtime/miniatures/dracula/dracula.normal.glb",
+    "turntable": "res://assets/MINIS/dracula.mp4",
+    "turntable_size": [
+      512,
+      512
+    ],
+    "original_model": "res://assets/MINIS/dracula.fbx"
+  },
+  "selection": {
+    "desktop_near_distance": 9.0,
+    "desktop_near": "desktop_model",
+    "desktop_far": "desktop_lod",
+    "web": "billboard",
+    "mobile": "billboard",
+    "tactical": "top_down_avatar",
+    "fallback": "billboard"
+  },
+  "client_profiles": {
+    "windows_native": {
+      "quality": "desktop_high",
+      "camera": "free_perspective",
+      "near_representation": "desktop_model",
+      "far_representation": "desktop_lod",
+      "tactical_view": "orthographic_top_down"
+    },
+    "web": {
+      "quality": "web_billboard",
+      "camera": "fixed_height_pitch_orbit",
+      "representation": "billboard",
+      "tactical_view": "orthographic_top_down"
+    },
+    "mobile": {
+      "quality": "mobile_billboard",
+      "camera": "fixed_height_pitch_orbit",
+      "representation": "billboard",
+      "tactical_view": "orthographic_top_down"
+    }
+  },
+  "representations": {
+    "desktop_model": {
+      "type": "model",
+      "path": "res://assets/runtime/miniatures/dracula/dracula.normal.glb",
+      "profile": "desktop_high"
+    },
+    "billboard": {
+      "type": "billboard_frames",
+      "profile": "web_mobile",
+      "frame_count": 31,
+      "frame_size": [
+        512,
+        512
+      ],
+      "front_frame": 0,
+      "direction": "counter_clockwise",
+      "front_axis": "+z",
+      "vertical_offset_cm": -1.0,
+      "transparent_background": "connected_edge_flood_fill",
+      "frames": [
+        {
+          "frame": 0,
+          "angle_degrees": 0.0,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_000.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 1,
+          "angle_degrees": 348.387097,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_001.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 2,
+          "angle_degrees": 336.774194,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_002.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 3,
+          "angle_degrees": 325.16129,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_003.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 4,
+          "angle_degrees": 313.548387,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_004.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 5,
+          "angle_degrees": 301.935484,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_005.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 6,
+          "angle_degrees": 290.322581,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_006.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 7,
+          "angle_degrees": 278.709677,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_007.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 8,
+          "angle_degrees": 267.096774,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_008.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 9,
+          "angle_degrees": 255.483871,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_009.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 10,
+          "angle_degrees": 243.870968,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_010.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 11,
+          "angle_degrees": 232.258065,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_011.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 12,
+          "angle_degrees": 220.645161,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_012.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 13,
+          "angle_degrees": 209.032258,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_013.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 14,
+          "angle_degrees": 197.419355,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_014.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 15,
+          "angle_degrees": 185.806452,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_015.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 16,
+          "angle_degrees": 174.193548,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_016.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 17,
+          "angle_degrees": 162.580645,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_017.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 18,
+          "angle_degrees": 150.967742,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_018.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 19,
+          "angle_degrees": 139.354839,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_019.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 20,
+          "angle_degrees": 127.741935,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_020.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 21,
+          "angle_degrees": 116.129032,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_021.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 22,
+          "angle_degrees": 104.516129,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_022.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 23,
+          "angle_degrees": 92.903226,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_023.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 24,
+          "angle_degrees": 81.290323,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_024.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 25,
+          "angle_degrees": 69.677419,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_025.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 26,
+          "angle_degrees": 58.064516,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_026.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 27,
+          "angle_degrees": 46.451613,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_027.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 28,
+          "angle_degrees": 34.83871,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_028.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 29,
+          "angle_degrees": 23.225806,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_029.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 30,
+          "angle_degrees": 11.612903,
+          "path": "res://assets/runtime/miniatures/dracula/frames/frame_030.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        }
+      ]
+    },
+    "top_down_avatar": {
+      "type": "portrait_token",
+      "profile": "tactical_2d",
+      "path": "res://assets/runtime/miniatures/dracula/dracula_avatar.png",
+      "shape": "circle",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "desktop_lod": {
+      "type": "model",
+      "path": "res://assets/runtime/miniatures/dracula/dracula.far.glb",
+      "profile": "desktop_standard"
+    }
+  }
+}

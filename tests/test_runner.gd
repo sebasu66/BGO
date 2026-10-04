@@ -1,6 +1,7 @@
 extends "res://tests/test_runner_base.gd"
 
 const COMPONENT_API_TEST = preload("res://tests/component_api_test.gd")
+const MINIATURE_RENDERING_TEST = preload("res://tests/miniature_rendering_test.gd")
 
 
 func _initialize() -> void:
@@ -19,6 +20,7 @@ func _run() -> void:
 	await _test_sequential_drop_animator()
 	_test_logger_levels()
 	_test_client_settings_controller()
+	await MINIATURE_RENDERING_TEST.run(self, Callable(self, "_check"))
 	_test_ui_theme_profiles()
 	await _test_action_strip_exclusive_modes()
 	await _test_settings_panel()

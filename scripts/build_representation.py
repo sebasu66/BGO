@@ -9,6 +9,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from PIL import Image, ImageChops, ImageDraw
+
 
 def _run(command: list[str]) -> str:
     result = subprocess.run(command, check=True, text=True, capture_output=True)
@@ -41,6 +43,41 @@ def _resource_path(project_root: Path, path: Path) -> str:
     return "res://" + path.resolve().relative_to(project_root.resolve()).as_posix()
 
 
+def _build_round_avatar(source: Path, output: Path, size: int) -> None:
+    with Image.open(source).convert("RGBA") as image:
+        crop_size = min(image.width, image.height)
+        left = (image.width - crop_size) // 2
+        top = (image.height - crop_size) // 2
+        avatar = image.crop((left, top, left + crop_size, top + crop_size))
+        avatar = avatar.resize((size, size), Image.Resampling.LANCZOS)
+        mask = Image.new("L", (size, size), 0)
+        ImageDraw.Draw(mask).ellipse((0, 0, size - 1, size - 1), fill=255)
+        avatar.putalpha(ImageChops.multiply(avatar.getchannel("A"), mask))
+        avatar.save(output)
+
+
+def _remove_connected_background(frame: Path, threshold: int) -> bool:
+    """Remove an opaque, near-uniform backdrop connected to the image edges."""
+    with Image.open(frame).convert("RGBA") as image:
+        alpha = image.getchannel("A")
+        if alpha.getextrema()[0] < 255:
+            return False
+        transparent = (0, 0, 0, 0)
+        corners = (
+            (0, 0),
+            (image.width - 1, 0),
+            (0, image.height - 1),
+            (image.width - 1, image.height - 1),
+        )
+        for corner in corners:
+            ImageDraw.floodfill(image, corner, transparent, thresh=threshold)
+        alpha_extrema = image.getchannel("A").getextrema()
+        if alpha_extrema != (0, 255):
+            raise SystemExit(f"background removal did not preserve foreground and transparency: {frame}")
+        image.save(frame)
+        return True
+
+
 def _validate_glb(model: Path, label: str) -> None:
     if model.suffix.lower() != ".glb":
         raise SystemExit(f"{label} must be an optimized .glb: {model}")
@@ -65,9 +102,13 @@ def main() -> int:
     parser.add_argument("--lod-model", type=Path)
     parser.add_argument("--source-model", type=Path)
     parser.add_argument("--turntable", type=Path, required=True)
+    parser.add_argument("--portrait", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--project-root", type=Path, default=Path.cwd())
     parser.add_argument("--front-frame", type=int, default=0)
+    parser.add_argument("--expected-frame-count", type=int, default=31)
+    parser.add_argument("--avatar-size", type=int, default=512)
+    parser.add_argument("--background-threshold", type=int, default=48)
     parser.add_argument("--direction", choices=("clockwise", "counter_clockwise"), default="clockwise")
     parser.add_argument("--model-front-axis", choices=("+z", "-z"), default="-z")
     parser.add_argument("--near-distance", type=float, default=9.0)
@@ -82,11 +123,14 @@ def main() -> int:
     project_root = args.project_root.resolve()
     model = args.model.resolve()
     turntable = args.turntable.resolve()
+    portrait = args.portrait.resolve()
     output = args.output.resolve()
     if not model.is_file():
         raise SystemExit(f"model not found: {model}")
     if not turntable.is_file():
         raise SystemExit(f"turntable not found: {turntable}")
+    if not portrait.is_file():
+        raise SystemExit(f"portrait not found: {portrait}")
     _validate_glb(model, "model")
     lod_model = args.lod_model.resolve() if args.lod_model else None
     if lod_model is not None:
@@ -101,8 +145,10 @@ def main() -> int:
     output.mkdir(parents=True, exist_ok=True)
 
     frame_count, source_width, source_height = _probe_frames(args.ffprobe, turntable)
-    if frame_count < 4:
-        raise SystemExit("turntable must contain at least four frames")
+    if frame_count != args.expected_frame_count:
+        raise SystemExit(
+            f"turntable must contain exactly {args.expected_frame_count} frames; found {frame_count}"
+        )
     if not 0 <= args.front_frame < frame_count:
         raise SystemExit("front-frame is outside the media frame range")
 
@@ -128,6 +174,12 @@ def main() -> int:
     frame_files = sorted(frames_dir.glob("frame_*.png"))
     if len(frame_files) != frame_count:
         raise SystemExit(f"expected {frame_count} frames, extracted {len(frame_files)}")
+    background_removed = False
+    for frame in frame_files:
+        background_removed = _remove_connected_background(frame, args.background_threshold) or background_removed
+
+    avatar_path = output / f"{args.asset_id}_avatar.png"
+    _build_round_avatar(portrait, avatar_path, args.avatar_size)
 
     angle_step = 360.0 / frame_count
     frames = []
@@ -163,7 +215,29 @@ def main() -> int:
             "desktop_far": "desktop_lod" if lod_model is not None else "billboard",
             "web": "billboard",
             "mobile": "billboard",
+            "tactical": "top_down_avatar",
             "fallback": "billboard",
+        },
+        "client_profiles": {
+            "windows_native": {
+                "quality": "desktop_high",
+                "camera": "free_perspective",
+                "near_representation": "desktop_model",
+                "far_representation": "desktop_lod" if lod_model is not None else "billboard",
+                "tactical_view": "orthographic_top_down",
+            },
+            "web": {
+                "quality": "web_billboard",
+                "camera": "fixed_height_pitch_orbit",
+                "representation": "billboard",
+                "tactical_view": "orthographic_top_down",
+            },
+            "mobile": {
+                "quality": "mobile_billboard",
+                "camera": "fixed_height_pitch_orbit",
+                "representation": "billboard",
+                "tactical_view": "orthographic_top_down",
+            },
         },
         "representations": {
             "desktop_model": {
@@ -180,8 +254,17 @@ def main() -> int:
                 "direction": args.direction,
                 "front_axis": args.model_front_axis,
                 "vertical_offset_cm": args.billboard_vertical_offset_cm,
-                "transparent_background": "source_alpha",
+                "transparent_background": (
+                    "connected_edge_flood_fill" if background_removed else "source_alpha"
+                ),
                 "frames": frames,
+            },
+            "top_down_avatar": {
+                "type": "portrait_token",
+                "profile": "tactical_2d",
+                "path": _resource_path(project_root, avatar_path),
+                "shape": "circle",
+                "size": [args.avatar_size, args.avatar_size],
             },
         },
     }
