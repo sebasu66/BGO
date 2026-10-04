@@ -1,0 +1,409 @@
+{
+  "schema": "bgo.asset-representations",
+  "version": 1,
+  "asset_id": "dracula",
+  "physical_size_cm": {
+    "height": 7.0,
+    "base_diameter": 4.0
+  },
+  "world_units_per_cm_fallback": 0.24,
+  "source": {
+    "model": "res://assets/MINIS/dracula.fbx",
+    "turntable": "res://assets/MINIS/dracula.gif",
+    "turntable_size": [
+      512,
+      512
+    ]
+  },
+  "selection": {
+    "desktop_near_distance": 9.0,
+    "desktop_near": "desktop_model",
+    "desktop_far": "billboard",
+    "web": "billboard",
+    "mobile": "billboard",
+    "fallback": "billboard"
+  },
+  "representations": {
+    "desktop_model": {
+      "type": "model",
+      "path": "res://assets/MINIS/dracula.fbx",
+      "profile": "desktop_high"
+    },
+    "billboard": {
+      "type": "billboard_frames",
+      "profile": "web_mobile",
+      "frame_count": 30,
+      "frame_size": [
+        512,
+        512
+      ],
+      "front_frame": 0,
+      "direction": "counter_clockwise",
+      "front_axis": "+z",
+      "vertical_offset_cm": -1.0,
+      "transparent_background": "source_alpha",
+      "frames": [
+        {
+          "frame": 0,
+          "angle_degrees": 0.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_000.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 1,
+          "angle_degrees": 348.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_001.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 2,
+          "angle_degrees": 336.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_002.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 3,
+          "angle_degrees": 324.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_003.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 4,
+          "angle_degrees": 312.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_004.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 5,
+          "angle_degrees": 300.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_005.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 6,
+          "angle_degrees": 288.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_006.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 7,
+          "angle_degrees": 276.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_007.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 8,
+          "angle_degrees": 264.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_008.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 9,
+          "angle_degrees": 252.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_009.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 10,
+          "angle_degrees": 240.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_010.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 11,
+          "angle_degrees": 228.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_011.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 12,
+          "angle_degrees": 216.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_012.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 13,
+          "angle_degrees": 204.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_013.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 14,
+          "angle_degrees": 192.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_014.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 15,
+          "angle_degrees": 180.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_015.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 16,
+          "angle_degrees": 168.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_016.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 17,
+          "angle_degrees": 156.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_017.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 18,
+          "angle_degrees": 144.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_018.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 19,
+          "angle_degrees": 132.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_019.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 20,
+          "angle_degrees": 120.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_020.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 21,
+          "angle_degrees": 108.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_021.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 22,
+          "angle_degrees": 96.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_022.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 23,
+          "angle_degrees": 84.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_023.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 24,
+          "angle_degrees": 72.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_024.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 25,
+          "angle_degrees": 60.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_025.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 26,
+          "angle_degrees": 48.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_026.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 27,
+          "angle_degrees": 36.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_027.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 28,
+          "angle_degrees": 24.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_028.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        },
+        {
+          "frame": 29,
+          "angle_degrees": 12.0,
+          "path": "res://assets/MINIS/generated/dracula/frames/frame_029.png",
+          "calibration": {
+            "scale": 1.0,
+            "offset_pixels": [
+              0.0,
+              0.0
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
