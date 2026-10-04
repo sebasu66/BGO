@@ -5,11 +5,13 @@ signal session_loaded(data: Dictionary)
 signal session_missing
 signal session_error(message: String)
 signal piece_changed(piece_id: String, piece_data: Dictionary)
+signal piece_removed(piece_id: String)
 signal github_bridge_status_changed(status: String)
 
 const MCP_COMMAND_PROCESSOR = preload("res://src/mcp/mcp_command_processor.gd")
 const GITHUB_JOBS_TRANSPORT = preload("res://src/network/github_jobs_transport.gd")
-const DEFAULT_GAME_ID := "TEST001"
+const DEFAULT_GAME_ID := "TEST002"
+const ACTIVITY_LOG_LIMIT := 500
 
 var game_id: String = DEFAULT_GAME_ID
 var poll_interval_seconds := 0.75
@@ -30,7 +32,6 @@ var _github_jobs_enabled := false
 var _github_bridge_status := "disabled"
 var _github_bridge_error := ""
 var _last_session: Dictionary = {}
-const ACTIVITY_LOG_LIMIT := 500
 
 
 func _ready() -> void:
@@ -110,7 +111,9 @@ func set_mcp_command_authority(participant_id: String, enabled: bool) -> void:
 func set_github_jobs_transport(client_id: String, enabled: bool, persist: bool = true) -> void:
 	_github_client_id = client_id
 	_github_jobs_enabled = enabled and not client_id.is_empty()
-	_github_bridge_error = "" if not enabled else ("client_required" if client_id.is_empty() else "")
+	_github_bridge_error = (
+		"" if not enabled else ("client_required" if client_id.is_empty() else "")
+	)
 	_update_github_bridge_status(_last_session)
 	if persist and not game_id.is_empty():
 		_adapter.patch(_game_path(), {"session/github_jobs_enabled": enabled})
@@ -165,7 +168,9 @@ func persist_activity_event(event: Dictionary) -> void:
 
 static func activity_event_patch(event: Dictionary) -> Dictionary:
 	var event_id := str(event.get("event_id", ""))
-	return {} if event_id.is_empty() else {"activity_log/events/%s" % event_id: event.duplicate(true)}
+	return (
+		{} if event_id.is_empty() else {"activity_log/events/%s" % event_id: event.duplicate(true)}
+	)
 
 
 static func merge_activity_events(existing: Dictionary, incoming: Dictionary) -> Dictionary:
@@ -175,7 +180,9 @@ static func merge_activity_events(existing: Dictionary, incoming: Dictionary) ->
 	return bounded_activity_events(merged)
 
 
-static func bounded_activity_events(events: Dictionary, limit: int = ACTIVITY_LOG_LIMIT) -> Dictionary:
+static func bounded_activity_events(
+	events: Dictionary, limit: int = ACTIVITY_LOG_LIMIT
+) -> Dictionary:
 	var ids: Array[String] = []
 	for event_id in events:
 		ids.append(str(event_id))
@@ -367,11 +374,6 @@ func place_piece_at_grid(
 	)
 
 
-## Moves a logical piece between authorized logical locations.
-func move_piece(piece_id: String, actor_id: String, cell: Vector2i) -> void:
-	place_piece(piece_id, actor_id, cell)
-
-
 func _initial_session() -> Dictionary:
 	if game_definition.is_empty():
 		return {
@@ -529,7 +531,10 @@ func _on_request_succeeded(operation: StringName, path: String, data: Variant) -
 	_last_session = session.duplicate(true)
 	var persisted_session: Dictionary = session.get("session", {})
 	if persisted_session.has("github_jobs_enabled"):
-		_github_jobs_enabled = bool(persisted_session.get("github_jobs_enabled", false)) and not _github_client_id.is_empty()
+		_github_jobs_enabled = (
+			bool(persisted_session.get("github_jobs_enabled", false))
+			and not _github_client_id.is_empty()
+		)
 	_update_github_bridge_status(session)
 	_bind_activity_log()
 	var activity_root: Variant = session.get("activity_log", {})
@@ -554,6 +559,10 @@ func _on_request_succeeded(operation: StringName, path: String, data: Variant) -
 		if not _last_piece_snapshot.has(piece_id) or _last_piece_snapshot[piece_id] != current:
 			_log("PIECE_STATE_RECEIVED", {"piece_id": str(piece_id), "state": current})
 			piece_changed.emit(str(piece_id), current)
+	for previous_piece_id in _last_piece_snapshot:
+		if not current_pieces.has(previous_piece_id):
+			_log("PIECE_REMOVED_RECEIVED", {"piece_id": str(previous_piece_id)})
+			piece_removed.emit(str(previous_piece_id))
 	_last_piece_snapshot = current_pieces.duplicate(true)
 
 
@@ -624,7 +633,11 @@ func _process_pending_github_jobs(session: Dictionary) -> void:
 	if not _github_jobs_enabled or game_definition.is_empty():
 		return
 	var result := GITHUB_JOBS_TRANSPORT.process_pending(
-		session, _github_client_id, _mcp_command_processor, game_definition, int(Time.get_unix_time_from_system())
+		session,
+		_github_client_id,
+		_mcp_command_processor,
+		game_definition,
+		int(Time.get_unix_time_from_system())
 	)
 	if not bool(result.get("should_patch_lease", false)):
 		return
@@ -633,7 +646,10 @@ func _process_pending_github_jobs(session: Dictionary) -> void:
 	if patch.has("github_lease"):
 		_last_session["github_lease"] = patch["github_lease"]
 		_update_github_bridge_status(_last_session)
-	_log("GITHUB_JOBS_PROCESSED", {"client_id": _github_client_id, "processed": int(result.get("processed", 0))})
+	_log(
+		"GITHUB_JOBS_PROCESSED",
+		{"client_id": _github_client_id, "processed": int(result.get("processed", 0))}
+	)
 
 
 func _update_github_bridge_status(session: Dictionary) -> void:

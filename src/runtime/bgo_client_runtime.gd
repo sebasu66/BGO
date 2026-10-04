@@ -96,6 +96,11 @@ func _refresh_session_header() -> void:
 		return
 	var game: Dictionary = game_definition.get("game", {})
 	var profile_key := _current_profile_key()
+	var turn_number := 0
+	var active_player_label := ""
+	if _runtime_session != null and _runtime_session.gameplay_state != null:
+		turn_number = _runtime_session.turn_number()
+		active_player_label = _runtime_session.active_participant_id().replace("_", " ")
 	var profile_label := "SPECTATOR"
 	var profile_icon := "eye"
 	var profile_color := Color(0.72, 0.75, 0.78)
@@ -117,10 +122,25 @@ func _refresh_session_header() -> void:
 				"profile_label": profile_label,
 				"profile_icon": profile_icon,
 				"profile_color": profile_color,
-				"turn_number": 0,
+				"turn_number": turn_number,
+				"active_player_label": active_player_label,
 			}
 		)
 	)
+
+
+func _on_session_loaded(data: Dictionary) -> void:
+	super._on_session_loaded(data)
+	var loaded := _runtime_session.load_session(game_id, game_definition, data)
+	if bool(loaded.get("ok", false)):
+		get_node("/root/G").bind_runtime(_runtime_session.gameplay_state)
+		_refresh_session_header()
+		return
+	var reason := str(loaded.get("reason", "logical_session_load_failed"))
+	if reason == "stale_remote_state":
+		return
+	logger.error("LOGICAL_SESSION_LOAD_REJECTED", {"reason": reason})
+	_set_status("Logical session rejected · %s" % reason)
 
 
 func _current_profile_key() -> String:

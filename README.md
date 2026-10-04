@@ -79,7 +79,7 @@ This chain is a migration seam, not a pattern to extend. New camera, networking,
 
 Runtime inheritance is one-way: a parent layer may call only methods declared by itself or an ancestor. It must never depend on a method first introduced by a child. After moving or renaming GDScript files, or changing class_name/inheritance, validate once from a clean .godot cache because stale class metadata can hide an invalid dependency direction.
 
-`Logical_client_runtime.gd` contains the structured logical-session path while that path is integrated deliberately.
+The production runtime composes `RuntimeSessionAdapter`, which loads shared match snapshots into the canonical `SessionState` + `FlowState` + `GameplayState` model. There is no second logical-client entry path.
 
 ## Runtime rules
 

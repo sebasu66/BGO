@@ -1,10 +1,13 @@
 extends "res://src/runtime/client_runtime_composition.gd"
 
+const LOGICAL_SESSION_REPOSITORY = preload("res://src/network/logical_game_session_repository.gd")
 const PLAYER_HAND_CONTROLLER = preload("res://src/runtime/player_hand_controller.gd")
 const PLAYER_UI_CONTROLLER = preload("res://src/runtime/player_ui_controller.gd")
+const RUNTIME_SESSION_ADAPTER = preload("res://src/runtime/runtime_session_adapter.gd")
 
 var _player_hand_controller := PLAYER_HAND_CONTROLLER.new()
 var _player_ui_controller := PLAYER_UI_CONTROLLER.new()
+var _runtime_session: RuntimeSessionAdapter = RUNTIME_SESSION_ADAPTER.new()
 
 
 func _set_mode(mode: String) -> void:
@@ -261,7 +264,7 @@ func _reflow_collection(holder: String, location_type: String) -> void:
 
 
 func _connect_session() -> void:
-	repository = GameSessionRepository.new()
+	repository = LOGICAL_SESSION_REPOSITORY.new()
 	add_child(repository)
 	repository.set_logger(logger)
 	if not game_definition.is_empty():

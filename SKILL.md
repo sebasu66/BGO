@@ -138,7 +138,7 @@ At typed plug-in boundaries prefer explicit collection types. Console.parse_line
 
 Firebase Functions CI targets Node 22. If a newer local Node/npm resolves the lockfile differently, reproduce the CI-compatible toolchain before changing valid backend code; npm 10 correctly installed the Firebase database type packages that npm 11 omitted locally in this integration.
 
-`src/demo/` now contains only real demo/prototype behavior. `logical_client_runtime.gd` is the structured logical-session implementation path and remains explicit while its activation is integrated deliberately.
+`src/demo/` now contains only real demo/prototype behavior. The production runtime directly composes `RuntimeSessionAdapter` and loads every shared match snapshot into the canonical `SessionState` + `FlowState` + `GameplayState` model. Do not reintroduce a second logical-client runtime entry path; continue migrating remaining UI mutations onto that same command/state path.
 
 ### Web export contract
 

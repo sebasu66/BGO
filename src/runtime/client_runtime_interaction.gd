@@ -238,52 +238,14 @@ func _on_piece_tapped(piece: Node3D) -> void:
 		_set_status("Selected %s" % piece.name)
 
 
-func _pick_up_piece(piece: Node3D) -> void:
-	var piece_id := str(piece.get_meta("entity_id"))
-	var target := _hand_world_position(player_id, piece_id)
-
-	# Publish the destination first; animate locally immediately after.
-	repository.pickup_piece(piece_id, player_id)
-	logger.info(
-		"PICKUP_REQUESTED",
-		{"piece_id": piece_id, "duration": MOVE_DURATION, "target": _vec3_payload(target)}
-	)
-
-	piece.set_meta("holder_id", player_id)
-	piece.set_meta("location_type", "hand")
-	_select_piece(piece)
-	_animate_piece(piece, target, "pickup")
-	_refresh_hand_strip()
-	_set_status("Picked up %s Â· moving to PLAYER 1 area" % piece.name)
-	_set_debug("pickup â†’ hand: %s" % piece.name)
+## Implemented by the gameplay layer. The base runtime holds no gameplay writes.
+func _pick_up_piece(_piece: Node3D) -> void:
+	pass
 
 
-func _place_selected_piece(destination: Vector2i) -> void:
-	if selected_piece == null:
-		return
-	var piece := selected_piece
-	var piece_id := str(piece.get_meta("entity_id"))
-	var target := _cell_world(destination) + Vector3(0, 0.35, 0)
-
-	repository.place_piece(piece_id, player_id, destination)
-	logger.info(
-		"PLACE_REQUESTED",
-		{
-			"piece_id": piece_id,
-			"cell": _cell_payload(destination),
-			"duration": MOVE_DURATION,
-			"target": _vec3_payload(target)
-		}
-	)
-
-	piece.set_meta("holder_id", "")
-	piece.set_meta("location_type", "board")
-	piece.set_meta("cell", destination)
-	_animate_piece(piece, target, "place")
-	selected_piece = null
-	_refresh_hand_strip()
-	_set_status("Placed %s at %s" % [piece.name, destination])
-	_set_debug("place cell: %s" % destination)
+## Implemented by the gameplay layer. The base runtime holds no gameplay writes.
+func _place_selected_piece(_destination: Vector2i) -> void:
+	pass
 
 
 func _create_board() -> void:
@@ -366,6 +328,7 @@ func _connect_session() -> void:
 	repository.session_error.connect(_on_session_error)
 	repository.github_bridge_status_changed.connect(_on_github_bridge_status_changed)
 	repository.piece_changed.connect(_on_piece_changed)
+	repository.piece_removed.connect(_on_piece_removed)
 	repository.start(game_id)
 	_set_status("Connecting to Firebase /games/%s â€¦" % game_id)
 
@@ -409,5 +372,15 @@ func _on_piece_changed(piece_id: String, piece_data: Dictionary) -> void:
 	if client_role == ROLE_DISPLAY:
 		_desired_focus = _target_world_position(piece_id, piece_data, cell)
 		_focus_release_at = Time.get_ticks_msec() / 1000.0 + 2.4
+	if client_role == ROLE_PLAYER:
+		_refresh_hand_strip()
+
+
+func _on_piece_removed(piece_id: String) -> void:
+	if pieces.has(piece_id):
+		var piece := pieces[piece_id] as Node3D
+		if piece != null:
+			piece.queue_free()
+		pieces.erase(piece_id)
 	if client_role == ROLE_PLAYER:
 		_refresh_hand_strip()
