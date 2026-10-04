@@ -7,7 +7,7 @@ const MAX_BUFFER_ENTRIES := 250
 const WEB_POLL_SECONDS := 0.25
 const LEVEL_PRIORITY := {"debug": 10, "info": 20, "warning": 30, "error": 40}
 
-var game_id := "TEST001"
+var game_id := "TEST002"
 var client_id := "unknown"
 var firebase_enabled := true
 var console_enabled := true

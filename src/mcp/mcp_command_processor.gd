@@ -13,7 +13,11 @@ const PUBLIC_API_DISCOVERY = preload("res://src/mcp/public_api_discovery.gd")
 func process(
 	command: Dictionary, session_snapshot: Dictionary, game_definition: Dictionary
 ) -> Dictionary:
-	var activity_log: Node = Engine.get_main_loop().root.get_node_or_null("BgoActivityLog") if Engine.get_main_loop() != null else null
+	var activity_log: Node = (
+		Engine.get_main_loop().root.get_node_or_null("BgoActivityLog")
+		if Engine.get_main_loop() != null
+		else null
+	)
 	if activity_log != null:
 		activity_log.record_invocation("System.processCommand", "mcp", command.get("context", {}))
 	var context: Dictionary = command.get("context", {})
@@ -107,7 +111,7 @@ func _restore_gameplay(
 ) -> GameplayState:
 	var participant_id := str(context.get("participant_id", ""))
 	var session := SessionState.create_lobby(
-		str(context.get("session_id", "TEST001")), participant_id
+		str(context.get("session_id", "TEST002")), participant_id
 	)
 	if not session.assign_participant(participant_id, "host", "player"):
 		return null

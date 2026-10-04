@@ -5,7 +5,7 @@ const DEFAULT_PRESENCE_COMPONENT := "bgo.player_presence.basic_mask"
 const POSE_PUBLISH_SECONDS := 0.5
 const PRESENCE_TIMEOUT_SECONDS := 3.0
 
-var game_id := "TEST001"
+var game_id := "TEST002"
 var client_role := "display"
 var local_player_id := "player_1"
 var definitions: Dictionary = {}
@@ -195,7 +195,7 @@ func _read_launch_options() -> void:
 		)
 		game_id = str(
 			JavaScriptBridge.eval(
-				"new URLSearchParams(window.location.search).get('game') || 'TEST001'", true
+				"new URLSearchParams(window.location.search).get('game') || 'TEST002'", true
 			)
 		)
 		local_player_id = str(

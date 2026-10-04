@@ -159,7 +159,7 @@ func _make_hand_test_preview(_item: Dictionary) -> Node3D:
 func _test_mcp_prototype_access_policy() -> void:
 	var owner: Dictionary = MCP_PROTOTYPE_ACCESS_POLICY.bind_context("", "player_1", "player")
 	_check(owner.auth_mode == "dev_direct_no_auth", "MCP prototype declares no-auth DEV mode")
-	_check(owner.session_id == "TEST001", "MCP prototype binds the default session")
+	_check(owner.session_id == "TEST002", "MCP prototype binds the default session")
 	_check(
 		MCP_PROTOTYPE_ACCESS_POLICY.can_execute(owner, "game.execute_action", "player_1"),
 		"MCP owner may control an owned object"

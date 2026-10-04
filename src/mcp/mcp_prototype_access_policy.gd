@@ -5,7 +5,7 @@ extends RefCounted
 ## not authentication and must remain DEV-only until pairing/OAuth exist.
 
 const AUTH_MODE := "dev_direct_no_auth"
-const DEFAULT_SESSION_ID := "TEST001"
+const DEFAULT_SESSION_ID := "TEST002"
 
 const READ_ACTIONS: Array[String] = [
 	"session.get_context",

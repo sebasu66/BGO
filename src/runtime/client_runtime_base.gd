@@ -3,7 +3,7 @@ extends Node3D
 const GRID_COLUMNS := 8
 const GRID_ROWS := 6
 const CELL_SIZE := 1.2
-const GAME_ID_DEFAULT := "TEST001"
+const GAME_ID_DEFAULT := "TEST002"
 const ROLE_DISPLAY := "display"
 const ROLE_PLAYER := "player"
 const MODE_PICK_UP := "pick_up"
@@ -87,7 +87,7 @@ func _create_hud() -> void:
 	$UI.add_child(_status_label)
 
 	if client_role == ROLE_DISPLAY:
-		hint_label.text = "Shared display · Firebase TEST001"
+		hint_label.text = "Shared display · Firebase TEST002"
 		return
 
 	hint_label.text = (
@@ -312,7 +312,7 @@ func _read_launch_options() -> void:
 			"new URLSearchParams(window.location.search).get('role') || 'display'", true
 		)
 		var game_value = JavaScriptBridge.eval(
-			"new URLSearchParams(window.location.search).get('game') || 'TEST001'", true
+			"new URLSearchParams(window.location.search).get('game') || 'TEST002'", true
 		)
 		var player_value = JavaScriptBridge.eval(
 			"new URLSearchParams(window.location.search).get('player') || 'player_1'", true

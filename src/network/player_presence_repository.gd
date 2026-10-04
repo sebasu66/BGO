@@ -4,7 +4,7 @@ extends Node
 signal players_received(players: Dictionary)
 signal presence_error(message: String)
 
-var game_id := "TEST001"
+var game_id := "TEST002"
 var poll_interval_seconds := 1.0
 
 var _adapter: FirebaseRestAdapter

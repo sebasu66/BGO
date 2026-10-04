@@ -1,0 +1,36 @@
+{
+  "schema": "bgo.game",
+  "schema_version": 1,
+  "game": { "id": "test002", "name": "BGO Miniature Test", "min_players": 2, "max_players": 2, "turn_based": true },
+  "flow": { "initial_phase": "main", "turn_order": "round_robin", "turn_end": "manual" },
+  "listeners": [],
+  "table": {
+    "width": 15.5,
+    "depth": 9.8,
+    "instances": [
+      {
+        "id": "main_board",
+        "component": "bgo.board.checkered",
+        "config": {
+          "columns": 8,
+          "rows": 8,
+          "cell_size": 1.2,
+          "grid_cell_size_cm": 5.0,
+          "grid_points_per_unit": 5,
+          "grid_virtual_infinite": true
+        },
+        "placement": { "position": { "x": 0.0, "y": 0.0, "z": 0.0 } }
+      }
+    ]
+  },
+  "players": [
+    { "id": "player_1", "name": "Player 1", "color": "#F2B837", "presence": { "component": "bgo.player_presence.basic_mask", "config": {} }, "hand": { "visibility": "owner_face_others_hidden" } },
+    { "id": "player_2", "name": "Player 2", "color": "#4DB7F2", "presence": { "component": "bgo.player_presence.basic_mask", "config": {} }, "hand": { "visibility": "owner_face_others_hidden" } }
+  ],
+  "setup": {
+    "asset_box": { "id": "game_box", "label": "MINIATURES" },
+    "objects": [
+      { "id": "dracula", "component": "bgo.piece.miniature", "owner_id": "", "quantity": 1, "config": { "representation_manifest": "assets/runtime/miniatures/dracula/representation.json", "model_scale": 1.0, "color_source": "fixed", "color": "#7B1E3A" }, "initial_location": { "type": "slot", "slot_id": "board:3:4" } }
+    ]
+  }
+}
