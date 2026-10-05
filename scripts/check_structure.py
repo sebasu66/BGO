@@ -35,8 +35,9 @@ for required in (
     "games/test001/game.jsonh",
     "tests/test_runner.gd",
     "AGENTS.md",
-    "docs/IMPLEMENTATION_ROADMAP.md",
-    "docs/UI_PLUGIN_STACK.md",
+    "README.md",
+    "TODO.md",
+    "SKILL.md",
 ):
     require(required)
 

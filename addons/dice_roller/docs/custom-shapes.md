@@ -2,7 +2,7 @@
 
 Step by step tutorial on how to add a new dice shape.
 It is based on the process followed to add the D12 dice.
-Check [its documention](../addons/dice_roller/dice/d12_dice/d12-derivations.md)
+Check [its documention](../dice/d12_dice/d12-derivations.md)
 for more information about formulas and dimensions.
 
 ## Project setup

@@ -326,7 +326,6 @@ Use these ownership boundaries:
 - `tests/` Ã¢â‚¬â€ focused automated/domain tests and test runner support;
 - `games/` Ã¢â‚¬â€ declarative fixture/game definitions, never internal implementation paths;
 - `hosting/` Ã¢â‚¬â€ static Firebase Hosting source surfaces outside the Godot runtime/PCK;
-- `docs/` Ã¢â‚¬â€ authoritative architecture, roadmap, UX and deployment documentation;
 - `backend/functions/` Ã¢â‚¬â€ Firebase HTTPS Functions/MCP backend; separate from Godot `src/`.
 - `assets/source/` Ã¢â‚¬â€ original source material ignored by Godot; `assets/authoring/` is authoring-only and excluded from Web; `assets/runtime/` is shippable.
 - `scripts/` Ã¢â‚¬â€ development/build tooling, not runtime domain behavior.
@@ -366,7 +365,7 @@ Do not proliferate parallel status documents. Current project truth has three ma
 - `TODO.md`: current tasks, blockers and next steps;
 - `SKILL.md`: this coding-agent contract, workflow and engineering policy.
 
-Material under `docs/`, plus legacy `AGENTS.md`, `AI_BACKLOG.md` and `CHANGES.md`, is reference/history unless README or TODO explicitly points to it for a specialized contract. When architecture or project state changes, update README/TODO/SKILL rather than creating another status file.
+The former `docs/` folder no longer exists (it was folded into README and TODO). `AGENTS.md` is only a pointer, and `AI_BACKLOG.md` and `CHANGES.md` are reference/history unless README or TODO explicitly points to them. When architecture or project state changes, update README/TODO/SKILL rather than creating another status file.
 
 The project-status dashboard is an operational projection generated for DEV visibility; it is not another source of project truth.
 
