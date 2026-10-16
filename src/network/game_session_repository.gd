@@ -19,6 +19,8 @@ var logger: BgoLogger
 var game_definition: Dictionary = {}
 
 var _adapter: FirebaseRestAdapter
+var _auth: FirebaseAnonymousAuth
+var _unseeded_members: Dictionary = {}
 var _poll_timer: Timer
 var _last_piece_snapshot: Dictionary = {}
 var _poll_in_flight := false
@@ -134,8 +136,45 @@ func start(target_game_id: String = DEFAULT_GAME_ID) -> void:
 	game_id = target_game_id
 	_bind_activity_log()
 	_log("SESSION_START", {"path": _game_path(), "poll_seconds": poll_interval_seconds})
+	if FirebaseConfig.web_api_key().is_empty():
+		_begin_sync()
+		return
+	_join_with_anonymous_auth()
+
+
+func _begin_sync() -> void:
 	refresh()
 	_poll_timer.start()
+
+
+func _join_with_anonymous_auth() -> void:
+	if _auth == null:
+		_auth = FirebaseAnonymousAuth.new()
+		add_child(_auth)
+		_auth.signed_in.connect(_on_auth_signed_in)
+		_auth.sign_in_failed.connect(_on_auth_failed)
+	_auth.sign_in()
+
+
+func _members_path(member_uid: String) -> String:
+	return "%s/members/%s" % [_game_path(), member_uid]
+
+
+func _on_auth_signed_in(member_uid: String) -> void:
+	_log("AUTH_SIGNED_IN", {"uid": member_uid})
+	_adapter.write(_members_path(member_uid), true)
+
+
+func _on_auth_failed(message: String) -> void:
+	_log("AUTH_FAILED", {"message": message}, "error")
+	session_error.emit("Firebase sign-in failed: %s" % message)
+
+
+static func is_unseeded_session(data: Variant) -> bool:
+	if not data is Dictionary:
+		return false
+	var dictionary: Dictionary = data
+	return dictionary.size() == 1 and dictionary.has("members")
 
 
 ## Refreshes repository state from the remote source.
@@ -149,6 +188,10 @@ func refresh() -> void:
 ## Ensures the development demo session exists with valid initial state.
 func ensure_demo_session() -> void:
 	var initial := _initial_session()
+	if FirebaseSession.is_signed_in():
+		var members := _unseeded_members.duplicate(true)
+		members[FirebaseSession.uid] = true
+		initial["members"] = members
 	_log("FIREBASE_WRITE", {"operation": "seed", "path": _game_path()})
 	_adapter.write(_game_path(), initial)
 
@@ -508,10 +551,20 @@ func _game_path() -> String:
 
 
 func _on_request_succeeded(operation: StringName, path: String, data: Variant) -> void:
+	if (
+		operation == &"write"
+		and FirebaseSession.is_signed_in()
+		and path == _members_path(FirebaseSession.uid)
+	):
+		_log("SESSION_JOINED", {"path": path})
+		_begin_sync()
+		return
 	if operation != &"read" or path != _game_path():
 		return
 	_poll_in_flight = false
-	if data == null:
+	if is_unseeded_session(data):
+		_unseeded_members = (data as Dictionary).get("members", {}).duplicate(true)
+	if data == null or is_unseeded_session(data):
 		_log("SESSION_MISSING", {"path": path}, "warning")
 		session_missing.emit()
 		return

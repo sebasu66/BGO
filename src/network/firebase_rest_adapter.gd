@@ -43,9 +43,8 @@ func _send(
 	request.request_completed.connect(_on_request_completed.bind(request))
 
 	var headers := PackedStringArray(["Content-Type: application/json"])
-	var error := request.request(
-		FirebaseConfig.database_path(path, auth_token), headers, method, body
-	)
+	var token := auth_token if not auth_token.is_empty() else FirebaseSession.id_token
+	var error := request.request(FirebaseConfig.database_path(path, token), headers, method, body)
 	if error != OK:
 		_requests.erase(request)
 		request.queue_free()
