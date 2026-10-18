@@ -31,7 +31,7 @@ Last updated: 2026-10-05. Branch: `feature/github-transport-ai-timeline`; `origi
 - [ ] Wire the grid code to the product (see G6, G7, G8 in `src/components/table/MODULE.md`): `object.drop`, `container.put_inside`, `container.take_out` verbs; filter `hands` and `events` per viewer.
 - [ ] Test the table through MCP with the real game (a real seat: zone + hand + presence). The per-seat player zone creation is still to do.
 - [ ] Linter: cyclomatic complexity (`gdradon`), Godot warnings as errors (unused variable, parameter, signal, unreachable code) for `table/` and `player/`, unused private functions in `check_structure.py`.
-- [ ] Decide what to do with the stray `src/components/slot/` (two `.tscn`, looks like a duplicate of `table/slots`). Ask the owner before deleting.
+- [x] Deleted the stray `src/components/slot/` (two unreferenced `.tscn`) with the owner's OK; Git history keeps them.
 - [ ] Make the project test command use `scripts/run_tests.py` in `AGENTS.md`, `SKILL.md` and CI.
 - [ ] Wire `TableVisibility.snapshot_for_viewer` into the real client and MCP snapshots.
 
