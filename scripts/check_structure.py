@@ -215,6 +215,87 @@ for core_path in sorted((ROOT / "src/core").rglob("*.gd")):
         else:
             fail(f"{rel}: core domain must not depend directly on Firebase/network adapters")
 
+# Component anatomy (SKILL.md, "Self-contained components"): a component listed here owns
+# its model, controller, view, version, tests, texts (i18n) and log, all inside its folder.
+# Add a component to this list when you bring it up to the standard; never remove one.
+SELF_CONTAINED_COMPONENTS = ("src/components/table",)
+for component_folder in SELF_CONTAINED_COMPONENTS:
+    folder = ROOT / component_folder
+    name = folder.name
+    manifest_file = folder / "component.jsonh"
+    version = ""
+    if manifest_file.exists():
+        version = str(json.loads(manifest_file.read_text(encoding="utf-8")).get("version", ""))
+    if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+        fail(f"{component_folder}: component.jsonh needs a semantic 'version' such as 0.1.0")
+    for required_file in ("MODULE.md", f"{name}.gd", f"{name}.tscn", f"{name}_texts.gd", f"{name}_log.gd"):
+        if not (folder / required_file).exists():
+            fail(f"{component_folder}: self-contained component is missing {required_file}")
+    if not list((folder / "tests").glob("*_test.gd")):
+        fail(f"{component_folder}: self-contained component needs tests/*_test.gd")
+    if not list(folder.glob("*_state.gd")):
+        fail(f"{component_folder}: self-contained component needs its model (*_state.gd)")
+
+# "Super-readable code" (SKILL.md): names that read like English, short functions.
+# Code listed in READABLE_STRICT must follow the rules (errors). All other code is only
+# counted, so the debt stays visible without blocking unrelated work. Move a path into
+# READABLE_STRICT when you clean it up; never remove one.
+READABLE_STRICT = (
+    "src/components/table/",
+    "src/runtime/table_state_controller.gd",
+)
+READABLE_SHORT_NAMES_ALLOWED = {"x", "y", "z", "i", "id", "ui", "uv", "to", "at", "up"}
+READABLE_BANNED_ABBREVIATIONS = {
+    "tmp", "temp", "cfg", "mgr", "idx", "cnt", "ctx", "val", "res", "ret",
+    "arr", "dict", "obj", "msg", "btn", "num", "str_val", "param", "params",
+}
+READABLE_MAX_FUNCTION_LINES = 30
+declared_name_pattern = re.compile(r"^\s*(?:static\s+)?var\s+(\w+)")
+function_start_pattern = re.compile(r"^(?:static\s+)?func\s+(\w+)\s*\(([^)]*)\)")
+readable_findings: dict[str, list[str]] = {}
+for gd_path in sorted((ROOT / "src").rglob("*.gd")):
+    rel_path = gd_path.relative_to(ROOT).as_posix()
+    found: list[str] = []
+    function_name = ""
+    function_start = 0
+    lines = gd_path.read_text(encoding="utf-8").splitlines()
+    for line_number, line in enumerate(lines + ["func _end_marker():"], start=1):
+        header = function_start_pattern.match(line)
+        if header or line.startswith("func "):
+            if function_name and line_number - function_start > READABLE_MAX_FUNCTION_LINES:
+                found.append(
+                    f"{rel_path}:{function_start}: function '{function_name}' has "
+                    f"{line_number - function_start} lines; keep it under {READABLE_MAX_FUNCTION_LINES}"
+                )
+            function_name = header.group(1) if header else ""
+            function_start = line_number
+        names = []
+        declared = declared_name_pattern.match(line)
+        if declared:
+            names.append(declared.group(1))
+        if header:
+            for parameter in header.group(2).split(","):
+                parameter_name = parameter.strip().split(":")[0].split("=")[0].strip()
+                if parameter_name:
+                    names.append(parameter_name)
+        for name in names:
+            bare = name.lstrip("_")
+            if bare.startswith("p_"):
+                bare = bare[2:]
+            if (len(bare) < 3 and bare not in READABLE_SHORT_NAMES_ALLOWED) or bare in READABLE_BANNED_ABBREVIATIONS:
+                found.append(f"{rel_path}:{line_number}: name '{name}' is not readable English")
+    if found:
+        readable_findings[rel_path] = found
+readable_debt = 0
+for rel_path, found in readable_findings.items():
+    if any(rel_path.startswith(prefix) for prefix in READABLE_STRICT):
+        for finding in found:
+            fail(f"readability: {finding}")
+    else:
+        readable_debt += len(found)
+if readable_debt:
+    warn(f"{readable_debt} readability findings outside READABLE_STRICT (tracked debt, see SKILL.md)")
+
 if (ROOT / "build/web/index.html").exists():
     warn("build/web exists in the checkout. Treat it as generated output; source changes belong outside build/.")
 

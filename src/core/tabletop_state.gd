@@ -4,6 +4,12 @@ extends RefCounted
 
 const TABLE_GRID_STATE = preload("res://src/core/table_grid_state.gd")
 const ASSET_BOX_STATE = preload("res://src/core/asset_box_state.gd")
+const TABLE_CONFIG_STATE = preload("res://src/components/table/table_config_state.gd")
+const VISIBILITIES := ["public", "private"]
+const ANCHOR_KINDS := ["table", "zone", "board", "card"]
+
+## Table-wide settings: placement mode, surface look and lights.
+var config = TABLE_CONFIG_STATE.new()
 
 ## Named logical tabletop sections keyed by stable section id.
 var sections: Dictionary = {}
@@ -99,12 +105,17 @@ func add_zone(zone_id: String, section_id: String, definition: Dictionary = {}) 
 	var bounds: Dictionary = definition.get("bounds", {})
 	if not bounds.is_empty() and not _valid_bounds(bounds):
 		return false
+	var visibility := str(definition.get("visibility", "public"))
+	if visibility not in VISIBILITIES:
+		return false
 	zones[zone_id] = {
 		"section_id": section_id,
 		"slot_ids": [],
 		"placement_mode": placement_mode,
 		"bounds": bounds.duplicate(true),
 		"accepted_kinds": _strings(definition.get("accepted_kinds", [])),
+		"visibility": visibility,
+		"owner_id": str(definition.get("owner_id", "")),
 	}
 	var zone_ids: Array = sections[section_id]["zone_ids"]
 	zone_ids.append(zone_id)
@@ -120,6 +131,9 @@ func add_slot(
 	var pose: Dictionary = definition.get("pose", {})
 	if not pose.is_empty() and not _valid_pose(pose):
 		return false
+	var anchor: Variant = definition.get("anchor", {})
+	if not anchor is Dictionary or not _valid_anchor(anchor):
+		return false
 	slots[slot_id] = {
 		"zone_id": zone_id,
 		"capacity": capacity,
@@ -127,9 +141,46 @@ func add_slot(
 		"accepted_kinds": _strings(definition.get("accepted_kinds", [])),
 		"accepted_components": _strings(definition.get("accepted_components", [])),
 		"pose": pose.duplicate(true),
+		"anchor": (anchor as Dictionary).duplicate(true),
 	}
 	var slot_ids: Array = zones[zone_id]["slot_ids"]
 	slot_ids.append(slot_id)
+	return true
+
+
+## Removes an empty slot from its zone.
+func remove_slot(slot_id: String) -> bool:
+	if not slots.has(slot_id) or not (slots[slot_id]["occupants"] as Array).is_empty():
+		return false
+	var slot_ids: Array = zones[str(slots[slot_id]["zone_id"])]["slot_ids"]
+	slot_ids.erase(slot_id)
+	slots.erase(slot_id)
+	return true
+
+
+## Marks a zone public or private. Private contents are hidden from other players by the view layer.
+func set_zone_visibility(zone_id: String, visibility: String) -> bool:
+	if not zones.has(zone_id) or visibility not in VISIBILITIES:
+		return false
+	zones[zone_id]["visibility"] = visibility
+	return true
+
+
+## Changes a zone's width (x) and depth (z) while keeping its center.
+## Refused when a placed free object would end up outside the new bounds.
+func resize_zone(zone_id: String, width: float, depth: float) -> bool:
+	if not zones.has(zone_id) or width <= 0.0 or depth <= 0.0:
+		return false
+	var zone: Dictionary = zones[zone_id]
+	var bounds: Dictionary = (zone["bounds"] as Dictionary).duplicate(true)
+	bounds["size"] = {"x": width, "z": depth}
+	if not bounds.has("center"):
+		bounds["center"] = {"x": 0.0, "z": 0.0}
+	for object_id in object_poses:
+		var placed: Dictionary = object_poses[object_id]
+		if str(placed["zone_id"]) == zone_id and not _pose_inside_bounds(placed["pose"], bounds):
+			return false
+	zone["bounds"] = bounds
 	return true
 
 
@@ -208,7 +259,9 @@ func place_object_free(
 	if object_id.is_empty() or is_placed(object_id) or not zones.has(zone_id):
 		return false
 	var zone: Dictionary = zones[zone_id]
-	if str(zone["placement_mode"]) == "slots_only" or not _valid_pose(pose):
+	if config.is_closed() or str(zone["placement_mode"]) == "slots_only":
+		return false
+	if not _valid_pose(pose):
 		return false
 	var accepted_kinds: Array = zone["accepted_kinds"]
 	if not accepted_kinds.is_empty() and not accepted_kinds.has(component_kind):
@@ -262,7 +315,7 @@ func place_object_at_grid(
 	footprint: Vector2i = Vector2i.ONE,
 	allow_overlap: bool = false
 ) -> bool:
-	if object_id.is_empty() or is_placed(object_id):
+	if object_id.is_empty() or is_placed(object_id) or config.is_closed():
 		return false
 	return grid.place_object(object_id, origin, footprint, allow_overlap)
 
@@ -317,6 +370,7 @@ func to_dictionary() -> Dictionary:
 		"object_poses": object_poses.duplicate(true),
 		"grid": grid.to_dictionary(),
 		"asset_box": asset_box.to_dictionary(),
+		"config": config.to_dictionary(),
 	}
 
 
@@ -325,6 +379,9 @@ func load_dictionary(snapshot: Dictionary) -> bool:
 	for key in ["sections", "zones", "slots", "object_slots", "object_poses"]:
 		if not snapshot.get(key) is Dictionary:
 			return false
+	var saved_config: Variant = snapshot.get("config", {})
+	if not saved_config is Dictionary or not TABLE_CONFIG_STATE.new().load_dictionary(saved_config):
+		return false
 	_restore(snapshot)
 	return true
 
@@ -332,6 +389,22 @@ func load_dictionary(snapshot: Dictionary) -> bool:
 func _valid_bounds(bounds: Dictionary) -> bool:
 	var size: Dictionary = bounds.get("size", {})
 	return float(size.get("x", 0.0)) > 0.0 and float(size.get("z", 0.0)) > 0.0
+
+
+func _valid_anchor(anchor: Dictionary) -> bool:
+	if anchor.is_empty():
+		return true
+	if str(anchor.get("kind", "")) not in ANCHOR_KINDS:
+		return false
+	var cell: Variant = anchor.get("cell")
+	if cell == null:
+		return true
+	return (
+		cell is Array
+		and (cell as Array).size() == 2
+		and typeof(cell[0]) in [TYPE_INT, TYPE_FLOAT]
+		and typeof(cell[1]) in [TYPE_INT, TYPE_FLOAT]
+	)
 
 
 func _valid_pose(pose: Dictionary) -> bool:
@@ -374,3 +447,5 @@ func _restore(snapshot: Dictionary) -> void:
 	slots = snapshot["slots"].duplicate(true)
 	object_slots = snapshot["object_slots"].duplicate(true)
 	object_poses = snapshot["object_poses"].duplicate(true)
+	if snapshot.get("config") is Dictionary:
+		config.load_dictionary(snapshot["config"])

@@ -4,10 +4,19 @@ const LOGICAL_SESSION_REPOSITORY = preload("res://src/network/logical_game_sessi
 const PLAYER_HAND_CONTROLLER = preload("res://src/runtime/player_hand_controller.gd")
 const PLAYER_UI_CONTROLLER = preload("res://src/runtime/player_ui_controller.gd")
 const RUNTIME_SESSION_ADAPTER = preload("res://src/runtime/runtime_session_adapter.gd")
+const TABLE_STATE_CONTROLLER = preload("res://src/runtime/table_state_controller.gd")
 
+var _table_state_controller: BgoTableStateController
 var _player_hand_controller := PLAYER_HAND_CONTROLLER.new()
 var _player_ui_controller := PLAYER_UI_CONTROLLER.new()
 var _runtime_session: RuntimeSessionAdapter = RUNTIME_SESSION_ADAPTER.new()
+
+
+func _show_table_state(state: Dictionary) -> void:
+	if _table_state_controller == null:
+		var floor_mesh := get_node_or_null("InfiniteLightSurface") as MeshInstance3D
+		_table_state_controller = TABLE_STATE_CONTROLLER.new(self, floor_mesh)
+	_table_state_controller.show_snapshot(state)
 
 
 func _set_mode(mode: String) -> void:
@@ -23,9 +32,11 @@ func _ready() -> void:
 	if str((game_definition.get("runtime", {}) as Dictionary).get("mode", "match")) == "sandbox":
 		var game_api := get_node("/root/G")
 		game_api.runtime_changed.connect(_sync_sandbox_state)
+		game_api.runtime_changed.connect(_show_table_state)
 		var sandbox_result: Dictionary = game_api.start_sandbox()
 		if bool(sandbox_result.get("ok", false)):
 			_sync_sandbox_state(sandbox_result.get("state", {}))
+			_show_table_state(sandbox_result.get("state", {}))
 	var preview := get_node_or_null("EditorPreview")
 	if preview != null:
 		preview.queue_free()

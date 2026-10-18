@@ -8,6 +8,10 @@ static func build(game_definition: Dictionary) -> TabletopState:
 	if not tabletop.add_section("main"):
 		return null
 	var table: Dictionary = game_definition.get("table", {})
+	var config := TableConfigState.from_definition(table)
+	if config == null:
+		return null
+	tabletop.config = config
 	if not _add_areas(tabletop, table.get("areas", [])):
 		return null
 	var board := _find_board(game_definition, table)

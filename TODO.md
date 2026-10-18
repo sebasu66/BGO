@@ -19,6 +19,12 @@ Last updated: 2026-10-05. Branch: `feature/github-transport-ai-timeline`; `origi
 
 ## Progress log (newest first)
 
+### 2026-10-18
+- New standards in `SKILL.md`: **self-contained components (MVC)** and **super-readable code**. `scripts/check_structure.py` enforces them for the paths in `SELF_CONTAINED_COMPONENTS` and `READABLE_STRICT`; other code is only counted (112 findings = visible debt). Migrate a component by adding it to those lists.
+- First component built to the standard: `src/components/table/` (`bgo.table.basic` 0.1.0): table mode (`free`/`closed`), surface, lights, zone visibility/resize, anchored slots, host-only verbs (`table.*`, `zone.*`, `slot.*`), live view, English/Spanish texts, log, tests. Rules and open gaps are in its `MODULE.md`. Design: `docs/mesa.md` in the `general` repo.
+- BGO branches reduced to `develop`, `main`, `respaldo`, `codex/reactive-ui-dev`; `develop` pushed (Firebase anonymous auth + membership rules).
+- Next: surface PBR preset painting, private-zone filtering, slot world position from board cell, then the `g`/`m` terminal tree and the Onitama slice.
+
 ### 2026-10-04 and 2026-10-05
 
 - [x] Documentation consolidated: all 29 files of `docs/` (about 200 KB) were read, what is still true was moved into `README.md` and `TODO.md` after checking it against the code, and `docs/` was removed (Git history keeps the originals). Corrections made while checking: the README said 13 components and the real count is 14; capability verbs (`object.spawn`, lock, transfer) are declared in the catalog but not implemented; match sessions have no checkpoints or restore, and there is no inspect mode, semantic Web state, interaction profile or section camera preset yet; the MCP server exposes 12 tools at version 0.2.0; the live transport is full-session polling every 0.75 s. The third-party dice-roller docs (`usage.md`, `custom-shapes.md`) moved to `addons/dice_roller/docs/`; the empty Copilot audit placeholder and the docs index were deleted.

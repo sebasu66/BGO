@@ -13,4 +13,6 @@ Hard rules in one place (details in `SKILL.md` and `README.md`):
 - Core domain code never depends on rendering, Firebase or any single transport; every authoritative change goes through the one canonical command path.
 - Game packages are declarative data that reference stable component IDs; never download and execute remote code.
 - Deploy only with `firebase deploy --only hosting` (plus the named DEV MCP function exception); never an unrestricted `firebase deploy`. Promoting to PROD is the owner's decision.
+- Write super-readable code: names and structure that read like plain English, functions under 30 lines, no abbreviations (see `SKILL.md`, "Super-readable code"; `scripts/check_structure.py` enforces it).
+- Every component lives in its own folder under `src/components/` with its `component.jsonh`, `MODULE.md`, script and scene.
 - Do not pull later-phase work forward, add tests for public behavior, keep the quality gate green, and update `README.md` and `TODO.md` in the same change as the work.

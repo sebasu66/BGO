@@ -3,6 +3,7 @@ extends "res://tests/test_runner_base.gd"
 const COMPONENT_API_TEST = preload("res://tests/component_api_test.gd")
 const MINIATURE_RENDERING_TEST = preload("res://tests/miniature_rendering_test.gd")
 const PLAYER_AREA_LAYOUT_TEST = preload("res://tests/player_area_layout_test.gd")
+const TABLE_TEST = preload("res://src/components/table/tests/table_test.gd")
 
 
 func _initialize() -> void:
@@ -42,6 +43,7 @@ func _run() -> void:
 	ACTIVITY_LOG_PERSISTENCE_TEST.run(_check)
 	GAMEPLAY_STATE_TEST.run(_check)
 	PLAYER_AREA_LAYOUT_TEST.run(_check)
+	TABLE_TEST.run(_check)
 	await CONSOLE_COMMAND_BRIDGE_TEST.run(_check)
 	FLUENT_GAME_BUILDER_TEST.run(_check)
 	SANDBOX_STATE_TEST.run(_check)

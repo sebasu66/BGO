@@ -340,6 +340,45 @@ A backlog item should not restate naming, file paths, function-size limits, docu
 
 When a public behavior changes, add or update focused tests. Prefer making the correct implementation the easiest way to satisfy the acceptance tests and the policy linter.
 
+## Self-contained components (MVC)
+
+Every component follows model-view-controller and owns everything it needs inside its own folder under `src/components/`:
+
+| Part | File | Job |
+|---|---|---|
+| Model | `<name>_state.gd` | The logical state and its validation. No rendering, no network. |
+| Controller | `<name>_verbs.gd` (or `<name>_commands.gd`) | The commands that change the model, with permission checks. They emit events. |
+| View | `<name>.gd` + `<name>.tscn` | What is drawn. It only shows the model and never decides legality. |
+| Texts (i18n) | `<name>_texts.gd` | Every sentence a person can read, in every supported language. Code and logs use English snake_case reasons; people get the sentence. |
+| Log | `<name>_log.gd` | What the component records so a change can be traced. Logging must never break a command. |
+| Tests | `tests/<name>_test.gd` | Focused tests of the model, the commands, the view, the texts and the log. Registered in `tests/test_runner.gd`. |
+| Contract | `component.jsonh` with `"version": "x.y.z"` | Stable id, version, description. Bump the version when its contract changes. |
+| Rules | `MODULE.md` | The numbered rules, commands, gaps and questions for the owner. |
+
+Rules for classes in general:
+
+- One class per file, in the folder of the part of the system it belongs to, with a descriptive name that says what it is (`TableConfigState`, `TableStateController`).
+- `Main`, `App`, runtime and similar classes may exist, but only to **coordinate** other classes. They hold no game or domain logic; when one grows logic, extract it into a class named for that job and have the coordinator call it. This also applies to the migration chain in `src/runtime/`.
+- Anything shared by several components moves to `src/core/` only when two components really need it.
+- `tests/` at the repository root keeps only cross-cutting tests; a component's own tests live in its folder and are excluded from the Web export.
+
+Enforcement: `scripts/check_structure.py` checks every component listed in `SELF_CONTAINED_COMPONENTS` for the full anatomy above. Add a component to that list when you bring it up to the standard; never remove one. Existing components migrate when they are next touched, starting with those on the current roadmap slice.
+
+## Super-readable code
+
+The owner's standard for every line of code: **code reads like plain English**. Someone who does not know GDScript should be able to follow what happens by reading the names. This is the main style rule, above cleverness and above brevity.
+
+- Name things for what they mean in the game, in full words: `remove_lights_that_are_no_longer_declared`, not `rm_lts`. No abbreviations (`cfg`, `tmp`, `idx`, `msg`, `btn`, `obj`) and no one- or two-letter names, except `x`, `y`, `z` and loop counters.
+- A function name is a verb phrase that says what it does; a yes/no function starts with `is_`, `has_` or `can_`. A call should read as a sentence: `table.set_zone_visibility(zone_id, "private")`.
+- One function does one thing. Keep functions under 30 lines. When a block needs a comment to explain what it does, make it a function whose name says it.
+- Prefer early returns with a plain reason over deep nesting. Name conditions: put `var is_host := ...` before the `if`, not a long expression inside it.
+- No magic numbers or strings. Give them a named constant: `MAX_LIGHT_INTENSITY`.
+- Comments explain *why*, never *what*. The code already says what.
+- Error reasons are English snake_case phrases (`host_only`, `invalid_mode`, `nothing_to_change`) that an AI or a person can read without a lookup table.
+- Verbs and events use dotted English: `table.set_mode`, `zone.visibility_changed`.
+
+Enforcement: `scripts/check_structure.py` checks names and function length. It is **strict** (blocking) for the paths listed in `READABLE_STRICT` and only **counts** findings elsewhere, so the older code is visible debt rather than a blocker. When you touch or create a file, bring it up to this standard and add its path to `READABLE_STRICT`; never remove a path from that list. The machine-enforced policy block above is the external AICI copy; moving these rules into it is a separate policy change.
+
 ## Maintainability rules
 
 Optimize for readable responsibilities, low coupling, explicit dependencies and testability rather than ceremony.

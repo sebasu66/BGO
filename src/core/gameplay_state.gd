@@ -4,6 +4,7 @@ extends RefCounted
 
 const HAND_STATE = preload("res://src/core/hand_state.gd")
 const COLLECTION_VERBS = preload("res://src/core/gameplay_collection_verbs.gd")
+const TABLE_VERBS = preload("res://src/components/table/table_verbs.gd")
 const EVENT_LIMIT := 256
 
 ## Active logical session governing permissions and turn state.
@@ -643,6 +644,7 @@ func _register_core_verbs() -> void:
 	register_verb("object.set_state", _set_state)
 	register_verb("turn.end", _end_turn)
 	register_verb("match.finish", _finish_match)
+	TABLE_VERBS.register(self)
 
 
 func _move_object(command: Dictionary) -> Dictionary:
