@@ -24,9 +24,11 @@ Last updated: 2026-10-05. Branch: `feature/github-transport-ai-timeline`; `origi
 - [x] Hierarchy applied: `grids/table_grid` -> `table/grid`, `slots/basic_slot` -> `table/slots`, `player_area` -> `player/area`, `hands/vertical_hand` -> `player/hand`, `player_presence` -> `player/presence`. Dependency goes one way: the player asks the table, the table never imports the player.
 - [x] `scripts/run_tests.py`: fails on any `SCRIPT ERROR`, compile failure or timeout. The plain Godot runner printed PASSED while two scripts did not compile, so a green count alone is not evidence.
 - [x] `SKILL.md`: tests must follow the real behavior (real game definition, real command path, real components), never invented stand-ins.
-- [ ] Rewrite `table_grid_test.gd` against a real game definition and the real command path (it still builds a `TabletopState` by hand). Do it with the `player/` seat below.
-- [ ] Create `src/components/player/` (seat = zone + hand + presence), then test the table with it and try it through MCP.
-- [ ] Download PBR textures from ambientCG and apply the surface presets (marble, wood, felt, metal).
+- [x] `table_grid_test.gd` rewritten: it loads `games/test001` with the real loader and adapter and changes it with the real verbs (`slot.add`, `table.set_mode`, `zone.set_visibility`, `object.move`, `turn.end`). Mutation check: breaking `TableVisibility` makes it fail.
+- [x] PBR presets from ambientCG (marble, wood, felt, metal) are painted on the floor; test per preset; switching back to no preset gives a plain floor (a bug the test found).
+- [x] Found: a script that fails to compile leaves the Godot test runner hanging instead of exiting. `scripts/run_tests.py` limits it to 120 s and reports the error. The runner itself should call `quit(1)` on failure.
+- [ ] Wire the grid code to the product (see G6, G7, G8 in `src/components/table/MODULE.md`): `object.drop`, `container.put_inside`, `container.take_out` verbs; filter `hands` and `events` per viewer.
+- [ ] Test the table through MCP with the real game (a real seat: zone + hand + presence). The per-seat player zone creation is still to do.
 - [ ] Linter: cyclomatic complexity (`gdradon`), Godot warnings as errors (unused variable, parameter, signal, unreachable code) for `table/` and `player/`, unused private functions in `check_structure.py`.
 - [ ] Decide what to do with the stray `src/components/slot/` (two `.tscn`, looks like a duplicate of `table/slots`). Ask the owner before deleting.
 - [ ] Make the project test command use `scripts/run_tests.py` in `AGENTS.md`, `SKILL.md` and CI.

@@ -13,7 +13,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_GODOT = r"C:\DEV\.tools\godot-4.7.1\Godot_v4.7.1-stable_win64_console.exe"
-TIME_LIMIT_SECONDS = 240
+TIME_LIMIT_SECONDS = 120  # a script error leaves the Godot runner hanging, so keep this short
 BAD_MARKERS = ("SCRIPT ERROR", "Compile Error", "Compilation failed", "BGO TESTS FAILED")
 
 

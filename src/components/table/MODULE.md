@@ -60,6 +60,9 @@ A game definition can set the starting values in its `table` block: `mode`, `sur
 - G2. (Partly done: `table_visibility.gd` filters a snapshot per viewer and is tested; it is not yet used by the real client or MCP snapshots.) A private zone is stored, but nothing yet hides its contents from other players. That is the per-client state filter.
 - G3. `zone.set_visibility` and `zone.resize` run on the table state, but the player area component does not yet redraw itself when its zone is resized.
 - G4. Anchored slots are stored with their anchor. The world does not yet compute their position from the board cell.
+- G6. `TableDropper`, `TableLocator`, `TableContainmentState` and `TableVisibility` are tested against the real game (`test001`) and real verbs, but the product does not call them yet. Today a drop goes through `object.move` and the grid magnet of `table/grid`; containment has no verbs (`container.put_inside`, `container.take_out`) and no one asks the locator. Wiring them to real verbs is the next slice.
+- G7. The viewer filter removes objects, slots and poses of a private zone, but the real snapshot also carries `hands` and the `events` history. Those can leak what the filter hides and must be filtered too.
+- G8. Only the active player may move (a real game rule). Players cannot arrange their own private zone out of turn; decide if the private zone is exempt.
 - G5. In `closed` mode `take_from_box` is refused when it drops onto the grid. A closed game must take objects into slots.
 
 ## Decided by the owner (2026-10-18)
