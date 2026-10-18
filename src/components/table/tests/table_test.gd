@@ -24,6 +24,7 @@ static func run(check: Callable) -> void:
 	_test_zone_and_slot_verbs(check)
 	_test_snapshot(check)
 	_test_live_view(check)
+	_test_surface_preset_is_painted(check)
 	_test_texts(check)
 	_test_log_and_version(check)
 
@@ -209,6 +210,26 @@ static func _test_live_view(check: Callable) -> void:
 	check.call(view.table_node().shown_light_ids() == only_sun, "the view drops a removed light")
 	view.show_snapshot({"tabletop": "garbage"})
 	check.call(view.table_node().shown_light_ids() == only_sun, "a garbage snapshot is ignored")
+	world.free()
+	floor_mesh.free()
+
+
+static func _test_surface_preset_is_painted(check: Callable) -> void:
+	var world := Node3D.new()
+	var floor_mesh := MeshInstance3D.new()
+	var view := BgoTableStateController.new(world, floor_mesh)
+	var game := _create_fixture()
+	for preset_name in TableSurfacePresets.known_presets():
+		game.execute(_command(HOST, "table.set_surface", {"preset": preset_name, "uv_scale": 3}))
+		view.show_snapshot(game.to_dictionary())
+		var painted := floor_mesh.material_override as StandardMaterial3D
+		var has_texture := painted != null and painted.albedo_texture != null
+		check.call(has_texture, "the %s preset paints a real texture" % preset_name)
+		check.call(painted.uv1_scale.x == 3.0, "the %s preset uses the texture scale" % preset_name)
+	game.execute(_command(HOST, "table.set_surface", {"preset": "", "tint": "#00ff00"}))
+	view.show_snapshot(game.to_dictionary())
+	var plain := floor_mesh.material_override as StandardMaterial3D
+	check.call(plain.albedo_texture == null, "no preset gives a plain tinted floor")
 	world.free()
 	floor_mesh.free()
 

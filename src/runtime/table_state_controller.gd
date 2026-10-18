@@ -36,9 +36,14 @@ func table_node() -> Node3D:
 func _paint_the_floor(surface: Dictionary) -> void:
 	if _floor == null:
 		return
-	var material := _floor.material_override as StandardMaterial3D
-	if material == null:
-		material = StandardMaterial3D.new()
-		_floor.material_override = material
 	var tint := Color.from_string(str(surface.get("tint", "#ffffff")), Color.WHITE)
-	material.albedo_color = tint
+	var uv_scale := float(surface.get("uv_scale", 1.0))
+	var preset_material := TableSurfacePresets.material_for(
+		str(surface.get("preset", "")), tint, uv_scale
+	)
+	if preset_material != null:
+		_floor.material_override = preset_material
+		return
+	var plain_material := StandardMaterial3D.new()
+	plain_material.albedo_color = tint
+	_floor.material_override = plain_material
