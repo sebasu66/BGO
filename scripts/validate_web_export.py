@@ -42,9 +42,9 @@ def main() -> None:
         "src/capabilities/capabilities.jsonh",
         "src/components/boards/checkered_board/component.jsonh",
         "src/components/pieces/basic_cylinder/component.jsonh",
-        "src/components/player_area/component.jsonh",
-        "src/components/player_presence/basic_mask/component.jsonh",
-        "src/components/slots/basic_slot/component.jsonh",
+        "src/components/player/area/component.jsonh",
+        "src/components/player/presence/basic_mask/component.jsonh",
+        "src/components/table/slots/component.jsonh",
     ]
     for resource_path in required_jsonh:
         if resource_path.encode("utf-8") not in pack_bytes:

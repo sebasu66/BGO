@@ -19,6 +19,19 @@ Last updated: 2026-10-05. Branch: `feature/github-transport-ai-timeline`; `origi
 
 ## Progress log (newest first)
 
+### 2026-10-18 (later)
+- [x] Table 0.2.0: 5 cm grid (`cell_size_cm`, `table.set_cell_size`), containment both ways, locator, magnet drop with closed-table refusal, private-zone snapshot filter. Rules T10-T13 in `src/components/table/MODULE.md`.
+- [x] Hierarchy applied: `grids/table_grid` -> `table/grid`, `slots/basic_slot` -> `table/slots`, `player_area` -> `player/area`, `hands/vertical_hand` -> `player/hand`, `player_presence` -> `player/presence`. Dependency goes one way: the player asks the table, the table never imports the player.
+- [x] `scripts/run_tests.py`: fails on any `SCRIPT ERROR`, compile failure or timeout. The plain Godot runner printed PASSED while two scripts did not compile, so a green count alone is not evidence.
+- [x] `SKILL.md`: tests must follow the real behavior (real game definition, real command path, real components), never invented stand-ins.
+- [ ] Rewrite `table_grid_test.gd` against a real game definition and the real command path (it still builds a `TabletopState` by hand). Do it with the `player/` seat below.
+- [ ] Create `src/components/player/` (seat = zone + hand + presence), then test the table with it and try it through MCP.
+- [ ] Download PBR textures from ambientCG and apply the surface presets (marble, wood, felt, metal).
+- [ ] Linter: cyclomatic complexity (`gdradon`), Godot warnings as errors (unused variable, parameter, signal, unreachable code) for `table/` and `player/`, unused private functions in `check_structure.py`.
+- [ ] Decide what to do with the stray `src/components/slot/` (two `.tscn`, looks like a duplicate of `table/slots`). Ask the owner before deleting.
+- [ ] Make the project test command use `scripts/run_tests.py` in `AGENTS.md`, `SKILL.md` and CI.
+- [ ] Wire `TableVisibility.snapshot_for_viewer` into the real client and MCP snapshots.
+
 ### 2026-10-18
 - New standards in `SKILL.md`: **self-contained components (MVC)** and **super-readable code**. `scripts/check_structure.py` enforces them for the paths in `SELF_CONTAINED_COMPONENTS` and `READABLE_STRICT`; other code is only counted (112 findings = visible debt). Migrate a component by adding it to those lists.
 - First component built to the standard: `src/components/table/` (`bgo.table.basic` 0.1.0): table mode (`free`/`closed`), surface, lights, zone visibility/resize, anchored slots, host-only verbs (`table.*`, `zone.*`, `slot.*`), live view, English/Spanish texts, log, tests. Rules and open gaps are in its `MODULE.md`. Design: `docs/mesa.md` in the `general` repo.

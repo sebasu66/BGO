@@ -4,7 +4,7 @@
   "kind": "hand",
   "description": "Client-side vertical hand presentation backed by the logical Hand contract.",
   "state": {},
-  "scene": "res://src/components/hands/vertical_hand/vertical_hand.tscn",
+  "scene": "res://src/components/player/hand/vertical_hand.tscn",
   "config": {
     "orientation": { "type": "string", "default": "floating_vertical_stack" },
     "stack_order": { "type": "string", "default": "filo" },

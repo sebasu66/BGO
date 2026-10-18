@@ -1,7 +1,7 @@
 class_name BgoPlayerUiController
 extends RefCounted
 
-const VERTICAL_HAND_SCENE = preload("res://src/components/hands/vertical_hand/vertical_hand.tscn")
+const VERTICAL_HAND_SCENE = preload("res://src/components/player/hand/vertical_hand.tscn")
 
 
 ## Creates the floating player-hand UI root.

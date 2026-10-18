@@ -4,7 +4,7 @@ extends Node3D
 
 signal component_event(event_name: String, payload: Dictionary)
 
-const TABLE_GRID_SCENE = preload("res://src/components/grids/table_grid/table_grid.tscn")
+const TABLE_GRID_SCENE = preload("res://src/components/table/grid/table_grid.tscn")
 
 @export_range(2, 30, 1) var columns: int = 8:
 	set(value):

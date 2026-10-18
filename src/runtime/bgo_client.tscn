@@ -2,7 +2,7 @@
 
 [ext_resource type="PackedScene" path="res://src/shared/tabletop_world_base.tscn" id="1_world"]
 [ext_resource type="Script" uid="uid://c7xaws7uvkg52" path="res://src/runtime/bgo_client_runtime.gd" id="2_main"]
-[ext_resource type="Script" uid="uid://c1m0u5bv5tgo1" path="res://src/components/player_presence/player_presence_layer.gd" id="3_presence"]
+[ext_resource type="Script" uid="uid://c1m0u5bv5tgo1" path="res://src/components/player/presence/player_presence_layer.gd" id="3_presence"]
 [ext_resource type="Script" uid="uid://yf7lcgvk4eru" path="res://src/ui/camera_filter_controller.gd" id="4_filter"]
 
 [node name="Main" instance=ExtResource("1_world")]

@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" uid="uid://hrr03svvocsk" path="res://src/components/boards/checkered_board/checkered_board.gd" id="1_board"]
 [ext_resource type="Script" uid="uid://uu5l5djyt83n" path="res://src/authoring/nodes/bgo_pbr_material.gd" id="2_pbr"]
-[ext_resource type="PackedScene" path="res://src/components/grids/table_grid/table_grid.tscn" id="3_0ascd"]
-[ext_resource type="Script" uid="uid://bu1kpewarx74l" path="res://src/components/grids/table_grid/table_grid.gd" id="4_yfncm"]
+[ext_resource type="PackedScene" path="res://src/components/table/grid/table_grid.tscn" id="3_0ascd"]
+[ext_resource type="Script" uid="uid://bu1kpewarx74l" path="res://src/components/table/grid/table_grid.gd" id="4_yfncm"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0ascd"]
 albedo_color = Color(0.2, 0.22, 0.25, 1)

@@ -22,6 +22,26 @@ const SENTENCES := {
 		"en": "The table mode must be free or closed.",
 		"es": "El modo de la mesa debe ser libre o cerrado.",
 	},
+	"invalid_cell_size":
+	{
+		"en": "The cell size must be a number of centimetres above zero.",
+		"es": "El tamaño de celda debe ser un número de centímetros mayor a cero.",
+	},
+	"closed_table_needs_a_slot":
+	{
+		"en": "This table is closed: things can only be dropped into a slot.",
+		"es": "Esta mesa es cerrada: solo se puede soltar dentro de un slot.",
+	},
+	"drop_outside_the_zone":
+	{
+		"en": "That spot is outside the zone.",
+		"es": "Ese lugar queda fuera de la zona.",
+	},
+	"cannot_drop":
+	{
+		"en": "That object cannot be dropped there.",
+		"es": "Ese objeto no se puede soltar ahí.",
+	},
 	"nothing_to_change":
 	{
 		"en": "Tell me what to change on the surface.",

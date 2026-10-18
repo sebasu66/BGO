@@ -4,7 +4,7 @@
   "kind": "player_area",
   "description": "Public or private tabletop area associated with one player.",
   "state": {},
-  "scene": "res://src/components/player_area/player_area.tscn",
+  "scene": "res://src/components/player/area/player_area.tscn",
   "config": {
     "player_id": { "type": "string", "default": "" },
     "label_text": { "type": "string", "default": "PLAYER" },

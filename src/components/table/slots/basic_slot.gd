@@ -72,42 +72,41 @@ func set_marker_color_string(value: String) -> bool:
 
 ## Returns the stable console, GUI, and MCP method surface for this component.
 func console_api() -> Dictionary:
-	return (
-		BgoComponentApiDescriptor
-		. create(
-			self,
-			"bgo.slot.basic",
-			"BgoBasicSlot",
-			"Deterministic placement-target configuration and marker controls.",
-			{
-				"setCapacity": BgoComponentApiDescriptor.setter("set_capacity", "capacity", "int"),
-				"setSlotId":
-				BgoComponentApiDescriptor.method(
-					"set_slot_id", [{"name": "value", "type": "string"}], "bool"
-				),
-				"setAcceptedKinds":
-				BgoComponentApiDescriptor.method(
-					"set_accepted_kinds", [{"name": "value", "type": "PackedStringArray"}]
-				),
-				"setVisibleMarker":
-				BgoComponentApiDescriptor.method(
-					"set_visible_marker", [{"name": "value", "type": "bool"}]
-				),
-				"setMarkerSize":
-				BgoComponentApiDescriptor.method(
-					"set_marker_size", [{"name": "value", "type": "Vector2"}], "bool"
-				),
-				"setMarkerColor":
-				BgoComponentApiDescriptor.method(
-					"set_marker_color_string", [{"name": "value", "type": "string"}], "bool"
-				),
-				"accepts":
-				BgoComponentApiDescriptor.method(
-					"accepts", [{"name": "component_kind", "type": "string"}], "bool"
-				),
-			},
-		)
+	return BgoComponentApiDescriptor.create(
+		self,
+		"bgo.slot.basic",
+		"BgoBasicSlot",
+		"Deterministic placement-target configuration and marker controls.",
+		_console_methods()
 	)
+
+
+func _console_methods() -> Dictionary:
+	return {
+		"setCapacity": BgoComponentApiDescriptor.setter("set_capacity", "capacity", "int"),
+		"setSlotId":
+		BgoComponentApiDescriptor.method(
+			"set_slot_id", [{"name": "value", "type": "string"}], "bool"
+		),
+		"setAcceptedKinds":
+		BgoComponentApiDescriptor.method(
+			"set_accepted_kinds", [{"name": "value", "type": "PackedStringArray"}]
+		),
+		"setVisibleMarker":
+		BgoComponentApiDescriptor.method("set_visible_marker", [{"name": "value", "type": "bool"}]),
+		"setMarkerSize":
+		BgoComponentApiDescriptor.method(
+			"set_marker_size", [{"name": "value", "type": "Vector2"}], "bool"
+		),
+		"setMarkerColor":
+		BgoComponentApiDescriptor.method(
+			"set_marker_color_string", [{"name": "value", "type": "string"}], "bool"
+		),
+		"accepts":
+		BgoComponentApiDescriptor.method(
+			"accepts", [{"name": "component_kind", "type": "string"}], "bool"
+		),
+	}
 
 
 ## Returns whether this slot accepts the supplied logical object.

@@ -2,7 +2,7 @@
 class_name BgoAssetBox
 extends Node3D
 
-const TABLE_GRID_SCENE = preload("res://src/components/grids/table_grid/table_grid.tscn")
+const TABLE_GRID_SCENE = preload("res://src/components/table/grid/table_grid.tscn")
 
 ## Editor/authoring representation of the Asset Placer catalog surface.
 ##

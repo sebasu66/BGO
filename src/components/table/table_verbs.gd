@@ -13,6 +13,7 @@ static func register(state: GameplayState) -> void:
 	var handlers := {
 		"table.set_mode": set_mode,
 		"table.set_surface": set_surface,
+		"table.set_cell_size": set_cell_size,
 		"table.add_light": add_light,
 		"table.remove_light": remove_light,
 		"zone.set_visibility": set_visibility,
@@ -47,6 +48,18 @@ static func set_mode(command: Dictionary, state: GameplayState) -> Dictionary:
 	if not state.tabletop.config.set_mode(mode):
 		return _rejected("invalid_mode")
 	return _event(command, "table.mode_changed", {"from": before, "to": mode})
+
+
+## Args: cell_size_cm (number above zero). Existing placements keep their cells.
+static func set_cell_size(command: Dictionary, state: GameplayState) -> Dictionary:
+	var denied := _host_only(command, state)
+	if not denied.is_empty():
+		return denied
+	var before: float = state.tabletop.config.cell_size_cm
+	var wanted: Variant = _args(command).get("cell_size_cm")
+	if not state.tabletop.config.set_cell_size(wanted):
+		return _rejected("invalid_cell_size")
+	return _event(command, "table.cell_size_changed", {"from": before, "to": float(wanted)})
 
 
 ## Args: any of preset (string), tint (HTML color), uv_scale (number > 0).

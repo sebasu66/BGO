@@ -1,7 +1,7 @@
 {
   "schema": "bgo.component",
   "id": "bgo.table.basic",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "kind": "table",
   "description": "The table: placement mode (free or closed), surface look, lights, zones and slots. The state is logical; this component shows the lights and announces the surface.",
   "state": {},

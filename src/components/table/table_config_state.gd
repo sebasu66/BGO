@@ -17,12 +17,22 @@ var surface: Dictionary = DEFAULT_SURFACE.duplicate(true)
 ## Extra lights keyed by stable light id.
 var lights: Dictionary = {}
 
+## Side of one grid cell, in centimetres. A cell holds one small object.
+var cell_size_cm := TableCellMath.DEFAULT_CELL_SIZE_CM
+
+## How many world units one centimetre of table is. 1.2 world units per 5 cm cell.
+var world_units_per_cm := 0.24
+
 
 ## Builds the config from the optional "table" block of a game definition.
 ## Returns null when any declared value is invalid.
 static func from_definition(table: Dictionary) -> TableConfigState:
 	var config := TableConfigState.new()
 	if table.has("mode") and not config.set_mode(str(table["mode"])):
+		return null
+	if table.has("cell_size_cm") and not config.set_cell_size(table["cell_size_cm"]):
+		return null
+	if table.has("world_units_per_cm") and not config.set_world_scale(table["world_units_per_cm"]):
 		return null
 	var surface_block: Variant = table.get("surface", {})
 	if surface_block is Dictionary and not config.set_surface(_surface_changes(surface_block)):
@@ -41,6 +51,22 @@ func set_mode(value: String) -> bool:
 	if value not in MODES:
 		return false
 	mode = value
+	return true
+
+
+## Sets the cell side in centimetres. Must be a number above zero.
+func set_cell_size(value: Variant) -> bool:
+	if typeof(value) not in [TYPE_INT, TYPE_FLOAT] or float(value) <= 0.0:
+		return false
+	cell_size_cm = float(value)
+	return true
+
+
+## Sets how many world units one centimetre is. Must be a number above zero.
+func set_world_scale(value: Variant) -> bool:
+	if typeof(value) not in [TYPE_INT, TYPE_FLOAT] or float(value) <= 0.0:
+		return false
+	world_units_per_cm = float(value)
 	return true
 
 
@@ -108,6 +134,8 @@ func to_dictionary() -> Dictionary:
 		"mode": mode,
 		"surface": surface.duplicate(true),
 		"lights": lights.duplicate(true),
+		"cell_size_cm": cell_size_cm,
+		"world_units_per_cm": world_units_per_cm,
 	}
 
 
@@ -115,6 +143,10 @@ func to_dictionary() -> Dictionary:
 func load_dictionary(snapshot: Dictionary) -> bool:
 	var loaded := TableConfigState.new()
 	if not loaded.set_mode(str(snapshot.get("mode", "free"))):
+		return false
+	var saved_cell_size: Variant = snapshot.get("cell_size_cm", loaded.cell_size_cm)
+	var saved_world_scale: Variant = snapshot.get("world_units_per_cm", loaded.world_units_per_cm)
+	if not loaded.set_cell_size(saved_cell_size) or not loaded.set_world_scale(saved_world_scale):
 		return false
 	var surface_block: Variant = snapshot.get("surface", {})
 	if not surface_block is Dictionary or not loaded.set_surface(surface_block):
@@ -129,6 +161,8 @@ func load_dictionary(snapshot: Dictionary) -> bool:
 	mode = loaded.mode
 	surface = loaded.surface
 	lights = loaded.lights
+	cell_size_cm = loaded.cell_size_cm
+	world_units_per_cm = loaded.world_units_per_cm
 	return true
 
 

@@ -5,11 +5,15 @@ extends RefCounted
 const TABLE_GRID_STATE = preload("res://src/core/table_grid_state.gd")
 const ASSET_BOX_STATE = preload("res://src/core/asset_box_state.gd")
 const TABLE_CONFIG_STATE = preload("res://src/components/table/table_config_state.gd")
+const TABLE_CONTAINMENT_STATE = preload("res://src/components/table/table_containment_state.gd")
 const VISIBILITIES := ["public", "private"]
 const ANCHOR_KINDS := ["table", "zone", "board", "card"]
 
 ## Table-wide settings: placement mode, surface look and lights.
 var config = TABLE_CONFIG_STATE.new()
+
+## Who is inside whom: cards inside a deck, a deck in a slot.
+var containment = TABLE_CONTAINMENT_STATE.new()
 
 ## Named logical tabletop sections keyed by stable section id.
 var sections: Dictionary = {}
@@ -371,6 +375,7 @@ func to_dictionary() -> Dictionary:
 		"grid": grid.to_dictionary(),
 		"asset_box": asset_box.to_dictionary(),
 		"config": config.to_dictionary(),
+		"containment": containment.to_dictionary(),
 	}
 
 
@@ -381,6 +386,12 @@ func load_dictionary(snapshot: Dictionary) -> bool:
 			return false
 	var saved_config: Variant = snapshot.get("config", {})
 	if not saved_config is Dictionary or not TABLE_CONFIG_STATE.new().load_dictionary(saved_config):
+		return false
+	var saved_links: Variant = snapshot.get("containment", {})
+	if (
+		not saved_links is Dictionary
+		or not TABLE_CONTAINMENT_STATE.new().load_dictionary(saved_links)
+	):
 		return false
 	_restore(snapshot)
 	return true
@@ -449,3 +460,5 @@ func _restore(snapshot: Dictionary) -> void:
 	object_poses = snapshot["object_poses"].duplicate(true)
 	if snapshot.get("config") is Dictionary:
 		config.load_dictionary(snapshot["config"])
+	if snapshot.get("containment") is Dictionary:
+		containment.load_dictionary(snapshot["containment"])

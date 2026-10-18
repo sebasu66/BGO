@@ -4,7 +4,7 @@
   "kind": "table_grid",
   "description": "Logical point grid used for deterministic free placement and occupancy queries.",
   "state": {},
-  "scene": "res://src/components/grids/table_grid/table_grid.tscn",
+  "scene": "res://src/components/table/grid/table_grid.tscn",
   "config": {
     "point_columns": { "type": "int", "min": 1, "max": 512, "default": 16 },
     "point_rows": { "type": "int", "min": 1, "max": 512, "default": 10 },

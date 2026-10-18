@@ -24,7 +24,7 @@ const TABLETOP_STATE = preload("res://src/core/tabletop_state.gd")
 const SETTINGS_PANEL = preload("res://src/components/ui/settings_panel/settings_panel.tscn")
 const ACTION_STRIP = preload("res://src/components/ui/action_strip/action_strip.tscn")
 const UI_THEME_PROFILES = preload("res://src/components/ui/theme_profiles/ui_theme_profiles.gd")
-const VERTICAL_HAND = preload("res://src/components/hands/vertical_hand/vertical_hand.tscn")
+const VERTICAL_HAND = preload("res://src/components/player/hand/vertical_hand.tscn")
 const FLUENT_GAME_BUILDER_TEST = preload("res://tests/fluent_game_builder_test.gd")
 
 var failures := 0

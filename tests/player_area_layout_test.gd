@@ -1,7 +1,7 @@
 class_name PlayerAreaLayoutTest
 extends RefCounted
 
-const PLAYER_AREA = preload("res://src/components/player_area/player_area.gd")
+const PLAYER_AREA = preload("res://src/components/player/area/player_area.gd")
 
 
 ## Checks the grid that objects follow inside a player area.

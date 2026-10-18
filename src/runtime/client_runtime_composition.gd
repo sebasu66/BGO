@@ -2,7 +2,7 @@ extends "res://src/runtime/client_runtime_interaction.gd"
 
 const GAME_COMPONENT_COMPOSER = preload("res://src/runtime/game_component_composer.gd")
 const ASSET_BOX_SCENE = preload("res://src/components/containers/asset_box/asset_box.tscn")
-const VERTICAL_HAND_SCENE = preload("res://src/components/hands/vertical_hand/vertical_hand.tscn")
+const VERTICAL_HAND_SCENE = preload("res://src/components/player/hand/vertical_hand.tscn")
 const SEQUENTIAL_DROP_ANIMATOR = preload("res://src/runtime/sequential_drop_animator.gd")
 const SANDBOX_RUNTIME_CONTROLLER = preload("res://src/runtime/sandbox_runtime_controller.gd")
 const TOAST_SCENE = preload("res://src/components/ui/toast/toast_component.tscn")

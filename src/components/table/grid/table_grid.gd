@@ -137,6 +137,13 @@ func _console_config_methods() -> Dictionary:
 
 
 func _console_placement_methods() -> Dictionary:
+	var methods := _console_conversion_methods()
+	methods.merge(_console_resolution_methods())
+	methods.merge(_console_metadata_methods())
+	return methods
+
+
+func _console_conversion_methods() -> Dictionary:
 	return {
 		"getPointWorld":
 		BgoComponentApiDescriptor.method(
@@ -150,6 +157,11 @@ func _console_placement_methods() -> Dictionary:
 		BgoComponentApiDescriptor.method(
 			"clamped_world_to_point", [{"name": "world_position", "type": "Vector3"}], "Vector2i"
 		),
+	}
+
+
+func _console_resolution_methods() -> Dictionary:
+	return {
 		"resolvePlacement":
 		BgoComponentApiDescriptor.method(
 			"resolve_magnetic_placement",
@@ -164,6 +176,11 @@ func _console_placement_methods() -> Dictionary:
 		BgoComponentApiDescriptor.method(
 			"is_valid_point", [{"name": "point", "type": "Vector2i"}], "bool"
 		),
+	}
+
+
+func _console_metadata_methods() -> Dictionary:
+	return {
 		"getPlacementMetadata":
 		(
 			BgoComponentApiDescriptor
@@ -190,6 +207,19 @@ func rebuild() -> void:
 	if not show_points:
 		return
 
+	var rendered_points := _rendered_points()
+	if rendered_points.is_empty():
+		return
+	var visuals := MultiMeshInstance3D.new()
+	visuals.name = "GridPoints"
+	visuals.multimesh = _multimesh_of_points(rendered_points)
+	visuals.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(visuals)
+	if Engine.is_editor_hint() and get_tree() != null:
+		visuals.owner = get_tree().edited_scene_root
+
+
+func _point_sphere() -> SphereMesh:
 	var sphere := SphereMesh.new()
 	sphere.radius = point_radius
 	sphere.height = point_radius * 2.0
@@ -197,26 +227,18 @@ func rebuild() -> void:
 	material.albedo_color = point_color
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	sphere.material = material
+	return sphere
 
-	var rendered_points := _rendered_points()
-	if rendered_points.is_empty():
-		return
+
+func _multimesh_of_points(points: Array) -> MultiMesh:
 	var multimesh := MultiMesh.new()
 	multimesh.transform_format = MultiMesh.TRANSFORM_3D
-	multimesh.mesh = sphere
-	multimesh.instance_count = rendered_points.size()
-	for index in rendered_points.size():
-		multimesh.set_instance_transform(
-			index, Transform3D(Basis.IDENTITY, point_local(rendered_points[index]))
-		)
-
-	var visuals := MultiMeshInstance3D.new()
-	visuals.name = "GridPoints"
-	visuals.multimesh = multimesh
-	visuals.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(visuals)
-	if Engine.is_editor_hint() and get_tree() != null:
-		visuals.owner = get_tree().edited_scene_root
+	multimesh.mesh = _point_sphere()
+	multimesh.instance_count = points.size()
+	for index in points.size():
+		var transform := Transform3D(Basis.IDENTITY, point_local(points[index]))
+		multimesh.set_instance_transform(index, transform)
+	return multimesh
 
 
 ## Returns the world-space position for a logical point on this table plane.

@@ -330,7 +330,7 @@ Use these ownership boundaries:
 - `assets/source/` Ã¢â‚¬â€ original source material ignored by Godot; `assets/authoring/` is authoring-only and excluded from Web; `assets/runtime/` is shippable.
 - `scripts/` Ã¢â‚¬â€ development/build tooling, not runtime domain behavior.
 
-A reusable public component normally lives in a component-owned folder. When it has a `component.jsonh`, that folder must use `snake_case` and contain matching `<folder_name>.gd` and `<folder_name>.tscn` siblings. Existing component families may add one grouping directory, for example `src/components/boards/checkered_board/`; do not scatter one component's implementation across unrelated folders.
+A reusable public component normally lives in a component-owned folder. When it has a `component.jsonh`, that folder must use `snake_case` and contain matching `<folder_name>.gd` and `<folder_name>.tscn` siblings. Existing component families may add one grouping directory, for example `src/components/boards/checkered_board/`; do not scatter one component's implementation across unrelated folders. A component that only makes sense inside another lives under its parent, and the dependency goes one way: `table/grid`, `table/slots` belong to the table; `player/area`, `player/hand`, `player/presence` belong to the player. The player asks the table for its zone; the table never imports the player.
 
 Component manifests remain `component.jsonh`, stable component IDs use the `bgo.<family>.<name>` style, and external game definitions must never reference these internal file paths.
 
@@ -339,6 +339,13 @@ Component manifests remain `component.jsonh`, stable component IDs use the `bgo.
 A backlog item should not restate naming, file paths, function-size limits, documentation syntax, deployment policy or other general implementation rules. It should describe behavior/acceptance criteria and reference the current skill for implementation compliance.
 
 When a public behavior changes, add or update focused tests. Prefer making the correct implementation the easiest way to satisfy the acceptance tests and the policy linter.
+
+**Tests follow the real behavior, never invented stand-ins.** A test must exercise the same path the product uses:
+
+- Build the state from a real game definition (for example `games/test001/game.jsonh`) through the real builder, not by hand-assembling the pieces the test needs.
+- Drive changes through the real command path (`GameplayState.execute`, console or MCP verbs), not by calling internals that the product never calls directly.
+- Use the real components and scenes (a real player seat, zone and hand), never fake owners, stub nodes or fixtures adapted so the test passes easily.
+- A passing count is not evidence. A feature is `TESTED` only when a test would fail if the real feature broke.
 
 ## Self-contained components (MVC)
 
