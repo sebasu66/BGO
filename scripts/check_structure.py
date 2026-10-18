@@ -226,8 +226,14 @@ for component_folder in SELF_CONTAINED_COMPONENTS:
     version = ""
     if manifest_file.exists():
         version = str(json.loads(manifest_file.read_text(encoding="utf-8")).get("version", ""))
-    if not re.fullmatch(r"\d+\.\d+\.\d+", version):
-        fail(f"{component_folder}: component.jsonh needs a semantic 'version' such as 0.1.0")
+    if not re.fullmatch(r"\d+\.\d+\.\d+(-prototype)?", version):
+        fail(f"{component_folder}: component.jsonh needs a semantic 'version' such as 0.1.0 (or 0.1.0-prototype)")
+    if version.endswith("-prototype"):
+        # Stage one (SKILL.md, "Two stages"): working code and functional tests only.
+        # The texts, log, MODULE.md and full anatomy come in the polish stage.
+        if not list((folder / "tests").glob("*_test.gd")):
+            fail(f"{component_folder}: a prototype still needs its functional tests/*_test.gd")
+        continue
     for required_file in ("MODULE.md", f"{name}.gd", f"{name}.tscn", f"{name}_texts.gd", f"{name}_log.gd"):
         if not (folder / required_file).exists():
             fail(f"{component_folder}: self-contained component is missing {required_file}")

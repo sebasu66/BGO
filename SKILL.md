@@ -371,6 +371,15 @@ Rules for classes in general:
 
 Enforcement: `scripts/check_structure.py` checks every component listed in `SELF_CONTAINED_COMPONENTS` for the full anatomy above. Add a component to that list when you bring it up to the standard; never remove one. Existing components migrate when they are next touched, starting with those on the current roadmap slice.
 
+### Two stages: prototype first, polish after
+
+To keep development fast, every component is built in two stages. The version in `component.jsonh` says which one it is.
+
+1. **Prototype** (`"version": "0.3.0-prototype"`). Write the working code and its functional tests only (they must still follow the real-behavior rule). No logs, no texts or translations, no `MODULE.md`, no extra documentation. The goal is the behavior. The owner then tries it interactively through the MCP and watches it work.
+2. **Polish** (`"version": "0.3.0"`, no suffix). Only after the owner has seen the behavior work, the agent finishes the component alone: the full anatomy above (model, controller, view, texts in every language, log, `MODULE.md`), unit and integration tests, readability and complexity limits, and the removal of leftovers. Then it drops the `-prototype` suffix.
+
+Rules that never wait for the polish stage: components live in their own folder, classes keep descriptive names and one file each, coordinators hold no logic, and tests never use invented stand-ins. `scripts/check_structure.py` asks a prototype only for its manifest and functional tests, and a polished component for everything. Say the stage when reporting progress ("table 0.3.0-prototype: ready to try through the MCP").
+
 ## Super-readable code
 
 The owner's standard for every line of code: **code reads like plain English**. Someone who does not know GDScript should be able to follow what happens by reading the names. This is the main style rule, above cleverness and above brevity.
